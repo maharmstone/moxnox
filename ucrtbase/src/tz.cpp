@@ -237,22 +237,23 @@ static bool load_tz_file(string_view fn) {
     void* addr;
     size_t size;
 
-    // FIXME - should work with absolute paths too
-
     static const u16string_view path = u"/share/zoneinfo/";
 
+    size_t prefix_size = fn[0] == '/' ? 0 : path.size();
     auto u16len = utf8_to_utf16_len(fn);
 
-    buf.reset(new char16_t[path.size() + u16len]);
+    buf.reset(new char16_t[prefix_size + u16len]);
     if (!buf) {
         print_stderr("malloc failed\n");
         return false;
     }
 
-    memcpy(buf.get(), path.data(), path.size() * sizeof(char16_t));
-    utf8_to_utf16(span(buf.get() + path.size(), u16len), fn);
+    if (fn[0] != '/')
+        memcpy(buf.get(), path.data(), path.size() * sizeof(char16_t));
 
-    auto tzfn = u16string_view(buf.get(), path.size() + u16len);
+    utf8_to_utf16(span(buf.get() + prefix_size, u16len), fn);
+
+    auto tzfn = u16string_view(buf.get(), prefix_size + u16len);
 
     us.Length = us.MaximumLength = (uint16_t)(tzfn.size() * sizeof(char16_t));
     us.Buffer = (char16_t*)tzfn.data();
