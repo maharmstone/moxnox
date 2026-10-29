@@ -2,10 +2,12 @@ module;
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <string_view>
 #include <span>
 #include <memory>
 #include <bit>
+#include <algorithm>
 
 export module tz;
 
@@ -57,6 +59,418 @@ export span<tz_transition> tz_transitions;
 static unique_ptr<tzif_time_type[]> tz_types_buf;
 export span<tzif_time_type> tz_types;
 export unique_ptr<char[]> tz_names;
+
+enum class tz_rule_type {
+    none,
+    julian_day,
+    julian_day_leap,
+    month,
+};
+
+template<bool LARGE_HOURS>
+constexpr bool try_parse_rules_offset(string_view& s, int32_t& offset) {
+    bool neg = false;
+    uint32_t hours, minutes, seconds;
+
+    static constexpr uint32_t HOURS_LIMIT = LARGE_HOURS ? 167 : 24;
+
+    if (!s.empty() && s[0] == '-') {
+        neg = true;
+        s = string_view(s.data() + 1, s.size() - 1);
+    } else if (!s.empty() && s[0] == '+')
+        s = string_view(s.data() + 1, s.size() - 1);
+
+    if (s.empty() || s[0] < '0' || s[0] > '9')
+        return false;
+
+    // hours
+
+    hours = (uint32_t)(s[0] - '0');
+    s = string_view(s.data() + 1, s.size() - 1);
+
+    if (!s.empty() && s[0] >= '0' && s[0] <= '9') {
+        hours *= 10;
+        hours += (uint32_t)(s[0] - '0');
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        if constexpr (LARGE_HOURS) {
+            if (!s.empty() && s[0] >= '0' && s[0] <= '9') {
+                hours *= 10;
+                hours += (uint32_t)(s[0] - '0');
+                s = string_view(s.data() + 1, s.size() - 1);
+            }
+        }
+    }
+
+    if (s.empty() || s[0] != ':') {
+        if (hours > HOURS_LIMIT)
+            return false;
+
+        offset = (int32_t)(hours * 3600);
+
+        if (neg)
+            offset = -offset;
+
+        return true;
+    }
+
+    // minutes
+
+    s = string_view(s.data() + 1, s.size() - 1);
+
+    if (s.empty() || s[0] < '0' || s[0] > '9')
+        return false;
+
+    minutes = (uint32_t)(s[0] - '0');
+    s = string_view(s.data() + 1, s.size() - 1);
+
+    if (!s.empty() && s[0] >= '0' && s[0] <= '9') {
+        minutes *= 10;
+        minutes += (uint32_t)(s[0] - '0');
+        s = string_view(s.data() + 1, s.size() - 1);
+    }
+
+    if (s.empty() || s[0] != ':') {
+        if (hours > HOURS_LIMIT || minutes > 59)
+            return false;
+
+        offset = (int32_t)((hours * 3600) + (minutes * 60));
+
+        if (neg)
+            offset = -offset;
+
+        return true;
+    }
+
+    // seconds
+
+    s = string_view(s.data() + 1, s.size() - 1);
+
+    if (s.empty() || s[0] < '0' || s[0] > '9')
+        return false;
+
+    seconds = (uint32_t)(s[0] - '0');
+    s = string_view(s.data() + 1, s.size() - 1);
+
+    if (!s.empty() && s[0] >= '0' && s[0] <= '9') {
+        seconds *= 10;
+        seconds += (uint32_t)(s[0] - '0');
+        s = string_view(s.data() + 1, s.size() - 1);
+    }
+
+    if (hours > HOURS_LIMIT || minutes > 59 || seconds > 59)
+        return false;
+
+    offset = (int32_t)((hours * 3600) + (minutes * 60) + seconds);
+
+    if (neg)
+        offset = -offset;
+
+    return true;
+}
+
+constexpr bool try_parse_tz_name(string_view& s, string_view& name) {
+    if (s.size() < 3)
+        return false;
+
+    if (s[0] == '<') {
+        if (s.size() < 5)
+            return false;
+
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        name = string_view(s.data(), min(s.size(), (size_t)TZNAME_MAX));
+
+        for (size_t i = 0; i < name.size(); i++) {
+            if ((s[i] < 'A' || s[i] > 'Z') && (s[i] < 'a' || s[i] > 'z') &&
+                (s[i] < '0' || s[i] > '9') && s[i] != '-' && s[i] != '+') {
+                name = string_view(name.data(), i);
+                break;
+            }
+        }
+
+        if (name.size() < 3)
+            return false;
+
+        s = string_view(s.data() + name.size(), s.size() - name.size());
+
+        if (s.empty() || s[0] != '>')
+            return false;
+
+        s = string_view(s.data() + 1, s.size() - 1);
+    } else {
+        name = string_view(s.data(), min(s.size(), (size_t)TZNAME_MAX));
+
+        for (size_t i = 0; i < name.size(); i++) {
+            if ((name[i] < 'A' || name[i] > 'Z') && (name[i] < 'a' || name[i] > 'z')) {
+                name = string_view(name.data(), i);
+                break;
+            }
+        }
+
+        if (name.size() < 3)
+            return false;
+
+        s = string_view(s.data() + name.size(), s.size() - name.size());
+    }
+
+    return true;
+}
+
+constexpr bool try_parse_rule(string_view& s, tz_rule_type& rule_type,
+                              unsigned int& param1, unsigned int& param2,
+                              unsigned int& param3, int32_t& offset) {
+    if (s.empty())
+        return false;
+
+    if (s[0] == 'J') {
+        unsigned int jd;
+
+        rule_type = tz_rule_type::julian_day;
+
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        if (s.empty() || s[0] < '0' || s[0] > '9')
+            return false;
+
+        jd = (unsigned int)(s[0] - '0');
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        if (!s.empty() && s[0] >= '0' && s[0] <= '9') {
+            jd *= 10;
+            jd += (unsigned int)(s[0] - '0');
+            s = string_view(s.data() + 1, s.size() - 1);
+
+            if (!s.empty() && s[0] >= '0' && s[0] <= '9') {
+                jd *= 10;
+                jd += (unsigned int)(s[0] - '0');
+                s = string_view(s.data() + 1, s.size() - 1);
+            }
+        }
+
+        if (jd < 1 || jd > 365)
+            return false;
+
+        param1 = jd;
+    } else if (s[0] >= '0' && s[0] <= '9') {
+        unsigned int jd;
+
+        rule_type = tz_rule_type::julian_day_leap;
+
+        jd = (unsigned int)(s[0] - '0');
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        if (!s.empty() && s[0] >= '0' && s[0] <= '9') {
+            jd *= 10;
+            jd += (unsigned int)(s[0] - '0');
+            s = string_view(s.data() + 1, s.size() - 1);
+
+            if (!s.empty() && s[0] >= '0' && s[0] <= '9') {
+                jd *= 10;
+                jd += (unsigned int)(s[0] - '0');
+                s = string_view(s.data() + 1, s.size() - 1);
+            }
+        }
+
+        if (jd > 365)
+            return false;
+
+        param1 = jd;
+    } else if (s[0] == 'M') {
+        unsigned int month, week, day;
+
+        rule_type = tz_rule_type::month;
+
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        if (s.empty() || s[0] < '1' || s[0] > '9')
+            return false;
+
+        month = (unsigned int)(s[0] - '0');
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        if (s.empty())
+            return false;
+
+        if (s[0] >= '0' && s[0] <= '9') {
+            month *= 10;
+            month += (unsigned int)(s[0] - '0');
+            s = string_view(s.data() + 1, s.size() - 1);
+        }
+
+        if (month > 12)
+            return false;
+
+        if (s.empty() || s[0] != '.')
+            return false;
+
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        if (s.empty() || s[0] < '1' || s[0] > '5')
+            return false;
+
+        week = (unsigned int)(s[0] - '0');
+
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        if (s.empty() || s[0] != '.')
+            return false;
+
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        if (s.empty() || s[0] < '0' || s[0] > '6')
+            return false;
+
+        day = (unsigned int)(s[0] - '0');
+        s = string_view(s.data() + 1, s.size() - 1);
+
+        param1 = month;
+        param2 = week;
+        param3 = day;
+    } else
+        return false;
+
+    if (s.empty() || s[0] != '/')
+        return true;
+
+    s = string_view(s.data() + 1, s.size() - 1);
+
+    return try_parse_rules_offset<true>(s, offset);
+}
+
+constexpr bool try_parse_rules_string(string_view s, string_view& std,
+                                      string_view& dst, int32_t& std_offset,
+                                      int32_t& dst_offset, tz_rule_type& start_rule_type,
+                                      unsigned int& start_param1, unsigned int& start_param2,
+                                      unsigned int& start_param3, int32_t& start_time,
+                                      tz_rule_type& end_rule_type, unsigned int& end_param1,
+                                      unsigned int& end_param2, unsigned int& end_param3,
+                                      int32_t& end_time) {
+    start_rule_type = tz_rule_type::none;
+    end_rule_type = tz_rule_type::none;
+    start_param1 = start_param2 = start_param3 = 0;
+    end_param1 = end_param2 = end_param3 = 0;
+    start_time = end_time = 7200;
+
+    if (!try_parse_tz_name(s, std))
+        return false;
+
+    if (!try_parse_rules_offset<false>(s, std_offset))
+        return false;
+
+    if (s.empty()) {
+        dst = std;
+        dst_offset = std_offset;
+        return true;
+    }
+
+    if (!try_parse_tz_name(s, dst))
+        return false;
+
+    dst_offset = std_offset - 3600;
+
+    if (s.empty())
+        return true;
+
+    if (s[0] != ',') {
+        if (!try_parse_rules_offset<false>(s, dst_offset))
+            return false;
+    }
+
+    if (s.empty())
+        return true;
+
+    if (s[0] != ',')
+        return false;
+
+    s = string_view(s.data() + 1, s.size() - 1);
+
+    if (s.empty())
+        return false;
+
+    if (!try_parse_rule(s, start_rule_type, start_param1, start_param2, start_param3, start_time))
+        return false;
+
+    if (s.empty() || s[0] != ',')
+        return false;
+
+    s = string_view(s.data() + 1, s.size() - 1);
+
+    if (!try_parse_rule(s, end_rule_type, end_param1, end_param2, end_param3, end_time))
+        return false;
+
+    if (!s.empty())
+        return false;
+
+    return true;
+}
+
+constexpr bool test_rules_string(string_view s, string_view exp_std,
+                                 string_view exp_dst, int32_t exp_std_offset,
+                                 int32_t exp_dst_offset, tz_rule_type exp_start_rule_type,
+                                 unsigned int exp_start_param1, unsigned int exp_start_param2,
+                                 unsigned int exp_start_param3, int32_t exp_start_time,
+                                 tz_rule_type exp_end_rule_type, unsigned int exp_end_param1,
+                                 unsigned int exp_end_param2, unsigned int exp_end_param3,
+                                 int32_t exp_end_time) {
+    string_view std, dst;
+    int32_t std_offset, dst_offset;
+    tz_rule_type start_rule_type, end_rule_type;
+    unsigned int start_param1, start_param2, start_param3;
+    unsigned int end_param1, end_param2, end_param3;
+    int32_t start_time, end_time;
+
+    if (!try_parse_rules_string(s, std, dst, std_offset, dst_offset,
+                                start_rule_type, start_param1, start_param2,
+                                start_param3, start_time, end_rule_type, end_param1,
+                                end_param2, end_param3, end_time)) {
+        return false;
+    }
+
+    if (std != exp_std || dst != exp_dst)
+        return false;
+
+    if (std_offset != exp_std_offset || dst_offset != exp_dst_offset)
+        return false;
+
+    if (start_rule_type != exp_start_rule_type)
+        return false;
+
+    if (end_rule_type != exp_end_rule_type)
+        return false;
+
+    if (start_param1 != exp_start_param1 || start_param2 != exp_start_param2 || start_param3 != exp_start_param3)
+        return false;
+
+    if (end_param1 != exp_end_param1 || end_param2 != exp_end_param2 || end_param3 != exp_end_param3)
+        return false;
+
+    if (start_time != exp_start_time || end_time != exp_end_time)
+        return false;
+
+    return true;
+}
+
+static_assert(test_rules_string("UTC0", "UTC", "UTC", 0, 0, tz_rule_type::none, 0, 0, 0, 7200, tz_rule_type::none, 0, 0, 0, 7200));
+static_assert(test_rules_string("EST5", "EST", "EST", 18000, 18000, tz_rule_type::none, 0, 0, 0, 7200, tz_rule_type::none, 0, 0, 0, 7200));
+static_assert(test_rules_string("<+0330>-3:30", "+0330", "+0330", -12600, -12600, tz_rule_type::none, 0, 0, 0, 7200, tz_rule_type::none, 0, 0, 0, 7200));
+static_assert(test_rules_string("<-03>3", "-03", "-03", 10800, 10800, tz_rule_type::none, 0, 0, 0, 7200, tz_rule_type::none, 0, 0, 0, 7200));
+static_assert(test_rules_string("XYZ-5:45:30", "XYZ", "XYZ", -20730, -20730, tz_rule_type::none, 0, 0, 0, 7200, tz_rule_type::none, 0, 0, 0, 7200));
+static_assert(test_rules_string("EST5EDT4,M3.2.0,M11.1.0", "EST", "EDT", 18000, 14400, tz_rule_type::month, 3, 2, 0, 7200, tz_rule_type::month, 11, 1, 0, 7200));
+static_assert(test_rules_string("<+0930>-9:30<+1030>,M10.1.0,M4.1.0/3", "+0930", "+1030", -34200, -37800, tz_rule_type::month, 10, 1, 0, 7200, tz_rule_type::month, 4, 1, 0, 10800));
+static_assert(test_rules_string("EST5EDT,M3.2.0,M11.1.0", "EST", "EDT", 18000, 14400, tz_rule_type::month, 3, 2, 0, 7200, tz_rule_type::month, 11, 1, 0, 7200));
+static_assert(test_rules_string("GMT0BST,M3.5.0/1,M10.5.0", "GMT", "BST", 0, -3600, tz_rule_type::month, 3, 5, 0, 3600, tz_rule_type::month, 10, 5, 0, 7200));
+static_assert(test_rules_string("CET-1CEST,M3.5.0,M10.5.0/3", "CET", "CEST", -3600, -7200, tz_rule_type::month, 3, 5, 0, 7200, tz_rule_type::month, 10, 5, 0, 10800));
+static_assert(test_rules_string("AEST-10AEDT,M10.1.0,M4.1.0/3", "AEST", "AEDT", -36000, -39600, tz_rule_type::month, 10, 1, 0, 7200, tz_rule_type::month, 4, 1, 0, 10800));
+static_assert(test_rules_string("NZST-12NZDT,M9.5.0,M4.1.0/3", "NZST", "NZDT", -43200, -46800, tz_rule_type::month, 9, 5, 0, 7200, tz_rule_type::month, 4, 1, 0, 10800));
+static_assert(test_rules_string("IST-2IDT,M3.4.4/26,M10.5.0", "IST", "IDT", -7200, -10800, tz_rule_type::month, 3, 4, 4, 93600, tz_rule_type::month, 10, 5, 0, 7200));
+static_assert(test_rules_string("WGT3WGST,M3.5.0/-2,M10.5.0/-1", "WGT", "WGST", 10800, 7200, tz_rule_type::month, 3, 5, 0, -7200, tz_rule_type::month, 10, 5, 0, -3600));
+static_assert(test_rules_string("<-03>3<-02>,M3.5.0/-2,M10.5.0/-1", "-03", "-02", 10800, 7200, tz_rule_type::month, 3, 5, 0, -7200, tz_rule_type::month, 10, 5, 0, -3600));
+static_assert(test_rules_string("EST5EDT,J60,J300", "EST", "EDT", 18000, 14400, tz_rule_type::julian_day, 60, 0, 0, 7200, tz_rule_type::julian_day, 300, 0, 0, 7200));
+static_assert(test_rules_string("EST5EDT,60,300", "EST", "EDT", 18000, 14400, tz_rule_type::julian_day_leap, 60, 0, 0, 7200, tz_rule_type::julian_day_leap, 300, 0, 0, 7200));
+static_assert(test_rules_string("EST5EDT,J59/23:59:59,J60/0:0:1", "EST", "EDT", 18000, 14400, tz_rule_type::julian_day, 59, 0, 0, 86399, tz_rule_type::julian_day, 60, 0, 0, 1));
+static_assert(test_rules_string("IST-1GMT0,M10.5.0,M3.5.0/1", "IST", "GMT", -3600, 0, tz_rule_type::month, 10, 5, 0, 7200, tz_rule_type::month, 3, 5, 0, 3600));
+static_assert(test_rules_string("EST5EDT,0/0,J365/25", "EST", "EDT", 18000, 14400, tz_rule_type::julian_day_leap, 0, 0, 0, 0, tz_rule_type::julian_day, 365, 0, 0, 90000));
 
 static bool parse_tzif(span<const uint8_t> data, u16string_view fn) {
     static constexpr size_t TIME_SIZE1 = sizeof(int32_t);
@@ -270,7 +684,9 @@ static bool load_tz_file(string_view fn) {
 
     status = NtCreateFile(&h, FILE_READ_DATA, &oa, &iosb, nullptr, 0, 0,
                           FILE_OPEN, FILE_NON_DIRECTORY_FILE, nullptr, 0);
-    if (!success(status)) {
+    if (status == nt_status::OBJECT_NAME_NOT_FOUND || status == nt_status::OBJECT_PATH_NOT_FOUND)
+        return false;
+    else if (!success(status)) {
         print_stderr("NtCreateFile returned {} for {}\n", status, tzfn);
         return false;
     }
@@ -354,28 +770,41 @@ void _tzset() {
         return;
     }
 
-    // FIXME - TZ might be rules string rather than filename
-
-    if (!load_tz_file(tz)) {
-        tz_string[0] = 0;
-
-        _daylight = 0;
-        _dstbias = 0;
-        _timezone = 0;
-        _tzname[0] = (char*)"UTC";
-        _tzname[1] = (char*)"UTC";
-
-        tz_transitions_buf.reset();
-        tz_types_buf.reset();
-        tz_names.reset();
-        tz_transitions = span<tz_transition>();
-        tz_types = span<tzif_time_type>();
-
+    if (load_tz_file(tz)) {
+        strcpy(tz_string, tz);
         RtlReleaseSRWLockExclusive(&tz_lock);
         return;
     }
 
-    strcpy(tz_string, tz);
+    {
+        string_view std, dst;
+        int32_t std_offset, dst_offset;
+        tz_rule_type start_rule_type, end_rule_type;
+        unsigned int start_param1, start_param2, start_param3;
+        unsigned int end_param1, end_param2, end_param3;
+        int32_t start_time, end_time;
+
+        if (try_parse_rules_string(tz, std, dst, std_offset, dst_offset,
+                                   start_rule_type, start_param1, start_param2,
+                                   start_param3, start_time, end_rule_type, end_param1,
+                                   end_param2, end_param3, end_time)) {
+            // FIXME - store
+        }
+    }
+
+    tz_string[0] = 0;
+
+    _daylight = 0;
+    _dstbias = 0;
+    _timezone = 0;
+    _tzname[0] = (char*)"UTC";
+    _tzname[1] = (char*)"UTC";
+
+    tz_transitions_buf.reset();
+    tz_types_buf.reset();
+    tz_names.reset();
+    tz_transitions = span<tz_transition>();
+    tz_types = span<tzif_time_type>();
 
     RtlReleaseSRWLockExclusive(&tz_lock);
 }
