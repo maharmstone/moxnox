@@ -54,18 +54,24 @@ struct tz_transition {
     uint8_t type;
 };
 
-static unique_ptr<tz_transition[]> tz_transitions_buf;
-export span<tz_transition> tz_transitions;
-static unique_ptr<tzif_time_type[]> tz_types_buf;
-export span<tzif_time_type> tz_types;
-export unique_ptr<char[]> tz_names;
-
 enum class tz_rule_type {
     none,
     julian_day,
     julian_day_leap,
     month,
 };
+
+static unique_ptr<tz_transition[]> tz_transitions_buf;
+export span<tz_transition> tz_transitions;
+static unique_ptr<tzif_time_type[]> tz_types_buf;
+export span<tzif_time_type> tz_types;
+export unique_ptr<char[]> tz_names;
+
+static int32_t tz_std_offset, tz_dst_offset;
+static tz_rule_type tz_start_rule_type, tz_end_rule_type;
+static unsigned int tz_start_param1, tz_start_param2, tz_start_param3;
+static unsigned int tz_end_param1, tz_end_param2, tz_end_param3;
+static int32_t tz_start_time, tz_end_time;
 
 template<bool LARGE_HOURS>
 constexpr bool try_parse_rules_offset(string_view& s, int32_t& offset) {
@@ -758,6 +764,11 @@ void _tzset() {
             tz_names.reset();
             tz_transitions = span<tz_transition>();
             tz_types = span<tzif_time_type>();
+
+            tz_std_offset = 0;
+            tz_dst_offset = 0;
+            tz_start_rule_type = tz_rule_type::none;
+            tz_end_rule_type = tz_rule_type::none;
         }
 
         RtlReleaseSRWLockExclusive(&tz_lock);
@@ -772,6 +783,13 @@ void _tzset() {
 
     if (load_tz_file(tz)) {
         strcpy(tz_string, tz);
+
+        // FIXME - set from footer
+        tz_std_offset = 0;
+        tz_dst_offset = 0;
+        tz_start_rule_type = tz_rule_type::none;
+        tz_end_rule_type = tz_rule_type::none;
+
         RtlReleaseSRWLockExclusive(&tz_lock);
         return;
     }
@@ -788,7 +806,31 @@ void _tzset() {
                                    start_rule_type, start_param1, start_param2,
                                    start_param3, start_time, end_rule_type, end_param1,
                                    end_param2, end_param3, end_time)) {
-            // FIXME - store
+            strcpy(tz_string, tz);
+
+            // FIXME - _tzname[0], _tzname[1], _daylight, _dstbias, _timezone
+
+            tz_transitions_buf.reset();
+            tz_types_buf.reset();
+            tz_names.reset();
+            tz_transitions = span<tz_transition>();
+            tz_types = span<tzif_time_type>();
+
+            tz_std_offset = std_offset;
+            tz_dst_offset = dst_offset;
+            tz_start_rule_type = start_rule_type;
+            tz_end_rule_type = end_rule_type;
+            tz_start_param1 = start_param1;
+            tz_start_param2 = start_param2;
+            tz_start_param3 = start_param3;
+            tz_end_param1 = end_param1;
+            tz_end_param2 = end_param2;
+            tz_end_param3 = end_param3;
+            tz_start_time = start_time;
+            tz_end_time = end_time;
+
+            RtlReleaseSRWLockExclusive(&tz_lock);
+            return;
         }
     }
 
@@ -805,6 +847,11 @@ void _tzset() {
     tz_names.reset();
     tz_transitions = span<tz_transition>();
     tz_types = span<tzif_time_type>();
+
+    tz_std_offset = 0;
+    tz_dst_offset = 0;
+    tz_start_rule_type = tz_rule_type::none;
+    tz_end_rule_type = tz_rule_type::none;
 
     RtlReleaseSRWLockExclusive(&tz_lock);
 }
