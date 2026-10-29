@@ -42,3 +42,5 @@
 #define PTHREAD_STACK_MIN 4096
 
 #define TTY_NAME_MAX 100
+
+#define TZNAME_MAX 6
