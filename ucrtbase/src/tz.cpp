@@ -239,6 +239,12 @@ static bool load_tz_file(string_view fn) {
 
     static const u16string_view path = u"/share/zoneinfo/";
 
+    if (fn[0] == ':') {
+        fn = string_view(fn.data() + 1, fn.size() - 1);
+        if (fn.empty())
+            return false;
+    }
+
     size_t prefix_size = fn[0] == '/' ? 0 : path.size();
     auto u16len = utf8_to_utf16_len(fn);
 
