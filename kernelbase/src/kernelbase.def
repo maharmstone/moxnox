@@ -18,7 +18,6 @@ CreateThread
 CreateProcessW
 GetCurrentThreadId
 GetModuleHandleExW
-GetModuleHandleW
 FreeLibrary
 GetProcAddress
 VirtualQuery

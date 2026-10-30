@@ -20,4 +20,3 @@ GetCurrentThreadId
 FreeLibrary
 GetModuleHandleExW
 GetProcAddress
-GetModuleHandleW

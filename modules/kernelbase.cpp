@@ -134,7 +134,6 @@ bool CreateProcessW(const char16_t* application_name, char16_t* command_line,
 void Sleep(uint32_t timeout);
 uint32_t GetCurrentThreadId();
 bool GetModuleHandleExW(uint32_t flags, const char16_t* name, HMODULE* mod);
-HMODULE GetModuleHandleW(const char16_t* mod);
 bool FreeLibrary(HMODULE mod);
 void RaiseException(uint32_t code, uint32_t flags, uint32_t count,
                     const uintptr_t* args);
