@@ -16,7 +16,6 @@ TlsGetValue
 TlsSetValue
 CreateThread
 CreateProcessW
-GetEnvironmentVariableW
 GetCurrentThreadId
 GetModuleHandleExW
 GetModuleHandleW

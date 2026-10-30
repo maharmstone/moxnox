@@ -16,7 +16,6 @@ TlsSetValue
 RaiseException
 CreateThread
 CreateProcessW
-GetEnvironmentVariableW
 GetCurrentThreadId
 FreeLibrary
 GetModuleHandleExW
