@@ -8,6 +8,7 @@ module;
 #include <memory>
 #include <bit>
 #include <algorithm>
+#include <chrono>
 
 export module tz;
 
@@ -477,6 +478,117 @@ static_assert(test_rules_string("EST5EDT,60,300", "EST", "EDT", 18000, 14400, tz
 static_assert(test_rules_string("EST5EDT,J59/23:59:59,J60/0:0:1", "EST", "EDT", 18000, 14400, tz_rule_type::julian_day, 59, 0, 0, 86399, tz_rule_type::julian_day, 60, 0, 0, 1));
 static_assert(test_rules_string("IST-1GMT0,M10.5.0,M3.5.0/1", "IST", "GMT", -3600, 0, tz_rule_type::month, 10, 5, 0, 7200, tz_rule_type::month, 3, 5, 0, 3600));
 static_assert(test_rules_string("EST5EDT,0/0,J365/25", "EST", "EDT", 18000, 14400, tz_rule_type::julian_day_leap, 0, 0, 0, 0, tz_rule_type::julian_day, 365, 0, 0, 90000));
+
+constexpr bool is_leap_year(unsigned int year) {
+    if (year % 4)
+        return false;
+
+    if (!(year % 400))
+        return true;
+
+    return year % 100;
+}
+
+constexpr clock_t find_tz_date(tz_rule_type rule_type, unsigned int param1,
+                               unsigned int param2, unsigned int param3,
+                               unsigned int year) {
+    chrono::sys_days tp;
+
+    switch (rule_type) {
+        case tz_rule_type::julian_day: {
+            chrono::year_month_day ymd{chrono::year{(int)year} / chrono::month{1} / chrono::day{1}};
+
+            tp = ymd;
+            tp += chrono::days{param1 - 1};
+
+            if (is_leap_year(year) && param1 > 59)
+                tp += chrono::days{1};
+
+            break;
+        }
+
+        case tz_rule_type::julian_day_leap: {
+            chrono::year_month_day ymd{chrono::year{(int)year} / chrono::month{1} / chrono::day{1}};
+
+            tp = ymd;
+            tp += chrono::days{param1};
+
+            break;
+        }
+
+        case tz_rule_type::month: {
+            unsigned int month, day;
+            chrono::year y{(int)year};
+            chrono::month m{param1};
+            chrono::weekday dow{param3};
+
+            if (param2 == 5) { // last of month
+                chrono::weekday_last wl{dow[chrono::last]};
+                chrono::year_month_day ymd{y / m / wl};
+
+                month = param1;
+                day = (unsigned int)ymd.day();
+            } else {
+                chrono::weekday_indexed wi = dow[param2];
+                chrono::year_month_weekday ymwd = y / m / wi;
+                chrono::year_month_day ymd{ymwd};
+
+                month = param1;
+                day = (unsigned int)ymd.day();
+            }
+
+            chrono::year_month_day ymd{chrono::year{(int)year} / chrono::month{month} / chrono::day{day}};
+            tp = ymd;
+
+            break;
+        }
+
+        case tz_rule_type::none:
+            break;
+    }
+
+    return chrono::duration_cast<chrono::seconds>(tp.time_since_epoch()).count();
+}
+
+constexpr bool test_rules_dates(string_view s, unsigned int year,
+                                clock_t start, clock_t end) {
+    string_view std, dst;
+    int32_t std_offset, dst_offset;
+    tz_rule_type start_rule_type, end_rule_type;
+    unsigned int start_param1, start_param2, start_param3;
+    unsigned int end_param1, end_param2, end_param3;
+    int32_t start_time, end_time;
+
+    if (!try_parse_rules_string(s, std, dst, std_offset, dst_offset,
+                                start_rule_type, start_param1, start_param2,
+                                start_param3, start_time, end_rule_type, end_param1,
+                                end_param2, end_param3, end_time)) {
+        return false;
+    }
+
+    auto ts = find_tz_date(start_rule_type, start_param1, start_param2, start_param3,
+                           year);
+
+    ts += std_offset + start_time;
+
+    auto ts2 = find_tz_date(end_rule_type, end_param1, end_param2, end_param3,
+                            year);
+
+    ts2 += dst_offset + end_time;
+
+    return ts == start && ts2 == end;
+}
+
+static_assert(test_rules_dates("EST5EDT,M3.2.0,M11.1.0", 2025, 1741503600, 1762063200));
+static_assert(test_rules_dates("GMT0BST,M3.5.0/1,M10.5.0", 2025, 1743296400, 1761440400));
+static_assert(test_rules_dates("CET-1CEST,M3.5.0,M10.5.0/3", 2025, 1743296400, 1761440400));
+static_assert(test_rules_dates("AEST-10AEDT,M10.1.0,M4.1.0/3", 2025, 1759593600, 1743868800));
+static_assert(test_rules_dates("NZST-12NZDT,M9.5.0,M4.1.0/3", 2025, 1758981600, 1743861600));
+static_assert(test_rules_dates("IST-2IDT,M3.4.4/26,M10.5.0", 2025, 1743120000, 1761433200));
+static_assert(test_rules_dates("WGT3WGST,M3.5.0/-2,M10.5.0/-1", 2025, 1743296400, 1761440400));
+static_assert(test_rules_dates("EST5EDT,J60,J300", 2025, 1740812400, 1761544800));
+static_assert(test_rules_dates("EST5EDT,60,300", 2024, 1709276400, 1730008800));
+static_assert(test_rules_dates("EST5EDT,60,300", 2025, 1740898800, 1761631200));
 
 static bool parse_tzif(span<const uint8_t> data, u16string_view fn) {
     static constexpr size_t TIME_SIZE1 = sizeof(int32_t);
