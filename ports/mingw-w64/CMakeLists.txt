@@ -99,14 +99,9 @@ target_link_libraries(mingwex PRIVATE ntdll_mod)
 ###
 
 add_library(mingw32 STATIC
-    repo/mingw-w64-crt/crt/crtexewin.c
-    repo/mingw-w64-crt/crt/dll_argv.c
     repo/mingw-w64-crt/crt/gccmain.c
     repo/mingw-w64-crt/crt/natstart.c
-    repo/mingw-w64-crt/crt/pseudo-reloc-list.c
     repo/mingw-w64-crt/crt/wildcard.c
-    repo/mingw-w64-crt/crt/charmax.c
-    repo/mingw-w64-crt/crt/ucrtexewin.c
     repo/mingw-w64-crt/crt/dllargv.c
     repo/mingw-w64-crt/crt/_newmode.c
     repo/mingw-w64-crt/crt/tlssup.c
@@ -114,19 +109,14 @@ add_library(mingw32 STATIC
     repo/mingw-w64-crt/crt/cinitexe.c
     repo/mingw-w64-crt/crt/merr.c
     repo/mingw-w64-crt/crt/pesect.c
-    repo/mingw-w64-crt/crt/udllargc.c
     repo/mingw-w64-crt/crt/xthdloc.c
-    repo/mingw-w64-crt/crt/mingw_custom.c
     repo/mingw-w64-crt/crt/mingw_helpers.c
     repo/mingw-w64-crt/crt/pseudo-reloc.c
-    repo/mingw-w64-crt/crt/udll_argv.c
     repo/mingw-w64-crt/crt/usermatherr.c
     repo/mingw-w64-crt/crt/xtxtmode.c
     repo/mingw-w64-crt/crt/crt_handler.c
     repo/mingw-w64-crt/crt/tlsthrd.c
-    repo/mingw-w64-crt/crt/tlsmthread.c
     repo/mingw-w64-crt/crt/tlsmcrt.c
-    repo/mingw-w64-crt/crt/cxa_atexit.c
     repo/mingw-w64-crt/crt/cxa_thread_atexit.c
     repo/mingw-w64-crt/crt/tls_atexit.c
 )
