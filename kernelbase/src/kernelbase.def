@@ -17,7 +17,6 @@ TlsSetValue
 CreateThread
 CreateProcessW
 GetCurrentThreadId
-GetModuleHandleExW
 FreeLibrary
 GetProcAddress
 VirtualQuery

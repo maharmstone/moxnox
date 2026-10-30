@@ -18,5 +18,4 @@ CreateThread
 CreateProcessW
 GetCurrentThreadId
 FreeLibrary
-GetModuleHandleExW
 GetProcAddress
