@@ -381,3 +381,29 @@ fsetpos
 mn_handled_nonrestartable_signal_count
 mn_dupfd
 mn_get_umask
+acoshl = acosh
+asinhl = asinh
+atanhl = atanh
+cbrtl = cbrt
+exp2l = exp2
+expm1l = expm1
+fmal = fma
+fmaxl = fmax
+fminl = fmin
+llroundl = llround
+log1pl = log1p
+log2l = log2
+lroundl = lround
+nextafterl = nextafter
+rintl = rint
+roundl = round
+truncl = trunc
+copysignl = copysign
+erfcl = erfc
+erfl = erf
+ilogbl = ilogb
+llrintl = llrint
+logbl = logb
+lrintl = lrint
+scalblnl = scalbln
+scalbnl = scalbn

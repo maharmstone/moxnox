@@ -358,6 +358,32 @@ fsetpos
 mn_handled_nonrestartable_signal_count
 mn_dupfd
 mn_get_umask
+acoshl
+asinhl
+atanhl
+cbrtl
+exp2l
+expm1l
+fmal
+fmaxl
+fminl
+llroundl
+log1pl
+log2l
+lroundl
+nextafterl
+rintl
+roundl
+truncl
+copysignl
+erfcl
+erfl
+ilogbl
+llrintl
+logbl
+lrintl
+scalblnl
+scalbnl
 
 ; stubs
 imaxabs
