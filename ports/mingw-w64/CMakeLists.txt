@@ -115,7 +115,7 @@ add_library(mingw32 STATIC
     repo/mingw-w64-crt/crt/usermatherr.c
     repo/mingw-w64-crt/crt/xtxtmode.c
     repo/mingw-w64-crt/crt/crt_handler.c
-    repo/mingw-w64-crt/crt/tlsthrd.c
+    tlsthrd.cpp
     repo/mingw-w64-crt/crt/tlsmcrt.c
     repo/mingw-w64-crt/crt/cxa_thread_atexit.c
     repo/mingw-w64-crt/crt/tls_atexit.c
@@ -123,7 +123,8 @@ add_library(mingw32 STATIC
 
 target_compile_definitions(mingw32 PRIVATE -D_CRTIMP= -D_UCRT -D_CRTBLD -D_WIN32 -D_WIN64 -D__MINGW32__)
 target_include_directories(mingw32 PRIVATE ${CMAKE_CURRENT_BINARY_DIR} repo/mingw-w64-headers/crt repo/mingw-w64-crt/include repo/mingw-w64-headers/include)
-target_compile_options(mingw32 PRIVATE -fno-stack-protector)
+target_compile_options(mingw32 PRIVATE ${USERSPACE_CFLAGS} -fno-stack-protector $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti -fno-exceptions>)
+target_link_libraries(mingw32 PRIVATE nt_mod ntdll_mod kernelbase_mod win32error)
 
 ###
 
