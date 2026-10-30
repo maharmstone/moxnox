@@ -133,7 +133,6 @@ bool CreateProcessW(const char16_t* application_name, char16_t* command_line,
                     PROCESS_INFORMATION* process_information);
 void Sleep(uint32_t timeout);
 uint32_t GetCurrentThreadId();
-bool FreeLibrary(HMODULE mod);
 void RaiseException(uint32_t code, uint32_t flags, uint32_t count,
                     const uintptr_t* args);
 size_t VirtualQuery(const void* addr, MEMORY_BASIC_INFORMATION* info,

@@ -17,6 +17,5 @@ TlsSetValue
 CreateThread
 CreateProcessW
 GetCurrentThreadId
-FreeLibrary
 VirtualQuery
 VirtualProtect

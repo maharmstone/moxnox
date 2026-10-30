@@ -17,4 +17,3 @@ RaiseException
 CreateThread
 CreateProcessW
 GetCurrentThreadId
-FreeLibrary

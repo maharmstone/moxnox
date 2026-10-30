@@ -13,7 +13,6 @@ set(SRC_FILES src/kernelbase.def
     src/debug.cpp
     src/thread.cpp
     src/process.cpp
-    src/loader.cpp
     src/memory.cpp
 )
 
