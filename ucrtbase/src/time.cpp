@@ -869,12 +869,11 @@ errno_t __localtime64_s(struct tm* tm, const __time64_t* t) {
                 }
             }
 
-            // FIXME - parse footer if after last transition
-
-            if (!trans_num.has_value())
+            if (!trans_num.has_value() && !tz_valid_footer)
                 trans_num = tz_transitions.size() - 1;
 
-            tt = &tz_types[tz_transitions[*trans_num].type];
+            if (trans_num.has_value())
+                tt = &tz_types[tz_transitions[*trans_num].type];
         }
     } else if (!tz_types.empty())
         tt = &tz_types[0];

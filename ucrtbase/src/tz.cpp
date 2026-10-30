@@ -75,6 +75,7 @@ static unsigned int tz_start_param1, tz_start_param2, tz_start_param3;
 static unsigned int tz_end_param1, tz_end_param2, tz_end_param3;
 static int32_t tz_start_time, tz_end_time;
 static unique_ptr<char[]> tz_std_name, tz_dst_name;
+export bool tz_valid_footer;
 
 template<bool LARGE_HOURS>
 constexpr bool try_parse_rules_offset(string_view& s, int32_t& offset) {
@@ -742,6 +743,78 @@ static bool parse_tzif(span<const uint8_t> data, u16string_view fn) {
         return false;
     }
 
+    // read footer
+
+    span footer(data.data() + ver1_size + ver2_size, data.size() - ver1_size - ver2_size);
+
+    if (footer.size() >= 3 && footer[0] == '\n' && footer[footer.size() - 1] == '\n') {
+        string_view std, dst;
+        int32_t std_offset, dst_offset;
+        tz_rule_type start_rule_type, end_rule_type;
+        unsigned int start_param1, start_param2, start_param3;
+        unsigned int end_param1, end_param2, end_param3;
+        int32_t start_time, end_time;
+        unique_ptr<char[]> std_name, dst_name;
+
+        if (try_parse_rules_string(string_view((char*)footer.data() + 1, footer.size() - 2),
+                                   std, dst, std_offset, dst_offset,
+                                   start_rule_type, start_param1, start_param2,
+                                   start_param3, start_time, end_rule_type,
+                                   end_param1, end_param2, end_param3, end_time)) {
+            std_name.reset(new char[std.size() + 1]);
+            if (!std_name) {
+                print_stderr("new failed\n");
+                return false;
+            }
+
+            dst_name.reset(new char[dst.size() + 1]);
+            if (!dst_name) {
+                print_stderr("new failed\n");
+                return false;
+            }
+
+            memcpy(std_name.get(), std.data(), std.size());
+            std_name[std.size()] = 0;
+
+            memcpy(dst_name.get(), dst.data(), dst.size());
+            dst_name[dst.size()] = 0;
+
+            tz_std_offset = std_offset;
+            tz_dst_offset = dst_offset;
+            tz_start_rule_type = start_rule_type;
+            tz_end_rule_type = end_rule_type;
+            tz_start_param1 = start_param1;
+            tz_start_param2 = start_param2;
+            tz_start_param3 = start_param3;
+            tz_end_param1 = end_param1;
+            tz_end_param2 = end_param2;
+            tz_end_param3 = end_param3;
+            tz_start_time = start_time;
+            tz_end_time = end_time;
+
+            swap(tz_std_name, std_name);
+            swap(tz_dst_name, dst_name);
+
+            tz_valid_footer = true;
+        } else {
+            tz_std_name.reset();
+            tz_dst_name.reset();
+
+            tz_std_offset = tz_dst_offset = 0;
+            tz_start_rule_type = tz_rule_type::none;
+            tz_end_rule_type = tz_rule_type::none;
+            tz_valid_footer = false;
+        }
+    } else {
+        tz_std_name.reset();
+        tz_dst_name.reset();
+
+        tz_std_offset = tz_dst_offset = 0;
+        tz_start_rule_type = tz_rule_type::none;
+        tz_end_rule_type = tz_rule_type::none;
+        tz_valid_footer = false;
+    }
+
     // replace existing values
 
     swap(tz_transitions_buf, tztt);
@@ -899,15 +972,6 @@ void _tzset() {
 
     if (load_tz_file(tz)) {
         strcpy(tz_string, tz);
-
-        // FIXME - set from footer
-        tz_std_offset = 0;
-        tz_dst_offset = 0;
-        tz_start_rule_type = tz_rule_type::none;
-        tz_end_rule_type = tz_rule_type::none;
-        tz_std_name.reset();
-        tz_dst_name.reset();
-
         RtlReleaseSRWLockExclusive(&tz_lock);
         return;
     }
