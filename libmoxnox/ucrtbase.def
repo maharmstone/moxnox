@@ -292,7 +292,6 @@ fmaf
 fma
 mn_handled_signal_count
 _daylight DATA
-_dstbias DATA
 _timezone DATA
 _tzname DATA
 lrint

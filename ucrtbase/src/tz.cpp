@@ -22,7 +22,6 @@ using namespace std;
 
 extern "C" {
     int _daylight;
-    int _dstbias;
     long _timezone;
     char* _tzname[] = { (char*)"UTC", (char*)"UTC" };
 }
@@ -941,7 +940,6 @@ void _tzset() {
             tz_string[0] = 0;
 
             _daylight = 0;
-            _dstbias = 0;
             _timezone = 0;
             _tzname[0] = (char*)"UTC";
             _tzname[1] = (char*)"UTC";
@@ -1011,7 +1009,7 @@ void _tzset() {
             memcpy(dst_name.get(), dst.data(), dst.size());
             dst_name[dst.size()] = 0;
 
-            // FIXME - _tzname[0], _tzname[1], _daylight, _dstbias, _timezone
+            // FIXME - _tzname[0], _tzname[1], _daylight, _timezone
 
             tz_transitions_buf.reset();
             tz_types_buf.reset();
@@ -1043,7 +1041,6 @@ void _tzset() {
     tz_string[0] = 0;
 
     _daylight = 0;
-    _dstbias = 0;
     _timezone = 0;
     _tzname[0] = (char*)"UTC";
     _tzname[1] = (char*)"UTC";
