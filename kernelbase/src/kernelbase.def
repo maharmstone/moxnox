@@ -19,19 +19,11 @@ AcquireSRWLockExclusive = ntdll.RtlAcquireSRWLockExclusive
 ReleaseSRWLockExclusive = ntdll.RtlReleaseSRWLockExclusive
 QueryPerformanceCounter = ntdll.RtlQueryPerformanceCounter
 QueryPerformanceFrequency = ntdll.RtlQueryPerformanceFrequency
-FormatMessageA
-LocalFree
-SleepConditionVariableCS
-GetSystemTimeAsFileTime
-CloseHandle
-GetThreadId
 TlsAlloc
 TlsFree
 TlsSetValue
 RaiseException
 IsProcessorFeaturePresent = ntdll.RtlIsProcessorFeaturePresent
-GetCurrentProcess
-TerminateProcess
 SetUnhandledExceptionFilter
 Sleep
 GetLastError
