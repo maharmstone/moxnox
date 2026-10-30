@@ -38,20 +38,3 @@ QueryPerformanceFrequency
 GetProcAddress
 GetModuleHandleW
 SleepEx
-
-; stubs
-FormatMessageA
-LocalFree
-SleepConditionVariableCS
-GetSystemTimeAsFileTime
-CloseHandle
-GetThreadId
-GetCurrentProcess
-TerminateProcess
-SleepConditionVariableSRW
-InitOnceExecuteOnce
-WaitForSingleObjectEx
-SwitchToThread
-FlsAlloc
-FlsGetValue
-FlsSetValue

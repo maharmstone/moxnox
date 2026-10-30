@@ -10,7 +10,6 @@ enable_language(ASM)
 set(SRC_FILES src/kernelbase.def
     src/kernelbase.cpp
     src/sync.cpp
-    src/stubs.S
     src/debug.cpp
     src/thread.cpp
     src/process.cpp
