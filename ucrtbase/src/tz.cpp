@@ -824,8 +824,6 @@ static bool parse_tzif(span<const uint8_t> data, u16string_view fn) {
 
     swap(tz_names, names);
 
-    // FIXME - derive _timezone and _tzname from footer
-    // FIXME - set _daylight
     // FIXME - copy over _daylight, _timezone, and _tzname to mnposix counterparts
 
     return true;
@@ -970,6 +968,12 @@ void _tzset() {
 
     if (load_tz_file(tz)) {
         strcpy(tz_string, tz);
+
+        _daylight = tz_start_rule_type != tz_rule_type::none ? 1 : 0;
+        _timezone = tz_std_offset;
+        _tzname[0] = tz_std_name ? tz_std_name.get() : (char*)"";
+        _tzname[1] = tz_dst_name ? tz_dst_name.get() : (char*)"";
+
         RtlReleaseSRWLockExclusive(&tz_lock);
         return;
     }
@@ -1009,8 +1013,6 @@ void _tzset() {
             memcpy(dst_name.get(), dst.data(), dst.size());
             dst_name[dst.size()] = 0;
 
-            // FIXME - _tzname[0], _tzname[1], _daylight, _timezone
-
             tz_transitions_buf.reset();
             tz_types_buf.reset();
             tz_names.reset();
@@ -1032,6 +1034,11 @@ void _tzset() {
 
             swap(tz_std_name, std_name);
             swap(tz_dst_name, dst_name);
+
+            _tzname[0] = tz_std_name.get();
+            _tzname[1] = tz_dst_name.get();
+            _daylight = tz_start_rule_type != tz_rule_type::none ? 1 : 0;
+            _timezone = tz_std_offset;
 
             RtlReleaseSRWLockExclusive(&tz_lock);
             return;
