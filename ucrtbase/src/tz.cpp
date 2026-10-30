@@ -21,9 +21,9 @@ import unicode;
 using namespace std;
 
 extern "C" {
-    int _daylight;
-    long _timezone;
-    char* _tzname[] = { (char*)"UTC", (char*)"UTC" };
+    int daylight;
+    long timezone;
+    char* tzname[] = { (char*)"UTC", (char*)"UTC" };
 }
 
 export RTL_SRWLOCK tz_lock;
@@ -824,8 +824,6 @@ static bool parse_tzif(span<const uint8_t> data, u16string_view fn) {
 
     swap(tz_names, names);
 
-    // FIXME - copy over _daylight, _timezone, and _tzname to mnposix counterparts
-
     return true;
 }
 
@@ -937,10 +935,10 @@ void _tzset() {
         if (strcmp(tz_string, "")) {
             tz_string[0] = 0;
 
-            _daylight = 0;
-            _timezone = 0;
-            _tzname[0] = (char*)"UTC";
-            _tzname[1] = (char*)"UTC";
+            daylight = 0;
+            timezone = 0;
+            tzname[0] = (char*)"UTC";
+            tzname[1] = (char*)"UTC";
 
             tz_transitions_buf.reset();
             tz_types_buf.reset();
@@ -969,10 +967,10 @@ void _tzset() {
     if (load_tz_file(tz)) {
         strcpy(tz_string, tz);
 
-        _daylight = tz_start_rule_type != tz_rule_type::none ? 1 : 0;
-        _timezone = tz_std_offset;
-        _tzname[0] = tz_std_name ? tz_std_name.get() : (char*)"";
-        _tzname[1] = tz_dst_name ? tz_dst_name.get() : (char*)"";
+        daylight = tz_start_rule_type != tz_rule_type::none ? 1 : 0;
+        timezone = tz_std_offset;
+        tzname[0] = tz_std_name ? tz_std_name.get() : (char*)"";
+        tzname[1] = tz_dst_name ? tz_dst_name.get() : (char*)"";
 
         RtlReleaseSRWLockExclusive(&tz_lock);
         return;
@@ -1035,10 +1033,10 @@ void _tzset() {
             swap(tz_std_name, std_name);
             swap(tz_dst_name, dst_name);
 
-            _tzname[0] = tz_std_name.get();
-            _tzname[1] = tz_dst_name.get();
-            _daylight = tz_start_rule_type != tz_rule_type::none ? 1 : 0;
-            _timezone = tz_std_offset;
+            tzname[0] = tz_std_name.get();
+            tzname[1] = tz_dst_name.get();
+            daylight = tz_start_rule_type != tz_rule_type::none ? 1 : 0;
+            timezone = tz_std_offset;
 
             RtlReleaseSRWLockExclusive(&tz_lock);
             return;
@@ -1047,10 +1045,10 @@ void _tzset() {
 
     tz_string[0] = 0;
 
-    _daylight = 0;
-    _timezone = 0;
-    _tzname[0] = (char*)"UTC";
-    _tzname[1] = (char*)"UTC";
+    daylight = 0;
+    timezone = 0;
+    tzname[0] = (char*)"UTC";
+    tzname[1] = (char*)"UTC";
 
     tz_transitions_buf.reset();
     tz_types_buf.reset();
@@ -1070,7 +1068,7 @@ void _tzset() {
 
 extern "C"
 long* ____timezone() {
-    return &_timezone;
+    return &timezone;
 }
 
 export void tz_adjust_by_rules(__time64_t& v, struct ::tm& tm) {

@@ -9,12 +9,6 @@ import nt;
 import ntdll;
 import ucrtbase;
 
-extern "C" {
-    int daylight;
-    long timezone;
-    char* tzname[] = { (char*)"UTC", (char*)"UTC" };
-}
-
 extern "C"
 int _gettimeofday(struct timeval* tv, struct timezone* /*tz*/) {
     LARGE_INTEGER li;

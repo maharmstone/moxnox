@@ -313,9 +313,9 @@ cbrtf
 fmaf
 fma
 mn_handled_signal_count
-_daylight DATA
-_timezone DATA
-_tzname DATA
+daylight DATA
+timezone DATA
+tzname DATA
 mn_allocate_aligned
 lrint
 lrintf
