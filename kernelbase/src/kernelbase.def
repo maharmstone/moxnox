@@ -23,4 +23,3 @@ FreeLibrary
 GetProcAddress
 VirtualQuery
 VirtualProtect
-SleepEx

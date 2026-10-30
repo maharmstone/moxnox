@@ -21,4 +21,3 @@ FreeLibrary
 GetModuleHandleExW
 GetProcAddress
 GetModuleHandleW
-SleepEx
