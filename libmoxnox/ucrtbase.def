@@ -384,6 +384,29 @@ logbl
 lrintl
 scalblnl
 scalbnl
+acosl == acos
+asinl == asin
+atan2l == atan2
+atanl == atan
+ceill == ceil
+coshl == cosh
+cosl == cos
+expl == exp
+fabsl == fabs
+floorl == floor
+fmodl == fmod
+frexpl == frexp
+hypotl == hypot
+ldexpl == ldexp
+log10l == log10
+logl == log
+modfl == modf
+powl == pow
+sinhl == sinh
+sinl == sin
+sqrtl == sqrt
+tanhl == tanh
+tanl == tan
 
 ; stubs
 imaxabs
