@@ -121,7 +121,6 @@ void* TlsGetValue(uint32_t tls_index);
 bool TlsSetValue(uint32_t tls_index, void* tls_value);
 bool TlsFree(uint32_t tls_index);
 uint32_t GetLastError();
-void SetLastError(uint32_t err_code);
 HANDLE CreateThread(SECURITY_ATTRIBUTES* sa, size_t stack,
                     THREAD_START_ROUTINE start, void* param, uint32_t flags,
                     uint32_t* id);
@@ -141,10 +140,7 @@ HMODULE GetModuleHandleW(const char16_t* mod);
 bool FreeLibrary(HMODULE mod);
 void RaiseException(uint32_t code, uint32_t flags, uint32_t count,
                     const uintptr_t* args);
-bool IsProcessorFeaturePresent(uint32_t processor_feature);
 void* GetProcAddress(HMODULE mod, const char* function);
-void AcquireSRWLockExclusive(RTL_SRWLOCK* lock);
-void ReleaseSRWLockExclusive(RTL_SRWLOCK* lock);
 size_t VirtualQuery(const void* addr, MEMORY_BASIC_INFORMATION* info,
                     size_t len);
 bool VirtualProtect(void* addr, size_t size, uint32_t new_prot,

@@ -4,26 +4,11 @@ DeleteCriticalSection = ntdll.RtlDeleteCriticalSection
 EnterCriticalSection = ntdll.RtlEnterCriticalSection
 InitializeCriticalSection = ntdll.RtlInitializeCriticalSection
 LeaveCriticalSection = ntdll.RtlLeaveCriticalSection
-TryEnterCriticalSection = ntdll.RtlTryEnterCriticalSection
-SetLastError = ntdll.RtlSetLastWin32Error
-InitializeConditionVariable = ntdll.RtlInitializeConditionVariable
-WakeAllConditionVariable = ntdll.RtlWakeAllConditionVariable
-WakeConditionVariable = ntdll.RtlWakeConditionVariable
-AddVectoredExceptionHandler = ntdll.RtlAddVectoredExceptionHandler
-HeapAlloc = ntdll.RtlAllocateHeap
-HeapFree = ntdll.RtlFreeHeap
-HeapReAlloc = ntdll.RtlReAllocateHeap
 __C_specific_handler = ntdll.__C_specific_handler
-TryAcquireSRWLockExclusive = ntdll.RtlTryAcquireSRWLockExclusive
-AcquireSRWLockExclusive = ntdll.RtlAcquireSRWLockExclusive
-ReleaseSRWLockExclusive = ntdll.RtlReleaseSRWLockExclusive
-QueryPerformanceCounter = ntdll.RtlQueryPerformanceCounter
-QueryPerformanceFrequency = ntdll.RtlQueryPerformanceFrequency
 TlsAlloc
 TlsFree
 TlsSetValue
 RaiseException
-IsProcessorFeaturePresent = ntdll.RtlIsProcessorFeaturePresent
 SetUnhandledExceptionFilter
 Sleep
 GetLastError
