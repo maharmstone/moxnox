@@ -18,6 +18,5 @@ CreateThread
 CreateProcessW
 GetCurrentThreadId
 FreeLibrary
-GetProcAddress
 VirtualQuery
 VirtualProtect

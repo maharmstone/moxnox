@@ -18,4 +18,3 @@ CreateThread
 CreateProcessW
 GetCurrentThreadId
 FreeLibrary
-GetProcAddress

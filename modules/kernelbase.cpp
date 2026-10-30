@@ -136,7 +136,6 @@ uint32_t GetCurrentThreadId();
 bool FreeLibrary(HMODULE mod);
 void RaiseException(uint32_t code, uint32_t flags, uint32_t count,
                     const uintptr_t* args);
-void* GetProcAddress(HMODULE mod, const char* function);
 size_t VirtualQuery(const void* addr, MEMORY_BASIC_INFORMATION* info,
                     size_t len);
 bool VirtualProtect(void* addr, size_t size, uint32_t new_prot,
