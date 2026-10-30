@@ -73,8 +73,6 @@ __time32_t __time32(__time32_t* t) {
 }
 
 constexpr errno_t constexpr__gmtime64_s(tm* tm, const __time64_t& v) {
-    tm->tm_isdst = 0;
-
     auto secs = v % 86400;
     auto days = v / 86400;
 
@@ -108,15 +106,18 @@ constexpr errno_t constexpr__gmtime64_s(tm* tm, const __time64_t& v) {
 
     tm->tm_yday = (month_index < 10) ? (int)(day_of_year + 59 + leap) : (int)(day_of_year - 306);
 
-    tm->tm_gmtoff = 0;
-    tm->tm_zone = "UTC";
-
     return 0;
 }
 
 extern "C"
 errno_t __gmtime64_s(struct tm* tm, const __time64_t* t) {
-    return constexpr__gmtime64_s(tm, *t);
+    auto ret = constexpr__gmtime64_s(tm, *t);
+
+    tm->tm_isdst = 0;
+    tm->tm_gmtoff = 0;
+    tm->tm_zone = "UTC";
+
+    return ret;
 }
 
 static constexpr bool test_gmtime(int64_t v, int exp_wday, int exp_mday,
@@ -878,16 +879,19 @@ errno_t __localtime64_s(struct tm* tm, const __time64_t* t) {
     } else if (!tz_types.empty())
         tt = &tz_types[0];
 
-    if (tt)
+    if (tt) {
         v += tt->utoff;
 
-    auto ret = constexpr__gmtime64_s(tm, v);
-
-    if (tt) {
         tm->tm_isdst = tt->dst;
         tm->tm_gmtoff = tt->utoff;
         tm->tm_zone = &tz_names[tt->idx];
+    } else {
+        constexpr__gmtime64_s(tm, v - tz_std_offset); // get the year first
+
+        tz_adjust_by_rules(v, *tm);
     }
+
+    auto ret = constexpr__gmtime64_s(tm, v);
 
     RtlReleaseSRWLockShared(&tz_lock);
 
@@ -952,10 +956,9 @@ static constexpr __time64_t do_mktime(tm* tm) {
     t.tm_mon = tm2.tm_mon;
     t.tm_mday = tm2.tm_mday;
 
-    t.tm_isdst = 0; // FIXME?
-
-    t.tm_gmtoff = tm2.tm_gmtoff;
-    t.tm_zone = tm2.tm_zone;
+    t.tm_isdst = 0; // FIXME
+    t.tm_gmtoff = 0; // FIXME
+    t.tm_zone = "UTC"; // FIXME
 
     return ret;
 }

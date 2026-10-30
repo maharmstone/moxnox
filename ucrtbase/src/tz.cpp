@@ -68,11 +68,13 @@ static unique_ptr<tzif_time_type[]> tz_types_buf;
 export span<tzif_time_type> tz_types;
 export unique_ptr<char[]> tz_names;
 
-static int32_t tz_std_offset, tz_dst_offset;
+export int32_t tz_std_offset;
+static int32_t tz_dst_offset;
 static tz_rule_type tz_start_rule_type, tz_end_rule_type;
 static unsigned int tz_start_param1, tz_start_param2, tz_start_param3;
 static unsigned int tz_end_param1, tz_end_param2, tz_end_param3;
 static int32_t tz_start_time, tz_end_time;
+static unique_ptr<char[]> tz_std_name, tz_dst_name;
 
 template<bool LARGE_HOURS>
 constexpr bool try_parse_rules_offset(string_view& s, int32_t& offset) {
@@ -881,6 +883,8 @@ void _tzset() {
             tz_dst_offset = 0;
             tz_start_rule_type = tz_rule_type::none;
             tz_end_rule_type = tz_rule_type::none;
+            tz_std_name.reset();
+            tz_dst_name.reset();
         }
 
         RtlReleaseSRWLockExclusive(&tz_lock);
@@ -901,6 +905,8 @@ void _tzset() {
         tz_dst_offset = 0;
         tz_start_rule_type = tz_rule_type::none;
         tz_end_rule_type = tz_rule_type::none;
+        tz_std_name.reset();
+        tz_dst_name.reset();
 
         RtlReleaseSRWLockExclusive(&tz_lock);
         return;
@@ -913,12 +919,33 @@ void _tzset() {
         unsigned int start_param1, start_param2, start_param3;
         unsigned int end_param1, end_param2, end_param3;
         int32_t start_time, end_time;
+        unique_ptr<char[]> std_name, dst_name;
 
         if (try_parse_rules_string(tz, std, dst, std_offset, dst_offset,
                                    start_rule_type, start_param1, start_param2,
                                    start_param3, start_time, end_rule_type, end_param1,
                                    end_param2, end_param3, end_time)) {
             strcpy(tz_string, tz);
+
+            std_name.reset(new char[std.size() + 1]);
+            if (!std_name) {
+                print_stderr("new failed\n");
+                RtlReleaseSRWLockExclusive(&tz_lock);
+                return;
+            }
+
+            dst_name.reset(new char[dst.size() + 1]);
+            if (!dst_name) {
+                print_stderr("new failed\n");
+                RtlReleaseSRWLockExclusive(&tz_lock);
+                return;
+            }
+
+            memcpy(std_name.get(), std.data(), std.size());
+            std_name[std.size()] = 0;
+
+            memcpy(dst_name.get(), dst.data(), dst.size());
+            dst_name[dst.size()] = 0;
 
             // FIXME - _tzname[0], _tzname[1], _daylight, _dstbias, _timezone
 
@@ -940,6 +967,9 @@ void _tzset() {
             tz_end_param3 = end_param3;
             tz_start_time = start_time;
             tz_end_time = end_time;
+
+            swap(tz_std_name, std_name);
+            swap(tz_dst_name, dst_name);
 
             RtlReleaseSRWLockExclusive(&tz_lock);
             return;
@@ -964,6 +994,8 @@ void _tzset() {
     tz_dst_offset = 0;
     tz_start_rule_type = tz_rule_type::none;
     tz_end_rule_type = tz_rule_type::none;
+    tz_std_name.reset();
+    tz_dst_name.reset();
 
     RtlReleaseSRWLockExclusive(&tz_lock);
 }
@@ -971,4 +1003,38 @@ void _tzset() {
 extern "C"
 long* ____timezone() {
     return &_timezone;
+}
+
+export void tz_adjust_by_rules(__time64_t& v, struct ::tm& tm) {
+    if (tz_start_rule_type == tz_rule_type::none || tz_end_rule_type == tz_rule_type::none) {
+        v -= tz_std_offset;
+
+        tm.tm_isdst = 0;
+        tm.tm_zone = tz_std_name.get();
+        tm.tm_gmtoff = -tz_std_offset;
+
+        return;
+    }
+
+    auto ts = find_tz_date(tz_start_rule_type, tz_start_param1, tz_start_param2,
+                           tz_start_param3, (unsigned int)tm.tm_year + 1900);
+
+    ts += tz_std_offset + tz_start_time;
+
+    auto ts2 = find_tz_date(tz_end_rule_type, tz_end_param1, tz_end_param2,
+                            tz_end_param3, (unsigned int)tm.tm_year + 1900);
+
+    ts2 += tz_dst_offset + tz_end_time;
+
+    if ((ts < ts2 && v >= ts && v < ts2) || (ts2 < ts && (v >= ts || v < ts2))) {
+        v -= tz_dst_offset;
+        tm.tm_isdst = 1;
+        tm.tm_zone = tz_dst_name.get();
+        tm.tm_gmtoff = -tz_dst_offset;
+    } else {
+        v -= tz_std_offset;
+        tm.tm_isdst = 0;
+        tm.tm_zone = tz_std_name.get();
+        tm.tm_gmtoff = -tz_std_offset;
+    }
 }
