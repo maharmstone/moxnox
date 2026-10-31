@@ -118,7 +118,7 @@ add_library(mingw32 STATIC
     tlsthrd.cpp
     repo/mingw-w64-crt/crt/tlsmcrt.c
     repo/mingw-w64-crt/crt/cxa_thread_atexit.c
-    repo/mingw-w64-crt/crt/tls_atexit.c
+    tls_atexit.cpp
 )
 
 target_compile_definitions(mingw32 PRIVATE -D_CRTIMP= -D_UCRT -D_CRTBLD -D_WIN32 -D_WIN64 -D__MINGW32__)
