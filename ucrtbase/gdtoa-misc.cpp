@@ -29,19 +29,15 @@ THIS SOFTWARE.
 /* Please send bug reports to David M. Gay (dmg at acm dot org,
  * with " at " changed at "@" and " dot " changed to ".").	*/
 
-
 #if defined(__MINGW32__) || defined(__MINGW64__)
-/* we have to include windows.h before gdtoa
-   headers, otherwise defines cause conflicts. */
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
+
+import nt;
+import ntdll;
 
 #define NLOCKS 2
 
 #include <stdlib.h>
-static CRITICAL_SECTION dtoa_CritSec[NLOCKS];
+static RTL_CRITICAL_SECTION dtoa_CritSec[NLOCKS];
 static long dtoa_CS_init = 0;
 /*
    1 = initializing
@@ -50,11 +46,11 @@ static long dtoa_CS_init = 0;
 */
 static void dtoa_lock_cleanup (void)
 {
-	long last_CS_init = InterlockedExchange (&dtoa_CS_init,3);
+	long last_CS_init = __atomic_exchange_n(&dtoa_CS_init, 3, __ATOMIC_SEQ_CST);
 	if (2 == last_CS_init) {
 		int i;
 		for (i = 0; i < NLOCKS; i++)
-			DeleteCriticalSection (&dtoa_CritSec[i]);
+			RtlDeleteCriticalSection (&dtoa_CritSec[i]);
 	}
 }
 
@@ -62,15 +58,15 @@ extern "C"
 void dtoa_lock (unsigned int n)
 {
 	if (2 == dtoa_CS_init) {
-		EnterCriticalSection (&dtoa_CritSec[n]);
+		RtlEnterCriticalSection (&dtoa_CritSec[n]);
 		return;
 	}
 	else if (0 == dtoa_CS_init) {
-		long last_CS_init = InterlockedExchange (&dtoa_CS_init, 1);
+		long last_CS_init = __atomic_exchange_n(&dtoa_CS_init, 1, __ATOMIC_SEQ_CST);
 		if (0 == last_CS_init) {
 			int i;
 			for (i = 0; i < NLOCKS;  i++)
-				InitializeCriticalSection (&dtoa_CritSec[i]);
+				RtlInitializeCriticalSection (&dtoa_CritSec[i]);
 			atexit (dtoa_lock_cleanup);
 			dtoa_CS_init = 2;
 		}
@@ -78,19 +74,24 @@ void dtoa_lock (unsigned int n)
 			dtoa_CS_init = 2;
 	}
 	/*  Another thread is initializing. Wait. */
-	while (1 == dtoa_CS_init)
-		Sleep (1);
+	while (1 == dtoa_CS_init) {
+		LARGE_INTEGER t;
+
+		t.QuadPart = -10000; // 1ms
+
+		NtDelayExecution(false, &t);
+	}
 
 	/* It had better be initialized now. */
 	if (2 == dtoa_CS_init)
-		EnterCriticalSection(&dtoa_CritSec[n]);
+		RtlEnterCriticalSection(&dtoa_CritSec[n]);
 }
 
 extern "C"
 void dtoa_unlock (unsigned int n)
 {
 	if (2 == dtoa_CS_init)
-		LeaveCriticalSection (&dtoa_CritSec[n]);
+		RtlLeaveCriticalSection (&dtoa_CritSec[n]);
 }
 
 #define ACQUIRE_DTOA_LOCK(n) dtoa_lock(n)

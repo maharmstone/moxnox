@@ -176,8 +176,9 @@ unset(DEFAULT_MSVCRT_VERSION)
 
 target_include_directories(mingwex2 PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ../ports/mingw-w64/repo/mingw-w64-headers/crt ../ports/mingw-w64/repo/mingw-w64-crt/include ../ports/mingw-w64/repo/mingw-w64-headers/include ../ports/mingw-w64/repo/mingw-w64-crt/gdtoa)
 target_compile_definitions(mingwex2 PRIVATE -D_CRTIMP= -D_UCRT -D_CRTBLD -D_WIN32 -D_WIN64 -D__MINGW32__)
-target_compile_options(mingwex2 PRIVATE ${USERSPACE_CFLAGS} $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti -fno-exceptions> -mno-stack-arg-probe -fno-stack-protector $<$<CXX_COMPILER_ID:Clang>:-Wno-pragma-pack -Wno-include-next-absolute-path>)
+target_compile_options(mingwex2 PRIVATE ${USERSPACE_CFLAGS} $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti -fno-exceptions> -mno-stack-arg-probe -fno-stack-protector $<$<CXX_COMPILER_ID:Clang>:-Wno-pragma-pack -Wno-include-next-absolute-path> -fno-builtin)
 target_compile_options(mingwex2 PRIVATE -Wno-shorten-64-to-32 -Wno-missing-declarations -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-unused-variable -Wno-gnu-pointer-arith -Wno-implicit-float-conversion -Wno-float-conversion -Wno-conversion -Wno-pointer-arith $<$<CXX_COMPILER_ID:GNU>:-Wno-use-after-free -Wno-missing-attributes>)
+target_link_libraries(mingwex2 PRIVATE nt_nobuiltin ntdll_mod_nobuiltin)
 
 set(SRC_FILES src/ucrtbase.cpp
     src/stubs.S
