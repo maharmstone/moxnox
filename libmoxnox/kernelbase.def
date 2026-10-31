@@ -2,7 +2,6 @@ LIBRARY "kernelbase.dll"
 EXPORTS
 Sleep
 DeleteCriticalSection
-EnterCriticalSection
 LeaveCriticalSection
 GetLastError
 SetUnhandledExceptionFilter

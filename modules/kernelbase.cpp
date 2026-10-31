@@ -113,7 +113,6 @@ extern "C" {
 
 TOP_LEVEL_EXCEPTION_FILTER SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER filter);
 void DeleteCriticalSection(RTL_CRITICAL_SECTION* critical_section);
-void EnterCriticalSection(RTL_CRITICAL_SECTION* critical_section);
 void LeaveCriticalSection(RTL_CRITICAL_SECTION* critical_section);
 uint32_t TlsAlloc();
 void* TlsGetValue(uint32_t tls_index);
