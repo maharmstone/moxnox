@@ -1,7 +1,6 @@
 LIBRARY "kernelbase.dll"
 EXPORTS
 DeleteCriticalSection = ntdll.RtlDeleteCriticalSection
-LeaveCriticalSection = ntdll.RtlLeaveCriticalSection
 __C_specific_handler = ntdll.__C_specific_handler
 TlsAlloc
 TlsFree
