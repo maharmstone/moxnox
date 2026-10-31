@@ -2,7 +2,6 @@ LIBRARY "kernelbase.dll"
 EXPORTS
 DeleteCriticalSection = ntdll.RtlDeleteCriticalSection
 EnterCriticalSection = ntdll.RtlEnterCriticalSection
-InitializeCriticalSection = ntdll.RtlInitializeCriticalSection
 LeaveCriticalSection = ntdll.RtlLeaveCriticalSection
 __C_specific_handler = ntdll.__C_specific_handler
 TlsAlloc

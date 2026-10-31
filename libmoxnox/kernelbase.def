@@ -3,7 +3,6 @@ EXPORTS
 Sleep
 DeleteCriticalSection
 EnterCriticalSection
-InitializeCriticalSection
 LeaveCriticalSection
 GetLastError
 SetUnhandledExceptionFilter
