@@ -5,18 +5,13 @@
  */
 
 #include <sect_attribs.h>
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <corecrt_startup.h>
+#include <stdint.h>
 #include <process.h>
 
+import nt;
+import ntdll;
+import kernelbase;
 
 typedef void (__thiscall * dtor_fn)(void*);
 
@@ -30,10 +25,10 @@ struct dtor_obj {
 HANDLE __dso_handle;
 extern char __mingw_module_is_dll;
 
-static CRITICAL_SECTION lock;
+static RTL_CRITICAL_SECTION lock;
 static int inited = 0;
 static dtor_obj *global_dtors = NULL;
-static DWORD tls_dtors_slot = TLS_OUT_OF_INDEXES;
+static uint32_t tls_dtors_slot = TLS_OUT_OF_INDEXES;
 
 extern "C"
 int __mingw_cxa_atexit(dtor_fn dtor, void *obj, void *dso) {
@@ -45,10 +40,10 @@ int __mingw_cxa_atexit(dtor_fn dtor, void *obj, void *dso) {
     return 1;
   handler->dtor = dtor;
   handler->obj = obj;
-  EnterCriticalSection(&lock);
+  RtlEnterCriticalSection(&lock);
   handler->next = global_dtors;
   global_dtors = handler;
-  LeaveCriticalSection(&lock);
+  RtlLeaveCriticalSection(&lock);
   return 0;
 }
 
@@ -86,7 +81,7 @@ int __mingw_cxa_thread_atexit(dtor_fn dtor, void *obj, void *dso) {
   return 0;
 }
 
-static void WINAPI tls_atexit_callback(HANDLE __UNUSED_PARAM(hDllHandle), DWORD dwReason, LPVOID __UNUSED_PARAM(lpReserved)) {
+static void tls_atexit_callback(HANDLE, uint32_t dwReason, void*) {
   if (dwReason == DLL_PROCESS_DETACH) {
     dtor_obj **p = (dtor_obj **)TlsGetValue(tls_dtors_slot);
     run_dtor_list(p);
@@ -97,12 +92,12 @@ static void WINAPI tls_atexit_callback(HANDLE __UNUSED_PARAM(hDllHandle), DWORD 
   }
 }
 
-static void WINAPI tls_callback(HANDLE hDllHandle, DWORD dwReason, LPVOID __UNUSED_PARAM(lpReserved)) {
+static void tls_callback(HANDLE hDllHandle, uint32_t dwReason, void*) {
   dtor_obj **p;
   switch (dwReason) {
   case DLL_PROCESS_ATTACH:
     if (inited == 0) {
-      InitializeCriticalSection(&lock);
+      RtlInitializeCriticalSection(&lock);
       __dso_handle = hDllHandle;
       tls_dtors_slot = TlsAlloc();
       /*
@@ -115,8 +110,12 @@ static void WINAPI tls_callback(HANDLE hDllHandle, DWORD dwReason, LPVOID __UNUS
        * another time later as well, but that doesn't matter, it's safe to
        * invoke this with DLL_PROCESS_DETACH twice.
        */
-      if (!__mingw_module_is_dll)
-        _register_thread_local_exe_atexit_callback(tls_atexit_callback);
+      if (!__mingw_module_is_dll) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+        _register_thread_local_exe_atexit_callback((_tls_callback_type)tls_atexit_callback);
+#pragma GCC diagnostic pop
+      }
     }
     inited = 1;
     break;
@@ -155,7 +154,7 @@ static void WINAPI tls_callback(HANDLE hDllHandle, DWORD dwReason, LPVOID __UNUS
     }
     if (inited == 1) {
       inited = 0;
-      DeleteCriticalSection(&lock);
+      RtlDeleteCriticalSection(&lock);
     }
     break;
   case DLL_THREAD_ATTACH:
@@ -169,4 +168,4 @@ static void WINAPI tls_callback(HANDLE hDllHandle, DWORD dwReason, LPVOID __UNUS
   }
 }
 
-_CRTALLOC(".CRT$XLB") PIMAGE_TLS_CALLBACK __xl_b = tls_callback;
+__attribute__((section (".CRT$XLB"), used)) void(*__xl_b)(HANDLE, uint32_t, void*) = tls_callback;
