@@ -155,7 +155,6 @@ add_library(mingwex2 STATIC
     ../ports/mingw-w64/repo/mingw-w64-crt/gdtoa/strtodg.c
     ../ports/mingw-w64/repo/mingw-w64-crt/gdtoa/strtodnrp.c
     ../ports/mingw-w64/repo/mingw-w64-crt/gdtoa/strtof.c
-    ../ports/mingw-w64/repo/mingw-w64-crt/gdtoa/strtopx.c
     ../ports/mingw-w64/repo/mingw-w64-crt/gdtoa/sum.c
     ../ports/mingw-w64/repo/mingw-w64-crt/stdio/mingw_pformat.c
     ../ports/mingw-w64/repo/mingw-w64-crt/stdio/mingw_wpformat.c
