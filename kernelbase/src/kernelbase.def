@@ -9,7 +9,6 @@ SetUnhandledExceptionFilter
 Sleep
 GetLastError
 TlsGetValue
-TlsSetValue
 CreateThread
 CreateProcessW
 GetCurrentThreadId
