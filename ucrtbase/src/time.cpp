@@ -20,6 +20,8 @@ import tz;
 
 using namespace std;
 
+extern "C" int* __errno();
+
 static const unsigned int SYSTEM_TIME_RESOLUTION = 10000000; // 100ns
 
 static uint64_t init_time;
@@ -908,11 +910,7 @@ struct tm* __localtime64(const __time64_t* t) {
     return &tm;
 }
 
-static constexpr __time64_t do_mktime(tm* tm) {
-    auto& t = *tm;
-    struct tm tm2;
-    __time64_t ret;
-
+static constexpr __time64_t do_mktime(const tm& t) {
     int year = t.tm_year + 1900;
     auto mon = t.tm_mon;
 
@@ -940,31 +938,100 @@ static constexpr __time64_t do_mktime(tm* tm) {
 
     int days_since_epoch = (era * 146097) + (int)day_of_era - 719468;
 
-    ret = (days_since_epoch * 86400) + (t.tm_hour * 3600) + (t.tm_min * 60) + t.tm_sec;
-
-    // normalize fields
-
-    constexpr__gmtime64_s(&tm2, ret);
-
-    t.tm_hour = tm2.tm_hour;
-    t.tm_min = tm2.tm_min;
-    t.tm_sec = tm2.tm_sec;
-    t.tm_wday = tm2.tm_wday;
-    t.tm_yday = tm2.tm_yday;
-    t.tm_year = tm2.tm_year;
-    t.tm_mon = tm2.tm_mon;
-    t.tm_mday = tm2.tm_mday;
-
-    t.tm_isdst = 0; // FIXME
-    t.tm_gmtoff = 0; // FIXME
-    t.tm_zone = "UTC"; // FIXME
-
-    return ret;
+    return ((int64_t)days_since_epoch * 86400) + (t.tm_hour * 3600) + (t.tm_min * 60) + t.tm_sec;
 }
 
 extern "C"
 __time64_t __mktime64(struct tm* tm) {
-    return do_mktime(tm);
+    decltype(tz_types)::pointer tt = nullptr;
+    optional<size_t> trans_num;
+
+    _tzset();
+
+    auto t = do_mktime(*tm);
+
+    RtlAcquireSRWLockShared(&tz_lock);
+
+    if (tz_transitions.size() > 0) {
+
+        if (t < tz_transitions[0].time + tz_types[tz_transitions[0].type].utoff)
+            tt = &tz_types[0];
+        else {
+            for (size_t i = 1; i < tz_transitions.size(); i++) {
+                if (t < tz_transitions[i].time + tz_types[tz_transitions[i].type].utoff) {
+                    trans_num = i - 1;
+                    break;
+                }
+            }
+
+            if (!trans_num.has_value() && !tz_valid_footer)
+                trans_num = tz_transitions.size() - 1;
+
+            if (trans_num.has_value())
+                tt = &tz_types[tz_transitions[*trans_num].type];
+        }
+    } else if (!tz_types.empty())
+        tt = &tz_types[0];
+
+    if (tt) {
+        t -= tt->utoff;
+
+        if ((tm->tm_isdst == 0 && tt->dst) || (tm->tm_isdst > 0 && !tt->dst)) {
+            if (!trans_num.has_value()) {
+                bool found = false;
+
+                for (size_t i = 0; i < tz_transitions.size(); i++) {
+                    auto& next = tz_types[tz_transitions[i].type];
+
+                    if (((tm->tm_isdst && next.dst) || (tm->tm_isdst == 0 && !next.dst))) {
+                        t += tt->utoff;
+                        t -= next.utoff;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    RtlReleaseSRWLockShared(&tz_lock);
+                    *__errno() = EOVERFLOW;
+                    return -1;
+                }
+            } else {
+                auto num = *trans_num;
+
+                for (size_t i = 1; i <= tz_transitions.size(); i++) {
+                    auto prev = num >= i ? &tz_types[tz_transitions[num - i].type] : nullptr;
+                    auto next = num + i < tz_transitions.size() ? &tz_types[tz_transitions[num + i].type] : nullptr;
+
+                    if (!prev && !next) {
+                        RtlReleaseSRWLockShared(&tz_lock);
+                        *__errno() = EOVERFLOW;
+                        return -1;
+                    }
+
+                    if (prev && ((tm->tm_isdst && prev->dst) || (tm->tm_isdst == 0 && !prev->dst))) {
+                        t += tt->utoff;
+                        t -= prev->utoff;
+                        break;
+                    }
+
+                    if (next && ((tm->tm_isdst && next->dst) || (tm->tm_isdst == 0 && !next->dst))) {
+                        t += tt->utoff;
+                        t -= next->utoff;
+                        break;
+                    }
+                }
+            }
+        }
+    } else {
+        // FIXME - adjusting by rules
+    }
+
+    RtlReleaseSRWLockShared(&tz_lock);
+
+    __localtime64_s(tm, &t);
+
+    return t;
 }
 
 static constexpr __time64_t test_mktime(int year, int mon, int day, int hour,
@@ -978,7 +1045,7 @@ static constexpr __time64_t test_mktime(int year, int mon, int day, int hour,
     tm.tm_min = min;
     tm.tm_sec = sec;
 
-    return do_mktime(&tm);
+    return do_mktime(tm);
 }
 
 static_assert(test_mktime(1969, 12, 31, 0, 0, 0) == -86400);
