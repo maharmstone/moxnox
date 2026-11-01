@@ -1104,3 +1104,49 @@ export void tz_adjust_by_rules(__time64_t& v, struct ::tm& tm) {
         tm.tm_gmtoff = -tz_std_offset;
     }
 }
+
+export void tz_adjust_by_rules2(__time64_t& v, struct ::tm& tm, int is_dst) {
+    if (tz_start_rule_type == tz_rule_type::none || tz_end_rule_type == tz_rule_type::none) {
+        v += tz_std_offset;
+
+        tm.tm_isdst = 0;
+        tm.tm_zone = tz_std_name.get();
+        tm.tm_gmtoff = -tz_std_offset;
+
+        return;
+    }
+
+    if (is_dst == 0) {
+        v += tz_std_offset;
+        tm.tm_isdst = 0;
+        tm.tm_zone = tz_std_name.get();
+        tm.tm_gmtoff = -tz_std_offset;
+    } else if (is_dst > 0) {
+        v += tz_dst_offset;
+        tm.tm_isdst = 1;
+        tm.tm_zone = tz_dst_name.get();
+        tm.tm_gmtoff = -tz_dst_offset;
+    } else {
+        auto ts = find_tz_date(tz_start_rule_type, tz_start_param1, tz_start_param2,
+                            tz_start_param3, (unsigned int)tm.tm_year + 1900);
+
+        ts += tz_start_time;
+
+        auto ts2 = find_tz_date(tz_end_rule_type, tz_end_param1, tz_end_param2,
+                                tz_end_param3, (unsigned int)tm.tm_year + 1900);
+
+        ts2 += tz_end_time;
+
+        if ((ts < ts2 && v >= ts && v < ts2) || (ts2 < ts && (v >= ts || v < ts2))) {
+            v += tz_dst_offset;
+            tm.tm_isdst = 1;
+            tm.tm_zone = tz_dst_name.get();
+            tm.tm_gmtoff = -tz_dst_offset;
+        } else {
+            v += tz_std_offset;
+            tm.tm_isdst = 0;
+            tm.tm_zone = tz_std_name.get();
+            tm.tm_gmtoff = -tz_std_offset;
+        }
+    }
+}

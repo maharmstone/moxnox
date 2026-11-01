@@ -1024,7 +1024,11 @@ __time64_t __mktime64(struct tm* tm) {
             }
         }
     } else {
-        // FIXME - adjusting by rules
+        auto is_dst = tm->tm_isdst;
+
+        constexpr__gmtime64_s(tm, t); // normalize so we have the year
+
+        tz_adjust_by_rules2(t, *tm, is_dst);
     }
 
     RtlReleaseSRWLockShared(&tz_lock);
