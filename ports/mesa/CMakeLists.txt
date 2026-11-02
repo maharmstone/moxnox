@@ -1978,7 +1978,6 @@ target_link_libraries(libEGL PUBLIC libgallium)
 
 install(TARGETS libgallium libEGL
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
 )
 
 install(FILES ${PATCHED}/include/KHR/khrplatform.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/KHR)
