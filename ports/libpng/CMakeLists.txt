@@ -32,9 +32,7 @@ set_target_properties(png_shared PROPERTIES INTERFACE_LINK_LIBRARIES "${libs}")
 cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}
     CALL add_dependencies png_shared zlib)
 
-install(TARGETS png_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
-)
+install(TARGETS png_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 set(LIBPNG_PUBLIC_HEADERS
     repo/png.h
