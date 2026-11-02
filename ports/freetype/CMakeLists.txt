@@ -68,9 +68,7 @@ target_include_directories(freetype PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(freetype PUBLIC repo/include)
 target_link_libraries(freetype PRIVATE png_shared)
 
-install(TARGETS freetype DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
-)
+install(TARGETS freetype DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES repo/include/ft2build.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/freetype2)
 install(DIRECTORY repo/include/freetype/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/freetype2/freetype
