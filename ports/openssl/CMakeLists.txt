@@ -1232,9 +1232,7 @@ set_target_properties(libcrypto PROPERTIES
 
 target_link_libraries(libcrypto PRIVATE moxnox)
 
-install(TARGETS libcrypto DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
-)
+install(TARGETS libcrypto DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 add_library(libssl SHARED
     repo/crypto/packet.c
@@ -1329,9 +1327,7 @@ set_target_properties(libssl PROPERTIES
 
 target_link_libraries(libssl PRIVATE libcrypto moxnox)
 
-install(TARGETS libssl DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
-)
+install(TARGETS libssl DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(DIRECTORY repo/include/openssl/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/openssl
     PATTERN "*.in" EXCLUDE
