@@ -1,0 +1,11 @@
+# Site defaults for autoconf-generated configure scripts on Moxnox.
+# Generated from share/config.site.in by CMake; read via the CONFIG_SITE
+# environment variable, which init sets to /share/config.site.
+
+# Executables carry a .exe suffix, so program probes (AC_CHECK_PROG and
+# friends) must try "name.exe" as well as "name".
+ac_executable_extensions=.exe
+
+# The bundled config.guess in most tarballs predates Moxnox, so supply the
+# build type directly rather than letting configure guess it.
+ac_cv_build=@CMAKE_SYSTEM_PROCESSOR@-pc-moxnox
