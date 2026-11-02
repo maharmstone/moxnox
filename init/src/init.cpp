@@ -139,6 +139,7 @@ static void prepare_environment() {
     static const u16string_view vars[] = {
         u"PATH=/bin",
         u"LD_LIBRARY_PATH=/lib:.",
+        u"CONFIG_SITE=/share/config.site",
         u"TZ=GB" // FIXME - should be set by user
     };
 

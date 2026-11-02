@@ -1,0 +1,2 @@
+ac_executable_extensions=.exe
+ac_cv_build=@CMAKE_SYSTEM_PROCESSOR@-pc-moxnox
