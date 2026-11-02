@@ -102,9 +102,7 @@ target_include_directories(xkbcommon PRIVATE
 target_compile_options(xkbcommon PRIVATE ${XKBCOMMON_CFLAGS})
 target_link_libraries(xkbcommon PRIVATE moxnox)
 
-install(TARGETS xkbcommon DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
-)
+install(TARGETS xkbcommon DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES
     repo/include/xkbcommon/xkbcommon.h
