@@ -33,7 +33,6 @@ target_compile_options(harfbuzz PRIVATE
 )
 
 install(TARGETS harfbuzz DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
     CXX_MODULES_BMI EXCLUDE_FROM_ALL
 )
 
