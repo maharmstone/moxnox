@@ -20,8 +20,6 @@ target_compile_options(zlib PRIVATE ${USERSPACE_CFLAGS} -fvisibility=default $<$
 target_compile_options(zlib PRIVATE -Wno-sign-conversion -Wno-conversion)
 target_compile_definitions(zlib PRIVATE Z_HAVE_UNISTD_H)
 
-install(TARGETS zlib DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
-)
+install(TARGETS zlib DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES repo/zlib.h repo/zconf.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
