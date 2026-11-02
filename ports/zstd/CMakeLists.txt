@@ -31,9 +31,7 @@ target_compile_options(zstd PRIVATE ${USERSPACE_CFLAGS} -fvisibility=default $<$
 target_compile_options(zstd PRIVATE -Wno-sign-conversion -Wno-conversion)
 target_include_directories(zstd PUBLIC repo/lib)
 
-install(TARGETS zstd DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
-)
+install(TARGETS zstd DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES repo/lib/zstd.h repo/lib/zdict.h repo/lib/zstd_errors.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
