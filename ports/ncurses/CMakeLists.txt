@@ -587,7 +587,6 @@ target_link_libraries(panel PRIVATE ncurses)
 
 install(TARGETS tinfo ncurses form menu panel
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
 )
 
 install(FILES
