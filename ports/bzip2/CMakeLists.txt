@@ -18,9 +18,7 @@ target_compile_options(bzip2 PRIVATE
     -Wno-implicit-fallthrough
 )
 
-install(TARGETS bzip2 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
-)
+install(TARGETS bzip2 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES repo/bzlib.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
