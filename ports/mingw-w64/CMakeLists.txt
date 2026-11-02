@@ -128,7 +128,7 @@ target_link_libraries(mingw32 PRIVATE nt_mod ntdll_mod kernelbase_mod)
 
 ###
 
-set(crt2_src repo/mingw-w64-crt/crt/crtexe.c)
+set(crt2_src crtexe.cpp)
 set(dllcrt2_src repo/mingw-w64-crt/crt/crtdll.c)
 set(gcrt2_src repo/mingw-w64-crt/profile/gcrt0.c)
 set(crtbegin_src repo/mingw-w64-crt/crt/crtbegin.c)
