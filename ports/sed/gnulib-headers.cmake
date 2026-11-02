@@ -1,10 +1,7 @@
-# Generated gnulib headers: template -> output, substitutions from
-# gnulib-vars.cmake, snippet blocks inserted by gnulib_header().
 gnulib_header(repo/gnulib/lib/error.in.h ${GEN}/lib/error.h)
 gnulib_header(repo/gnulib/lib/fcntl.in.h ${GEN}/lib/fcntl.h)
-gnulib_header(repo/gnulib/lib/getopt-cdefs.in.h ${GEN}/lib/getopt-cdefs.h)
-gnulib_header(repo/gnulib/lib/getopt.in.h ${GEN}/lib/getopt.h)
 gnulib_header(repo/gnulib/lib/limits.in.h ${GEN}/lib/limits.h)
+gnulib_header(repo/gnulib/lib/locale.in.h ${GEN}/lib/locale.h)
 gnulib_header(repo/gnulib/lib/se-context.in.h ${GEN}/lib/selinux/context.h)
 gnulib_header(repo/gnulib/lib/se-selinux.in.h ${GEN}/lib/selinux/selinux.h)
 gnulib_header(repo/gnulib/lib/stddef.in.h ${GEN}/lib/stddef.h)

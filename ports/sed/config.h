@@ -69,7 +69,7 @@
 /* #undef ENABLE_NLS */
 
 /* Define this to 1 if F_DUPFD behavior does not match POSIX */
-#define FCNTL_DUPFD_BUGGY 1
+/* #undef FCNTL_DUPFD_BUGGY */
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like 'struct s { int n; short
@@ -113,7 +113,7 @@
 
 /* Define to 1 if mkdir mistakenly creates a directory given with a trailing
    dot component. */
-#define FUNC_MKDIR_DOT_BUG 1
+/* #undef FUNC_MKDIR_DOT_BUG */
 
 /* Define to 1 if realpath() can malloc memory, always gives an absolute path,
    and handles a trailing slash correctly. */
@@ -188,7 +188,7 @@
 
 /* Define to the directory where to find the localizations of the translation
    domain 'gnulib', as a C string. */
-#define GNULIB_LOCALEDIR "/usr/local/share/locale"
+#define GNULIB_LOCALEDIR "/share/locale"
 
 /* Define to a C preprocessor expression that evaluates to 1 or 0, depending
    whether the gnulib module lock shall be considered present. */
@@ -1170,7 +1170,7 @@
 #define HAVE_FREXP 1
 
 /* Define if the frexpl() function is available. */
-/* #undef HAVE_FREXPL */
+#define HAVE_FREXPL 1
 
 /* Define to 1 if the system has the fseeko function. */
 /* #undef HAVE_FSEEKO */
@@ -1200,7 +1200,7 @@
 /* #undef HAVE_GETEXECNAME */
 
 /* Define to 1 if you have the 'getlocalename_l' function. */
-#define HAVE_GETLOCALENAME_L 1
+/* #undef HAVE_GETLOCALENAME_L */
 
 /* Define to 1 if you have the <getopt.h> header file. */
 #define HAVE_GETOPT_H 1
@@ -1282,7 +1282,7 @@
 #define HAVE_LC_MESSAGES 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
-#define HAVE_LIBINTL_H 1
+/* #undef HAVE_LIBINTL_H */
 
 /* Define to 1 if the bcrypt library is guaranteed to be present. */
 /* #undef HAVE_LIB_BCRYPT */
@@ -1598,10 +1598,10 @@
 #define HAVE_STRTOUL 1
 
 /* Define to 1 if 'decimal_point' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_DECIMAL_POINT 1
+/* #undef HAVE_STRUCT_LCONV_DECIMAL_POINT */
 
 /* Define to 1 if 'int_p_cs_precedes' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES 1
+/* #undef HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES */
 
 /* Define to 1 if the system has the type 'struct random_data'. */
 /* #undef HAVE_STRUCT_RANDOM_DATA */
@@ -1765,13 +1765,13 @@
 /* #undef HAVE_WORKING_MBRTOC32 */
 
 /* Define to 1 if O_DIRECTORY works, 0 otherwise. */
-#define HAVE_WORKING_O_DIRECTORY 0
+#define HAVE_WORKING_O_DIRECTORY 1
 
 /* Define to 1 if O_NOATIME works, 0 otherwise. */
-#define HAVE_WORKING_O_NOATIME 0
+#define HAVE_WORKING_O_NOATIME 1
 
 /* Define to 1 if O_NOFOLLOW works, 0 otherwise. */
-#define HAVE_WORKING_O_NOFOLLOW 0
+#define HAVE_WORKING_O_NOFOLLOW 1
 
 /* Define if the uselocale function exists and may safely be called. */
 /* #undef HAVE_WORKING_USELOCALE */
@@ -1975,11 +1975,11 @@
 
 /* Define if the mbrtowc function does not return (size_t) -2 for empty input.
    */
-#define MBRTOWC_EMPTY_INPUT_BUG 1
+/* #undef MBRTOWC_EMPTY_INPUT_BUG */
 
 /* Define if the mbrtowc function may signal encoding errors in the C locale.
    */
-/* #undef MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ */
+#define MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ 1
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
@@ -2034,7 +2034,7 @@
 #define NL_LANGINFO_MTSAFE 1
 
 /* Define to 1 if open() fails to recognize a trailing slash. */
-/* #undef OPEN_TRAILING_SLASH_BUG */
+#define OPEN_TRAILING_SLASH_BUG 1
 
 /* Name of package */
 #define PACKAGE "sed"
@@ -2091,7 +2091,7 @@
 
 /* Define to 1 if pthread_sigmask(), when it fails, returns -1 and sets errno.
    */
-#define PTHREAD_SIGMASK_FAILS_WITH_ERRNO 1
+/* #undef PTHREAD_SIGMASK_FAILS_WITH_ERRNO */
 
 /* Define to 1 if pthread_sigmask may return 0 and have no effect. */
 /* #undef PTHREAD_SIGMASK_INEFFECTIVE */
@@ -2108,11 +2108,11 @@
 
 /* Define to 1 if readlink sets errno instead of truncating a too-long link.
    */
-#define READLINK_TRUNCATE_BUG 1
+/* #undef READLINK_TRUNCATE_BUG */
 
 /* Define if rename does not work when the destination file exists, as on
    Cygwin 1.5 or Windows. */
-#define RENAME_DEST_EXISTS_BUG 1
+/* #undef RENAME_DEST_EXISTS_BUG */
 
 /* Define if rename fails to leave hard links alone, as on NetBSD 1.6 or
    Cygwin 1.5. */
@@ -2120,18 +2120,18 @@
 
 /* Define if rename does not correctly handle slashes on the destination
    argument, such as on Solaris 11 or NetBSD 1.6. */
-/* #undef RENAME_TRAILING_SLASH_DEST_BUG */
+#define RENAME_TRAILING_SLASH_DEST_BUG 1
 
 /* Define if rename does not correctly handle slashes on the source argument,
    such as on Solaris 9 or cygwin 1.5. */
-/* #undef RENAME_TRAILING_SLASH_SOURCE_BUG */
+#define RENAME_TRAILING_SLASH_SOURCE_BUG 1
 
 /* Define to 1 if stat needs help when passed a file name with a trailing
    slash */
-/* #undef REPLACE_FUNC_STAT_FILE */
+#define REPLACE_FUNC_STAT_FILE 1
 
 /* Define if nl_langinfo exists but is overridden by gnulib. */
-/* #undef REPLACE_NL_LANGINFO */
+#define REPLACE_NL_LANGINFO 1
 
 /* Define to 1 if strerror(0) does not return a message implying success. */
 /* #undef REPLACE_STRERROR_0 */
@@ -2207,6 +2207,10 @@
 /* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
+#endif
+/* Enable extensions on Cosmopolitan Libc. */
+#ifndef _COSMO_SOURCE
+# define _COSMO_SOURCE 1
 #endif
 /* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
@@ -2419,7 +2423,7 @@
 
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
-#define __GETOPT_PREFIX rpl_
+/* #undef __GETOPT_PREFIX */
 
 /* Define to 1 on platforms where this makes time_t a 64-bit type. */
 /* #undef __MINGW_USE_VC2005_COMPAT */

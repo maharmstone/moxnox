@@ -45,8 +45,7 @@ add_executable(sed
     repo/gnulib/lib/free.c
     repo/gnulib/lib/get-permissions.c
     repo/gnulib/lib/getdelim.c
-    repo/gnulib/lib/getopt.c
-    repo/gnulib/lib/getopt1.c
+    repo/gnulib/lib/hard-locale.c
     repo/gnulib/lib/ialloc.c
     repo/gnulib/lib/issymlink.c
     repo/gnulib/lib/iswctype.c
@@ -78,6 +77,8 @@ add_executable(sed
     repo/gnulib/lib/rmdir.c
     repo/gnulib/lib/se-selinux.c
     repo/gnulib/lib/set-permissions.c
+    repo/gnulib/lib/setlocale_null-unlocked.c
+    repo/gnulib/lib/setlocale_null.c
     repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stat.c
     repo/gnulib/lib/streq.c
