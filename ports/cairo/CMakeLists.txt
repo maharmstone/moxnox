@@ -143,7 +143,6 @@ target_link_libraries(cairo PRIVATE pixman freetype png_shared zlib)
 
 install(TARGETS cairo
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
     CXX_MODULES_BMI EXCLUDE_FROM_ALL
 )
 
