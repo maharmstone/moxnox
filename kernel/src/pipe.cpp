@@ -349,10 +349,12 @@ nt_status pipe::write_nonblock(span<const span<const uint8_t>> v,
 
     written_bytes = 0;
 
-    size_t to_copy;
-
     {
-        lock_guard l(lock);
+        size_t to_copy;
+
+        sync_lock sl;
+        lock_guard l(sl);
+        lock_guard l2(lock);
 
         size_t buf_left = (buf_pages << PAGE_SHIFT) - buf_unread;
 
@@ -377,23 +379,14 @@ nt_status pipe::write_nonblock(span<const span<const uint8_t>> v,
             buf_unread += to_copy;
             vec_size -= to_copy;
             written_bytes += to_copy;
-        }
-    }
 
-    if (to_copy > 0) {
-        // wake up waiting thread
+            // wake up waiting thread
 
-        sync_lock sl;
-        lock_guard l(sl);
+            if (!signalled) {
+                signalled = true;
 
-        if (!signalled) {
-            signalled = true;
-
-            wake_up_waiters(waiters, WAIT_TYPE_READING);
-        }
-
-        {
-            lock_guard l2(lock);
+                wake_up_waiters(waiters, WAIT_TYPE_READING);
+            }
 
             if (buf_unread == buf_pages << PAGE_SHIFT && !server_closed)
                 not_full_event.signalled = false;
