@@ -87,9 +87,7 @@ target_include_directories(libiconv PRIVATE
     repo/libcharset/include
 )
 
-install(TARGETS libiconv DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
-)
+install(TARGETS libiconv DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES ${GEN}/include/iconv.h ${GEN}/include/localcharset.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 install(FILES repo/libcharset/include/libcharset.h.in DESTINATION ${CMAKE_INSTALL_PREFIX}/include RENAME libcharset.h)
