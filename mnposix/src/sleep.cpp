@@ -37,11 +37,11 @@ int nanosleep(const timespec* duration, timespec* rem) {
     RtlQueryPerformanceFrequency(&freq);
 
     while (true) {
-        auto sig_count = mn_handled_nonrestartable_signal_count();
+        auto sig_count = mn_handled_signal_count();
 
         status = NtDelayExecution(true, &t);
 
-        if (status == nt_status::USER_APC && mn_handled_nonrestartable_signal_count() == sig_count) {
+        if (status == nt_status::USER_APC && mn_handled_signal_count() == sig_count) {
             LARGE_INTEGER now;
 
             RtlQueryPerformanceCounter(&now);
