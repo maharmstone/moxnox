@@ -86,7 +86,6 @@ target_link_libraries(readline PRIVATE tinfo moxnox)
 
 install(TARGETS readline
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    ARCHIVE EXCLUDE_FROM_ALL
 )
 
 install(FILES
