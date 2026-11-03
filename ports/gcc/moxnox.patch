@@ -418,19 +418,20 @@ index 2ab04c889a7..29370886d3f 100755
      # we must compare to with_cross_host to decide if this is a native
      # or cross-compiler and select where to install dlls appropriately.
 diff --git a/libgcc/config.host b/libgcc/config.host
-index ac10ccc4340..616395d852c 100644
+index ac10ccc4340..63bc8e56b26 100644
 --- a/libgcc/config.host
 +++ b/libgcc/config.host
-@@ -377,7 +377,7 @@ case ${host} in
-   *-*-solaris2*)
-   enable_execute_stack=enable-execute-stack-mprotect.c
-   ;;
--i[34567]86-*-mingw* | x86_64-*-mingw*)
-+i[34567]86-*-mingw* | x86_64-*-mingw* | x86_64-*-moxnox*)
+@@ -380,6 +380,9 @@ case ${host} in
+ i[34567]86-*-mingw* | x86_64-*-mingw*)
    enable_execute_stack=config/i386/enable-execute-stack-mingw32.c
    ;;
++x86_64-*-moxnox*)
++  enable_execute_stack=config/mingw/enable-execute-stack-moxnox.c
++  ;;
  i[34567]86-*-cygwin* | x86_64-*-cygwin*)
-@@ -946,6 +946,18 @@ x86_64-*-mingw*)
+   enable_execute_stack=config/i386/enable-execute-stack-mingw32.c
+   ;;
+@@ -946,6 +949,18 @@ x86_64-*-mingw*)
  		extra_parts="$extra_parts vtv_start.o vtv_end.o vtv_start_preinit.o vtv_end_preinit.o"
  	fi
  	;;
@@ -449,9 +450,99 @@ index ac10ccc4340..616395d852c 100644
  ia64*-*-elf*)
  	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
  	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm t-softfp-tf ia64/t-softfp t-softfp ia64/t-softfp-compat"
+diff --git a/libgcc/config/mingw/enable-execute-stack-moxnox.c b/libgcc/config/mingw/enable-execute-stack-moxnox.c
+new file mode 100644
+index 00000000000..84d72528889
+--- /dev/null
++++ b/libgcc/config/mingw/enable-execute-stack-moxnox.c
+@@ -0,0 +1,84 @@
++/* Implement __enable_execute_stack for Moxnox.
++   Copyright (C) 2011-2026 Free Software Foundation, Inc.
++
++   This file is part of GCC.
++
++   GCC is free software; you can redistribute it and/or modify it under
++   the terms of the GNU General Public License as published by the Free
++   Software Foundation; either version 3, or (at your option) any later
++   version.
++
++   GCC is distributed in the hope that it will be useful, but WITHOUT ANY
++   WARRANTY; without even the implied warranty of MERCHANTABILITY or
++   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++   for more details.
++
++   Under Section 7 of GPL version 3, you are granted additional
++   permissions described in the GCC Runtime Library Exception, version
++   3.1, as published by the Free Software Foundation.
++
++   You should have received a copy of the GNU General Public License and
++   a copy of the GCC Runtime Library Exception along with this program;
++   see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
++   <http://www.gnu.org/licenses/>.  */
++
++/* Same logic as enable-execute-stack-mingw32.c, but through the NT
++   system calls in ntdll rather than the Win32 wrappers, so that no
++   Win32-tier header or library is needed.  */
++
++#include <stdlib.h>
++#include <stddef.h>
++#include <stdint.h>
++
++typedef int32_t NTSTATUS;
++typedef void *HANDLE;
++
++#define NtCurrentProcess() ((HANDLE) (intptr_t) -1)
++
++#define MemoryBasicInformation 0
++#define PAGE_EXECUTE_READWRITE 0x40
++
++typedef struct
++{
++  void *BaseAddress;
++  void *AllocationBase;
++  uint32_t AllocationProtect;
++  uint16_t PartitionId;
++  size_t RegionSize;
++  uint32_t State;
++  uint32_t Protect;
++  uint32_t Type;
++} MEMORY_BASIC_INFORMATION;
++
++extern NTSTATUS NtQueryVirtualMemory (HANDLE process_handle,
++				      const void *base_address,
++				      int info_class, void *buffer,
++				      size_t buffer_size,
++				      size_t *return_length);
++extern NTSTATUS NtProtectVirtualMemory (HANDLE process_handle,
++					void **base_address,
++					size_t *region_size,
++					uint32_t new_prot,
++					uint32_t *old_prot);
++
++extern void __enable_execute_stack (void *);
++
++void
++__enable_execute_stack (void *addr)
++{
++  MEMORY_BASIC_INFORMATION b;
++  size_t return_length, region_size;
++  void *base_address;
++  uint32_t old_prot;
++
++  if (NtQueryVirtualMemory (NtCurrentProcess (), addr,
++			    MemoryBasicInformation, &b, sizeof (b),
++			    &return_length) < 0)
++    abort ();
++
++  base_address = b.BaseAddress;
++  region_size = b.RegionSize;
++
++  NtProtectVirtualMemory (NtCurrentProcess (), &base_address, &region_size,
++			  PAGE_EXECUTE_READWRITE, &old_prot);
++}
 diff --git a/libgcc/config/mingw/t-moxnox b/libgcc/config/mingw/t-moxnox
 new file mode 100644
-index 00000000000..4a084a594fb
+index 00000000000..bc3c1d64d98
 --- /dev/null
 +++ b/libgcc/config/mingw/t-moxnox
 @@ -0,0 +1,47 @@
@@ -483,9 +574,9 @@ index 00000000000..4a084a594fb
 +CFLAGS-fixxfbitint.c += -mlong-double-80
 +CFLAGS-floatbitintxf.c += -mlong-double-80
 +
-+# Also Win32-tier: execute-stack drives VirtualProtect via windows.h,
-+# and the SEH unwinder is Windows mechanics through and through.
-+CFLAGS-enable-execute-stack.c += $(MOXNOX_MINGW_COMPAT)
++# Also Win32-tier: the SEH unwinder is Windows mechanics through and
++# through.  (enable-execute-stack is not: the Moxnox version uses the
++# NT system calls directly.)
 +CFLAGS-unwind-seh.c += $(MOXNOX_MINGW_COMPAT)
 +CFLAGS-unwind-sjlj.c += $(MOXNOX_MINGW_COMPAT)
 +CFLAGS-unwind-c.c += $(MOXNOX_MINGW_COMPAT)
