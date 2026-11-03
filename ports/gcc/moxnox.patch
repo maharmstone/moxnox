@@ -2151,3 +2151,106 @@ index 8435a125817..cf93bcf7fac 100644
  
  #ifndef LIBGCC_SONAME
  #define LIBGCC_SONAME "libgcc_s.dll"
+--- /dev/null
++++ b/libgcc/moxnox-seh.h
+@@ -0,0 +1,5 @@
++#pragma once
++
++#define EH_NONCONTINUABLE 0x01
++
++NTSYSAPI void WINAPI RtlRaiseException(PEXCEPTION_RECORD);
+diff --git a/libgcc/unwind-seh.c b/libgcc/unwind-seh.c
+index ed038854787..af6e03d599f 100644
+--- a/libgcc/unwind-seh.c
++++ b/libgcc/unwind-seh.c
+@@ -28,6 +28,10 @@
+ #include "tm.h"
+ #include "unwind.h"
+ 
++#ifdef __moxnox__
++#include "moxnox-seh.h"
++#endif
++
+ #if defined (__SEH__) && !defined (__USING_SJLJ_EXCEPTIONS__)
+ 
+ /* At the moment everything is written for x64, but in theory this could
+@@ -269,16 +273,32 @@ _GCC_specific_handler (PEXCEPTION_RECORD ms_exc, void *this_frame,
+ 
+       if (gcc_reason == _URC_INSTALL_CONTEXT)
+ 	{
++#ifdef __moxnox__
++	  EXCEPTION_RECORD rec;
++#endif
+ 	  /* Scratch space for the bits for the unwind catch.  */
+ 	  ms_exc->ExceptionInformation[1] = (_Unwind_Ptr) this_frame;
+ 	  ms_exc->ExceptionInformation[2] = gcc_context.ra;
+ 	  ms_exc->ExceptionInformation[3] = gcc_context.reg[1];
+ 
++#ifdef __moxnox__
++	  rec.ExceptionCode = STATUS_GCC_UNWIND;
++	  rec.ExceptionFlags = EH_NONCONTINUABLE;
++	  rec.ExceptionRecord = NULL;
++	  rec.ExceptionAddress = (void*)_GCC_specific_handler;
++	  rec.NumberParameters = 4;
++
++	  memcpy(rec.ExceptionInformation, ms_exc->ExceptionInformation,
++		 4 * sizeof(ULONG_PTR));
++
++	  RtlRaiseException(&rec);
++#else
+ 	  /* Cancel the current exception by raising another.  */
+ 	  RaiseException (STATUS_GCC_UNWIND, EXCEPTION_NONCONTINUABLE,
+ 			  4, ms_exc->ExceptionInformation);
+ 
+ 	  /* Is RaiseException declared noreturn?  */
++#endif
+ 	}
+ 
+       /* In _Unwind_RaiseException_Phase2 we return _URC_FATAL_PHASE2_ERROR. */
+@@ -328,10 +348,25 @@ _GCC_specific_handler (PEXCEPTION_RECORD ms_exc, void *this_frame,
+ _Unwind_Reason_Code
+ _Unwind_RaiseException (struct _Unwind_Exception *exc)
+ {
++#ifdef __moxnox__
++  EXCEPTION_RECORD rec;
++#endif
++
+   memset (exc->private_, 0, sizeof (exc->private_));
+ 
++#ifdef __moxnox__
++  rec.ExceptionCode = STATUS_GCC_THROW;
++  rec.ExceptionFlags = 0;
++  rec.ExceptionRecord = NULL;
++  rec.ExceptionAddress = (void*)_Unwind_RaiseException;
++  rec.NumberParameters = 1;
++  rec.ExceptionInformation[0] = (ULONG_PTR)exc;
++
++  RtlRaiseException(&rec);
++#else
+   /* The ExceptionInformation array will have only 1 element, EXC.  */
+   RaiseException (STATUS_GCC_THROW, 0, 1, (ULONG_PTR *)&exc);
++#endif
+ 
+   /* The exception handler installed in crt0 will continue any GCC
+      exception that reaches there (and isn't marked non-continuable).
+@@ -378,7 +413,20 @@ _Unwind_ForcedUnwind_Phase2 (struct _Unwind_Exception *exc)
+   _Unwind_Stop_Fn stop;
+   void * stop_argument;
+ 
++#ifdef __moxnox__
++  EXCEPTION_RECORD rec;
++
++  rec.ExceptionCode = STATUS_GCC_FORCED;
++  rec.ExceptionFlags = 0;
++  rec.ExceptionRecord = NULL;
++  rec.ExceptionAddress = (void*)_Unwind_ForcedUnwind_Phase2;
++  rec.NumberParameters = 1;
++  rec.ExceptionInformation[0] = (ULONG_PTR)exc;
++
++  RtlRaiseException(&rec);
++#else
+   RaiseException (STATUS_GCC_FORCED, 0, 1, (ULONG_PTR *)&exc);
++#endif
+ 
+   /* If we get here, we got to top-of-stack.  */
+   /* ??? We no longer have a context pointer to pass in.  */
