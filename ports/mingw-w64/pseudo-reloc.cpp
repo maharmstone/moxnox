@@ -116,6 +116,7 @@ mark_section_writable (void* addr)
   MEMORY_BASIC_INFORMATION b;
   IMAGE_SECTION_HEADER* h;
   int i;
+  size_t retlen;
 
   for (i = 0; i < maxSections; i++)
     {
@@ -132,9 +133,12 @@ mark_section_writable (void* addr)
   the_secs[i].old_protect = 0;
   the_secs[i].sec_start = _GetPEImageBase () + h->VirtualAddress;
 
-  if (!VirtualQuery (the_secs[i].sec_start, &b, sizeof(b)))
+  auto status = NtQueryVirtualMemory(NtCurrentProcess(), the_secs[i].sec_start,
+				     MEMORY_INFORMATION_CLASS::BasicInformation,
+				     &b, sizeof(b), &retlen);
+  if (!success(status))
     {
-      __report_error ("  VirtualQuery failed for %d bytes at address %p",
+      __report_error ("  NtQueryVirtualMemory failed for %d bytes at address %p",
 		      (int) h->VirtualSize, the_secs[i].sec_start);
     }
 
