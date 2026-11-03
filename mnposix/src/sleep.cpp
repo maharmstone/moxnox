@@ -14,7 +14,7 @@ import errno;
 extern "C"
 int nanosleep(const timespec* duration, timespec* rem) {
     nt_status status;
-    uint64_t dur_ns, units;
+    int64_t units;
     LARGE_INTEGER t, start, freq;
 
     if (!duration || duration->tv_sec < 0 || duration->tv_nsec >= 1000000000) {
@@ -22,19 +22,26 @@ int nanosleep(const timespec* duration, timespec* rem) {
         return -1;
     }
 
-    dur_ns = ((uint64_t)duration->tv_sec * 1000000000) + duration->tv_nsec;
-
     // convert to units to 100ns
 
-    units = dur_ns / 100;
+    // FIXME - use std::saturating_mul and std::saturating_add once we move to LLVM 23
+    if (__builtin_mul_overflow(duration->tv_sec, 10000000, &units))
+        units = INT64_MAX;
 
-    if (dur_ns % 100)
-        units++;
+    if (__builtin_add_overflow(units, duration->tv_nsec / 100, &units))
+        units = INT64_MAX;
 
-    t.QuadPart = -(int64_t)units;
+    if (duration->tv_nsec % 100) {
+        if (__builtin_add_overflow(units, 1, &units))
+            units = INT64_MAX;
+    }
+
+    t.QuadPart = -units;
 
     RtlQueryPerformanceCounter(&start);
     RtlQueryPerformanceFrequency(&freq);
+
+    auto f = (uint64_t)freq.QuadPart;
 
     while (true) {
         auto sig_count = mn_handled_signal_count();
@@ -47,11 +54,9 @@ int nanosleep(const timespec* duration, timespec* rem) {
             RtlQueryPerformanceCounter(&now);
 
             auto elapsed_ticks = (uint64_t)(now.QuadPart - start.QuadPart);
-            auto f = (uint64_t)freq.QuadPart;
-
             auto elapsed = ((elapsed_ticks / f) * 10000000) + (((elapsed_ticks % f) * 10000000) / f);
 
-            if (units <= elapsed)
+            if ((uint64_t)units <= elapsed)
                 return 0;
 
             t.QuadPart = -(int64_t)(units - elapsed);
@@ -70,19 +75,26 @@ int nanosleep(const timespec* duration, timespec* rem) {
     if (status == nt_status::USER_APC) {
         if (rem) {
             LARGE_INTEGER now;
-            uint64_t dur_ticks, elapsed_ticks, left_ticks;
+            uint64_t elapsed_sec;
+            long elapsed_nsec;
 
             RtlQueryPerformanceCounter(&now);
 
-            dur_ticks = duration->tv_sec * freq.QuadPart;
-            dur_ticks += duration->tv_nsec * freq.QuadPart / 1000000000;
+            auto elapsed_ticks = (uint64_t)(now.QuadPart - start.QuadPart);
 
-            elapsed_ticks = now.QuadPart - start.QuadPart;
+            elapsed_sec = elapsed_ticks / f;
+            elapsed_nsec = (long)(((elapsed_ticks % f) * 1000000000) / f);
 
-            left_ticks = elapsed_ticks < dur_ticks ? dur_ticks - elapsed_ticks : 0;
-
-            rem->tv_sec = left_ticks / freq.QuadPart;
-            rem->tv_nsec = (long)(((uint64_t)(left_ticks % freq.QuadPart) * 1000000000) / (uint64_t)freq.QuadPart);
+            if ((time_t)elapsed_sec > duration->tv_sec || ((time_t)elapsed_sec == duration->tv_sec && elapsed_nsec >= duration->tv_nsec)) {
+                rem->tv_sec = 0;
+                rem->tv_nsec = 0;
+            } else if (duration->tv_nsec < elapsed_nsec) {
+                rem->tv_sec = duration->tv_sec - elapsed_sec - 1;
+                rem->tv_nsec = 1000000000 + duration->tv_nsec - elapsed_nsec;
+            } else {
+                rem->tv_sec = duration->tv_sec - elapsed_sec;
+                rem->tv_nsec = duration->tv_nsec - elapsed_nsec;
+            }
         }
 
         *_errno() = EINTR;
