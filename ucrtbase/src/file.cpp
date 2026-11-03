@@ -1594,8 +1594,11 @@ FILE* __fdopen(int fd, const char* mode) {
     HANDLE h;
     bool readable, writable;
 
-    if (!mode || fd < 0 || (size_t)fd >= fds.size()) {
+    if (!mode) {
         *__errno() = EINVAL;
+        return nullptr;
+    } else if (fd < 0 || (size_t)fd >= fds.size()) {
+        *__errno() = EBADF;
         return nullptr;
     }
 
@@ -1637,7 +1640,7 @@ FILE* __fdopen(int fd, const char* mode) {
     RtlLeaveCriticalSection(&fds_lock);
 
     if (!h) {
-        *__errno() = EINVAL;
+        *__errno() = EBADF;
         return nullptr;
     }
 
