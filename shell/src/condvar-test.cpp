@@ -44,7 +44,9 @@ static void test_basic_signal() {
         return 0;
     }, &data, 0, nullptr);
 
-    Sleep(500);
+    LARGE_INTEGER t;
+    t.QuadPart = -5000000; // 500ms
+    NtDelayExecution(false, &t);
 
     print("[Main] Signalling...\n");
     RtlEnterCriticalSection(&cs);
@@ -98,10 +100,14 @@ static void test_multiple_waiters_signal() {
         }, &data, 0, nullptr);
     }
 
-    Sleep(500);
+    LARGE_INTEGER t;
+    t.QuadPart = -5000000; // 500ms
+    NtDelayExecution(false, &t);
 
     for (size_t i = 0; i < workers.size(); i++) {
-        Sleep(200);
+        t.QuadPart = -2000000; // 200ms
+        NtDelayExecution(false, &t);
+
         print("[Main] Signalling worker {}...\n", i + 1);
 
         RtlEnterCriticalSection(&cs);
@@ -159,7 +165,9 @@ static void test_broadcast() {
         }, &data, 0, nullptr);
     }
 
-    Sleep(500);
+    LARGE_INTEGER t;
+    t.QuadPart = -5000000; // 500ms
+    NtDelayExecution(false, &t);
 
     print("[Main] Broadcasting to all workers...\n");
     RtlEnterCriticalSection(&cs);
