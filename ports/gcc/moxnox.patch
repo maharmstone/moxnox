@@ -545,7 +545,7 @@ new file mode 100644
 index 00000000000..bc3c1d64d98
 --- /dev/null
 +++ b/libgcc/config/mingw/t-moxnox
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,45 @@
 +# Moxnox parts of libgcc. Replaces i386/t-cygming and i386/t-mingw32.
 +
 +# The crtstuff sources include windows.h, which is Win32-tier by
@@ -578,21 +578,19 @@ index 00000000000..bc3c1d64d98
 +# through.  (enable-execute-stack is not: the Moxnox version uses the
 +# NT system calls directly.)
 +CFLAGS-unwind-seh.c += $(MOXNOX_MINGW_COMPAT)
-+CFLAGS-unwind-sjlj.c += $(MOXNOX_MINGW_COMPAT)
-+CFLAGS-unwind-c.c += $(MOXNOX_MINGW_COMPAT)
 +
 +CUSTOM_CRTSTUFF = yes
 +
 +crtbegin.o: $(srcdir)/config/i386/cygming-crtbegin.c
-+	$(crt_compile) $(MOXNOX_MINGW_COMPAT) -fno-omit-frame-pointer -c $<
++	$(crt_compile) -fno-omit-frame-pointer -c $<
 +
 +crtbeginS.o: $(srcdir)/config/i386/cygming-crtbegin.c
-+	$(crt_compile) $(MOXNOX_MINGW_COMPAT) -fno-omit-frame-pointer -c $< -DCRTSTUFFS_O
++	$(crt_compile) -fno-omit-frame-pointer -c $< -DCRTSTUFFS_O
 +
 +# We intentionally use a implementation-reserved init priority of 0,
 +# so allow the warning.
 +crtend.o: $(srcdir)/config/i386/cygming-crtend.c
-+	$(crt_compile) $(MOXNOX_MINGW_COMPAT) -fno-omit-frame-pointer -Wno-error -c $<
++	$(crt_compile) -fno-omit-frame-pointer -Wno-error -c $<
 diff --git a/libgcc/config/mingw/t-moxnox-pthread b/libgcc/config/mingw/t-moxnox-pthread
 new file mode 100644
 index 00000000000..4285d68d1ef
@@ -2138,3 +2136,18 @@ index 1a710177fb2..692ffb8b648 100644
  	      # If a -bindir argument was supplied, place the dll there.
  	      if test "x$bindir" != x ;
  	      then
+diff --git a/libgcc/config/i386/cygming-crtbegin.c b/libgcc/config/i386/cygming-crtbegin.c
+index 8435a125817..cf93bcf7fac 100644
+--- a/libgcc/config/i386/cygming-crtbegin.c
++++ b/libgcc/config/i386/cygming-crtbegin.c
+@@ -35,8 +35,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ #include "libgcc_tm.h"
+ #include "unwind-dw2-fde.h"
+ 
++#ifndef __moxnox__
+ #define WIN32_LEAN_AND_MEAN
+ #include <windows.h>
++#endif
+ 
+ #ifndef LIBGCC_SONAME
+ #define LIBGCC_SONAME "libgcc_s.dll"
