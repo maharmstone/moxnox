@@ -7,61 +7,61 @@ export module pe;
 
 export {
 
-const uint16_t IMAGE_DOS_SIGNATURE = 0x5a4d; // "MZ"
-const uint32_t IMAGE_NT_SIGNATURE = 0x00004550; // "PE\0\0"
+constexpr inline uint16_t IMAGE_DOS_SIGNATURE = 0x5a4d; // "MZ"
+constexpr inline uint32_t IMAGE_NT_SIGNATURE = 0x00004550; // "PE\0\0"
 
-const uint16_t IMAGE_FILE_MACHINE_AMD64 = 0x8664;
-const uint16_t IMAGE_FILE_MACHINE_ARM64 = 0xaa64;
+constexpr inline uint16_t IMAGE_FILE_MACHINE_AMD64 = 0x8664;
+constexpr inline uint16_t IMAGE_FILE_MACHINE_ARM64 = 0xaa64;
 
-const uint16_t IMAGE_NT_OPTIONAL_HDR32_MAGIC = 0x10b;
-const uint16_t IMAGE_NT_OPTIONAL_HDR64_MAGIC = 0x20b;
+constexpr inline uint16_t IMAGE_NT_OPTIONAL_HDR32_MAGIC = 0x10b;
+constexpr inline uint16_t IMAGE_NT_OPTIONAL_HDR64_MAGIC = 0x20b;
 
-const uint32_t IMAGE_DIRECTORY_ENTRY_EXPORT = 0;
-const uint32_t IMAGE_DIRECTORY_ENTRY_IMPORT = 1;
-const uint32_t IMAGE_DIRECTORY_ENTRY_BASERELOC = 5;
-const uint32_t IMAGE_DIRECTORY_ENTRY_TLS = 9;
+constexpr inline uint32_t IMAGE_DIRECTORY_ENTRY_EXPORT = 0;
+constexpr inline uint32_t IMAGE_DIRECTORY_ENTRY_IMPORT = 1;
+constexpr inline uint32_t IMAGE_DIRECTORY_ENTRY_BASERELOC = 5;
+constexpr inline uint32_t IMAGE_DIRECTORY_ENTRY_TLS = 9;
 
-const uint16_t IMAGE_REL_BASED_ABSOLUTE = 0;
-const uint16_t IMAGE_REL_BASED_HIGHLOW = 3;
-const uint16_t IMAGE_REL_BASED_DIR64 = 10;
+constexpr inline uint16_t IMAGE_REL_BASED_ABSOLUTE = 0;
+constexpr inline uint16_t IMAGE_REL_BASED_HIGHLOW = 3;
+constexpr inline uint16_t IMAGE_REL_BASED_DIR64 = 10;
 
-const uint32_t IMAGE_SCN_TYPE_NO_PAD = 0x00000008;
-const uint32_t IMAGE_SCN_CNT_CODE = 0x00000020;
-const uint32_t IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040;
-const uint32_t IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080;
-const uint32_t IMAGE_SCN_LNK_OTHER = 0x00000100;
-const uint32_t IMAGE_SCN_LNK_INFO = 0x00000200;
-const uint32_t IMAGE_SCN_LNK_REMOVE = 0x00000800;
-const uint32_t IMAGE_SCN_LNK_COMDAT = 0x00001000;
-const uint32_t IMAGE_SCN_GPREL = 0x00008000;
-const uint32_t IMAGE_SCN_MEM_PURGEABLE = 0x00020000;
-const uint32_t IMAGE_SCN_MEM_16BIT = 0x00020000;
-const uint32_t IMAGE_SCN_MEM_LOCKED = 0x00040000;
-const uint32_t IMAGE_SCN_MEM_PRELOAD = 0x00080000;
-const uint32_t IMAGE_SCN_ALIGN_1BYTES = 0x00100000;
-const uint32_t IMAGE_SCN_ALIGN_2BYTES = 0x00200000;
-const uint32_t IMAGE_SCN_ALIGN_4BYTES = 0x00300000;
-const uint32_t IMAGE_SCN_ALIGN_8BYTES = 0x00400000;
-const uint32_t IMAGE_SCN_ALIGN_16BYTES = 0x00500000;
-const uint32_t IMAGE_SCN_ALIGN_32BYTES = 0x00600000;
-const uint32_t IMAGE_SCN_ALIGN_64BYTES = 0x00700000;
-const uint32_t IMAGE_SCN_ALIGN_128BYTES = 0x00800000;
-const uint32_t IMAGE_SCN_ALIGN_256BYTES = 0x00900000;
-const uint32_t IMAGE_SCN_ALIGN_512BYTES = 0x00a00000;
-const uint32_t IMAGE_SCN_ALIGN_1024BYTES = 0x00b00000;
-const uint32_t IMAGE_SCN_ALIGN_2048BYTES = 0x00c00000;
-const uint32_t IMAGE_SCN_ALIGN_4096BYTES = 0x00d00000;
-const uint32_t IMAGE_SCN_ALIGN_8192BYTES = 0x00e00000;
-const uint32_t IMAGE_SCN_LNK_NRELOC_OVFL = 0x01000000;
-const uint32_t IMAGE_SCN_MEM_DISCARDABLE = 0x02000000;
-const uint32_t IMAGE_SCN_MEM_NOT_CACHED = 0x04000000;
-const uint32_t IMAGE_SCN_MEM_NOT_PAGED = 0x08000000;
-const uint32_t IMAGE_SCN_MEM_SHARED = 0x10000000;
-const uint32_t IMAGE_SCN_MEM_EXECUTE = 0x20000000;
-const uint32_t IMAGE_SCN_MEM_READ = 0x40000000;
-const uint32_t IMAGE_SCN_MEM_WRITE = 0x80000000;
+constexpr inline uint32_t IMAGE_SCN_TYPE_NO_PAD = 0x00000008;
+constexpr inline uint32_t IMAGE_SCN_CNT_CODE = 0x00000020;
+constexpr inline uint32_t IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040;
+constexpr inline uint32_t IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080;
+constexpr inline uint32_t IMAGE_SCN_LNK_OTHER = 0x00000100;
+constexpr inline uint32_t IMAGE_SCN_LNK_INFO = 0x00000200;
+constexpr inline uint32_t IMAGE_SCN_LNK_REMOVE = 0x00000800;
+constexpr inline uint32_t IMAGE_SCN_LNK_COMDAT = 0x00001000;
+constexpr inline uint32_t IMAGE_SCN_GPREL = 0x00008000;
+constexpr inline uint32_t IMAGE_SCN_MEM_PURGEABLE = 0x00020000;
+constexpr inline uint32_t IMAGE_SCN_MEM_16BIT = 0x00020000;
+constexpr inline uint32_t IMAGE_SCN_MEM_LOCKED = 0x00040000;
+constexpr inline uint32_t IMAGE_SCN_MEM_PRELOAD = 0x00080000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_1BYTES = 0x00100000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_2BYTES = 0x00200000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_4BYTES = 0x00300000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_8BYTES = 0x00400000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_16BYTES = 0x00500000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_32BYTES = 0x00600000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_64BYTES = 0x00700000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_128BYTES = 0x00800000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_256BYTES = 0x00900000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_512BYTES = 0x00a00000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_1024BYTES = 0x00b00000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_2048BYTES = 0x00c00000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_4096BYTES = 0x00d00000;
+constexpr inline uint32_t IMAGE_SCN_ALIGN_8192BYTES = 0x00e00000;
+constexpr inline uint32_t IMAGE_SCN_LNK_NRELOC_OVFL = 0x01000000;
+constexpr inline uint32_t IMAGE_SCN_MEM_DISCARDABLE = 0x02000000;
+constexpr inline uint32_t IMAGE_SCN_MEM_NOT_CACHED = 0x04000000;
+constexpr inline uint32_t IMAGE_SCN_MEM_NOT_PAGED = 0x08000000;
+constexpr inline uint32_t IMAGE_SCN_MEM_SHARED = 0x10000000;
+constexpr inline uint32_t IMAGE_SCN_MEM_EXECUTE = 0x20000000;
+constexpr inline uint32_t IMAGE_SCN_MEM_READ = 0x40000000;
+constexpr inline uint32_t IMAGE_SCN_MEM_WRITE = 0x80000000;
 
-const uint16_t IMAGE_FILE_DLL = 0x2000;
+constexpr inline uint16_t IMAGE_FILE_DLL = 0x2000;
 
 struct IMAGE_DOS_HEADER {
     uint16_t e_magic;
