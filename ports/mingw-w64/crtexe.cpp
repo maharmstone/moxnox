@@ -16,6 +16,9 @@
 #include <float.h>
 #include <corecrt_startup.h>
 
+extern "C"
+NTSTATUS NtDelayExecution(bool alertable, const LARGE_INTEGER* delay_interval);
+
 #if defined(__SEH__) && (!defined(__clang__) || __clang_major__ >= 7)
 #define SEH_INLINE_ASM
 #endif
@@ -127,12 +130,17 @@ __tmainCRTStartup (void)
     while((lock_free = InterlockedCompareExchangePointer (&__native_startup_lock,
 							  fiberid, NULL)) != 0)
       {
+	LARGE_INTEGER t;
+
 	if (lock_free == fiberid)
 	  {
 	    nested = TRUE;
 	    break;
 	  }
-	Sleep(1000);
+
+	t.QuadPart = -10000000; // 1 second
+
+	NtDelayExecution(false, &t);
       }
     if (__native_startup_state == __initializing)
       {
