@@ -10,4 +10,3 @@ TlsGetValue
 CreateThread
 CreateProcessW
 GetCurrentThreadId
-VirtualProtect

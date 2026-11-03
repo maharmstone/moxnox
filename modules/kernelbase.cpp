@@ -128,8 +128,6 @@ bool CreateProcessW(const char16_t* application_name, char16_t* command_line,
 uint32_t GetCurrentThreadId();
 void RaiseException(uint32_t code, uint32_t flags, uint32_t count,
                     const uintptr_t* args);
-bool VirtualProtect(void* addr, size_t size, uint32_t new_prot,
-                    uint32_t* old_prot);
 
 }
 
