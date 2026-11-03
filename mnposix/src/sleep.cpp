@@ -104,5 +104,8 @@ unsigned int sleep(unsigned int seconds) {
 
     nanosleep(&t, &rem);
 
-    return (unsigned int)rem.tv_sec;
+    if (rem.tv_nsec > 0)
+        return (unsigned int)rem.tv_sec + 1;
+    else
+        return (unsigned int)rem.tv_sec;
 }
