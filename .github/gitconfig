@@ -106,6 +106,7 @@
 	insteadOf = git://git.musl-libc.org/musl
 [url "https://git.burntcomma.com/moxnox/gnulib"]
 	insteadOf = https://https.git.savannah.gnu.org/git/gnulib.git/
+	insteadOf = https://git.savannah.gnu.org/git/gnulib.git/
 [url "https://git.burntcomma.com/moxnox/curl"]
 	insteadOf = https://github.com/curl/curl
 [url "https://git.burntcomma.com/moxnox/binutils-gdb"]
