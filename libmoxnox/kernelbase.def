@@ -2,7 +2,6 @@ LIBRARY "kernelbase.dll"
 EXPORTS
 GetLastError
 TlsGetValue
-VirtualProtect
 TlsAlloc
 TlsFree
 TlsSetValue
