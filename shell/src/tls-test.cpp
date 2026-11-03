@@ -62,7 +62,9 @@ static unsigned int thread_func(void* arg) {
     }
 
     // Sleep a bit so threads interleave
-    Sleep(100);
+    LARGE_INTEGER t;
+    t.QuadPart = -1000000; // 100ms
+    NtDelayExecution(false, &t);
 
     // Read again to verify values didn't change from other threads
     print("Thread {}: Final check - static_tls_var: {}, string: {}\n",
