@@ -58,7 +58,6 @@ _initterm
 _initterm_e
 _initialize_narrow_environment
 _configure_narrow_argv
-_set_invalid_parameter_handler
 _crt_atexit
 exit
 __acrt_iob_func = ___acrt_iob_func

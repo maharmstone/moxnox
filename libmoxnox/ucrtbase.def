@@ -27,7 +27,6 @@ _initialize_onexit_table
 _initterm
 _initterm_e
 _register_onexit_function
-_set_invalid_parameter_handler
 _set_new_mode
 exit
 signal
