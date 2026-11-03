@@ -17,6 +17,9 @@
 #include <sect_attribs.h>
 #include <locale.h>
 
+extern "C"
+NTSTATUS NtDelayExecution(bool alertable, const LARGE_INTEGER* delay_interval);
+
 #if defined(__x86_64__) && !defined(__SEH__)
 extern int __mingw_init_ehandler (void);
 #endif
@@ -57,12 +60,17 @@ WINBOOL WINAPI _CRT_INIT (HANDLE hDllHandle, DWORD dwReason, LPVOID lpreserved)
       while ((lock_free = InterlockedCompareExchangePointer (&__native_startup_lock,
 							     fiberid, NULL)) != 0)
 	{
+	  LARGE_INTEGER t;
+
 	  if (lock_free == fiberid)
 	    {
 	      nested = TRUE;
 	      break;
 	    }
-	  Sleep(1000);
+
+	  t.QuadPart = -10000000; // 1 second
+
+	  NtDelayExecution(false, &t);
 	}
       if (__native_startup_state != __uninitialized)
 	{
@@ -110,12 +118,17 @@ i__leave:
 
       while ((lock_free = InterlockedCompareExchangePointer (&__native_startup_lock, fiberid, NULL)) != 0)
 	{
+	  LARGE_INTEGER t;
+
 	  if (lock_free == fiberid)
 	    {
 	      nested = TRUE;
 	      break;
 	    }
-	  Sleep(1000);
+
+	  t.QuadPart = -10000000; // 1 second
+
+	  NtDelayExecution(false, &t);
 	}
       if (__native_startup_state != __initialized)
 	{
