@@ -52,7 +52,10 @@ static void test_alertable_wait() {
     }, &c, 0, nullptr)};
 
     NtWaitForSingleObject(ready_evt.get(), false, nullptr);
-    Sleep(10); // let thread settle into wait
+
+    LARGE_INTEGER t;
+    t.QuadPart = -100000; // 10ms
+    NtDelayExecution(false, &t); // let thread settle into wait
 
     auto status = NtQueueApcThread(thread.get(), [](void* arg, void*, void*) {
         ((atomic<bool>*)arg)->store(true);
@@ -99,7 +102,10 @@ static void test_alertable_delay() {
     }, &c, 0, nullptr)};
 
     NtWaitForSingleObject(ready_evt.get(), false, nullptr);
-    Sleep(10);
+
+    LARGE_INTEGER t;
+    t.QuadPart = -100000; // 10ms
+    NtDelayExecution(false, &t);
 
     auto status = NtQueueApcThread(thread.get(), [](void* arg, void*, void*) {
         ((atomic<bool>*)arg)->store(true);
@@ -150,7 +156,9 @@ static void test_apc_queued_before_wait() {
         return 0;
     }, &c, 0, nullptr)};
 
-    Sleep(10); // let thread reach non-alertable wait
+    LARGE_INTEGER t;
+    t.QuadPart = -100000; // 10ms
+    NtDelayExecution(false, &t); // let thread reach non-alertable wait
 
     auto status = NtQueueApcThread(thread.get(), [](void* arg, void*, void*) {
         ((atomic<bool>*)arg)->store(true);
@@ -275,7 +283,9 @@ static void test_multiple_apc_fifo() {
         return 0;
     }, &c, 0, nullptr)};
 
-    Sleep(10);
+    LARGE_INTEGER t;
+    t.QuadPart = -100000; // 10ms
+    NtDelayExecution(false, &t);
 
     struct apc_arg { shared_data* s; unsigned int idx; };
     array<apc_arg, num_apcs> apc_args;
@@ -341,7 +351,9 @@ static void test_argument_passing() {
         return 0;
     }, &c, 0, nullptr)};
 
-    Sleep(10);
+    LARGE_INTEGER t;
+    t.QuadPart = -100000; // 10ms
+    NtDelayExecution(false, &t);
 
     // arg1 = &result (used by APC to store what it received)
     // arg2 = &sentinel2, arg3 = &sentinel3 (distinct pointer values to verify)
@@ -446,7 +458,10 @@ static void test_alertable_wait_multiple() {
     }, &c, 0, nullptr)};
 
     NtWaitForSingleObject(ready_evt.get(), false, nullptr);
-    Sleep(10); // let thread settle into wait
+
+    LARGE_INTEGER t;
+    t.QuadPart = -100000; // 10ms
+    NtDelayExecution(false, &t); // let thread settle into wait
 
     auto status = NtQueueApcThread(thread.get(), [](void* arg, void*, void*) {
         ((atomic<bool>*)arg)->store(true);
