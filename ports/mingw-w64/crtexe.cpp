@@ -48,7 +48,6 @@ static _TCHAR **argv;
 static _TCHAR **envp;
 
 static int has_cctor = 0;
-extern LPTOP_LEVEL_EXCEPTION_FILTER __mingw_oldexcpt_handler;
 
 extern "C" void _pei386_runtime_relocator (void);
 extern "C" long CALLBACK _gnu_exception_handler (EXCEPTION_POINTERS * exception_data);
@@ -162,7 +161,6 @@ __tmainCRTStartup (void)
 
 	_pei386_runtime_relocator ();
 
-	__mingw_oldexcpt_handler = SetUnhandledExceptionFilter (_gnu_exception_handler);
 	_set_invalid_parameter_handler (__mingw_invalidParameterHandler);
 	_fpreset ();
 
