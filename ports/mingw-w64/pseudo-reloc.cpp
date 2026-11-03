@@ -152,11 +152,12 @@ mark_section_writable (void* addr)
         new_protect = PAGE_EXECUTE_READWRITE;
       the_secs[i].base_address = b.BaseAddress;
       the_secs[i].region_size = b.RegionSize;
-      if (!VirtualProtect (b.BaseAddress, b.RegionSize,
-			   new_protect,
-			   &the_secs[i].old_protect))
-	__report_error ("  VirtualProtect failed with code 0x%x",
-	  (int) GetLastError ());
+
+      auto status = NtProtectVirtualMemory(NtCurrentProcess(), &b.BaseAddress,
+					   &b.RegionSize, new_protect,
+					   &the_secs[i].old_protect);
+      if (!success(status))
+	__report_error ("  NtProtectVirtualMemory failed with code 0x%08x", (uint32_t)status);
     }
   ++maxSections;
   return;
@@ -172,8 +173,10 @@ restore_modified_sections (void)
     {
       if (the_secs[i].old_protect == 0)
         continue;
-      VirtualProtect (the_secs[i].base_address, the_secs[i].region_size,
-                      the_secs[i].old_protect, &oldprot);
+
+      NtProtectVirtualMemory(NtCurrentProcess(), &the_secs[i].base_address,
+			     &the_secs[i].region_size, the_secs[i].old_protect,
+			     &oldprot);
     }
 }
 
