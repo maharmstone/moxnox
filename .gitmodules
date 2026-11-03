@@ -247,3 +247,6 @@
 [submodule "ports/autoconf/repo"]
 	path = ports/autoconf/repo
 	url = git://git.sv.gnu.org/autoconf.git
+[submodule "ports/automake/repo"]
+	path = ports/automake/repo
+	url = git://git.sv.gnu.org/automake.git
