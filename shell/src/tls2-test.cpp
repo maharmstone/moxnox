@@ -9,11 +9,11 @@ import print;
 class TLSTest {
 public:
     TLSTest() {
-        print("Constructor: thread {}\n", GetCurrentThreadId());
+        print("Constructor: thread {}\n", NtCurrentTeb()->ClientId.UniqueThread);
     }
 
     ~TLSTest() {
-        print("Destructor: thread {}\n", GetCurrentThreadId());
+        print("Destructor: thread {}\n", NtCurrentTeb()->ClientId.UniqueThread);
     }
 
     void foo() {
