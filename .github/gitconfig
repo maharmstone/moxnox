@@ -187,3 +187,5 @@
 	insteadOf = https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config
 [url "https://git.burntcomma.com/moxnox/tz"]
 	insteadOf = https://github.com/eggert/tz.git
+[url "https://git.burntcomma.com/moxnox/autoconf"]
+	insteadOf = git://git.sv.gnu.org/autoconf.git

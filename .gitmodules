@@ -244,3 +244,6 @@
 [submodule "ports/tzdb/repo"]
 	path = ports/tzdb/repo
 	url = https://github.com/eggert/tz.git
+[submodule "ports/autoconf/repo"]
+	path = ports/autoconf/repo
+	url = git://git.sv.gnu.org/autoconf.git

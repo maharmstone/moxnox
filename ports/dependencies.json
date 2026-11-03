@@ -1,4 +1,5 @@
 {
+    "autoconf": [],
     "bash": ["libiconv", "readline"],
     "binutils": ["zlib"],
     "bison": ["gnulib", "libiconv"],
