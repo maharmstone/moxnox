@@ -100,7 +100,6 @@ struct PROCESS_INFORMATION {
 };
 
 using HANDLER_ROUTINE = bool (*)(uint32_t ctrl_type);
-using TOP_LEVEL_EXCEPTION_FILTER = int32_t (*)(EXCEPTION_POINTERS* exception_info);
 using THREAD_START_ROUTINE = uint32_t (*)(void* ctx);
 
 inline constexpr uint32_t TLS_OUT_OF_INDEXES = 0xffffffff;
@@ -111,7 +110,6 @@ inline constexpr uint32_t GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = 0x00000004;
 
 extern "C" {
 
-TOP_LEVEL_EXCEPTION_FILTER SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER filter);
 uint32_t TlsAlloc();
 void* TlsGetValue(uint32_t tls_index);
 bool TlsSetValue(uint32_t tls_index, void* tls_value);

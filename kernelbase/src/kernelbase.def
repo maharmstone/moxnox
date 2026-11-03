@@ -5,7 +5,6 @@ TlsAlloc
 TlsFree
 TlsSetValue
 RaiseException
-SetUnhandledExceptionFilter
 Sleep
 GetLastError
 TlsGetValue
