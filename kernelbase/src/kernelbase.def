@@ -9,4 +9,3 @@ GetLastError
 TlsGetValue
 CreateThread
 CreateProcessW
-GetCurrentThreadId
