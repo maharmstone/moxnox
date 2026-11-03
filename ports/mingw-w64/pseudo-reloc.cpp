@@ -15,15 +15,20 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
-#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <memory.h>
-#include <internal.h>
 #include <stdint.h>
+#include <string.h>
 
 #define NO_COPY
+
+import nt;
+import ntdll;
+import pe;
+import kernelbase;
+
+using DWORD = uint32_t;
 
 #ifdef __GNUC__
 #define ATTRIBUTE_NORETURN __attribute__ ((noreturn))
@@ -90,32 +95,32 @@ __report_error (const char *msg, ...)
    the temporary access of code/read-only sections.
    This step speeds up pseudo-relocation pass.  */
 extern "C" int __mingw_GetSectionCount (void);
-extern "C" PIMAGE_SECTION_HEADER __mingw_GetSectionForAddress (LPVOID p);
-extern "C" PBYTE _GetPEImageBase (void);
+extern "C" IMAGE_SECTION_HEADER* __mingw_GetSectionForAddress (void* p);
+extern "C" uint8_t* _GetPEImageBase (void);
 
 typedef struct sSecInfo {
   /* Keeps altered section flags, or zero if nothing was changed.  */
   DWORD old_protect;
   PVOID base_address;
-  SIZE_T region_size;
-  PBYTE sec_start;
-  PIMAGE_SECTION_HEADER hash;
+  size_t region_size;
+  uint8_t* sec_start;
+  IMAGE_SECTION_HEADER* hash;
 } sSecInfo;
 
 static sSecInfo *the_secs = NULL;
 static int maxSections = 0;
 
 static void
-mark_section_writable (LPVOID addr)
+mark_section_writable (void* addr)
 {
   MEMORY_BASIC_INFORMATION b;
-  PIMAGE_SECTION_HEADER h;
+  IMAGE_SECTION_HEADER* h;
   int i;
 
   for (i = 0; i < maxSections; i++)
     {
-      if (the_secs[i].sec_start <= ((LPBYTE) addr)
-          && ((LPBYTE) addr) < (the_secs[i].sec_start + the_secs[i].hash->Misc.VirtualSize))
+      if (the_secs[i].sec_start <= ((uint8_t*) addr)
+          && ((uint8_t*) addr) < (the_secs[i].sec_start + the_secs[i].hash->VirtualSize))
         return;
     }
   h = __mingw_GetSectionForAddress (addr);
@@ -130,7 +135,7 @@ mark_section_writable (LPVOID addr)
   if (!VirtualQuery (the_secs[i].sec_start, &b, sizeof(b)))
     {
       __report_error ("  VirtualQuery failed for %d bytes at address %p",
-		      (int) h->Misc.VirtualSize, the_secs[i].sec_start);
+		      (int) h->VirtualSize, the_secs[i].sec_start);
     }
 
   if (b.Protect != PAGE_EXECUTE_READWRITE && b.Protect != PAGE_READWRITE
@@ -189,7 +194,7 @@ __write_memory (void *addr, const void *src, size_t len)
 
   /* Mark the section writable once, and unset it in
    * restore_modified_sections */
-  mark_section_writable ((LPVOID) addr);
+  mark_section_writable ((void*) addr);
 
   /* write the data. */
   memcpy (addr, src, len);
