@@ -3,7 +3,6 @@ EXPORTS
 GetLastError
 TlsGetValue
 VirtualProtect
-VirtualQuery
 TlsAlloc
 TlsFree
 TlsSetValue
