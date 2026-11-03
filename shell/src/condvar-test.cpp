@@ -83,7 +83,7 @@ static void test_multiple_waiters_signal() {
     for (size_t i = 0; i < workers.size(); i++) {
         workers[i] = CreateThread(nullptr, 0, [](void* arg) -> uint32_t {
             auto& data = *(shared_data*)arg;
-            auto tid = GetCurrentThreadId();
+            auto tid = (uint32_t)NtCurrentTeb()->ClientId.UniqueThread;
 
             RtlEnterCriticalSection(data.cs);
             print("[Worker {}] Waiting...\n", tid);
@@ -149,7 +149,7 @@ static void test_broadcast() {
     for (size_t i = 0; i < workers.size(); i++) {
         workers[i] = CreateThread(nullptr, 0, [](void* arg) -> uint32_t {
             auto& data = *(shared_data*)arg;
-            auto tid = GetCurrentThreadId();
+            auto tid = (uint32_t)NtCurrentTeb()->ClientId.UniqueThread;
 
             RtlEnterCriticalSection(data.cs);
             print("[Worker {}] Waiting for broadcast...\n", tid);
