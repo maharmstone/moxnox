@@ -1149,12 +1149,7 @@ add_custom_command(
     VERBATIM
 )
 
-add_custom_command(
-    OUTPUT ${GEN}/lib/Errno.pm
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Errno.pm ${GEN}/lib/Errno.pm
-    DEPENDS Errno.pm
-    VERBATIM
-)
+configure_file(Errno.pm.in ${GEN}/lib/Errno.pm @ONLY)
 
 add_custom_command(
     OUTPUT ${GEN}/lib/unicore/mktables.lst ${GEN}/pod/perluniprops.pod

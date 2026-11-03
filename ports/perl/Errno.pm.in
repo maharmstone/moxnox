@@ -10,8 +10,8 @@ use strict;
 
 use Config;
 "$Config{'archname'}-$Config{'osvers'}" eq
-"pc\-moxnox\-64int-" or
-	die "Errno architecture (pc\-moxnox\-64int-) does not match executable architecture ($Config{'archname'}-$Config{'osvers'})";
+"@PERL_ARCHNAME@-" or
+	die "Errno architecture (@PERL_ARCHNAME@-) does not match executable architecture ($Config{'archname'}-$Config{'osvers'})";
 
 our $VERSION = "1.38";
 $VERSION = eval $VERSION;
