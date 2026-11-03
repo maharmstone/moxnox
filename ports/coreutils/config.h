@@ -12,7 +12,7 @@
 
 
 /* Define if access does not correctly handle trailing slashes. */
-/* #undef ACCESS_TRAILING_SLASH_BUG */
+#define ACCESS_TRAILING_SLASH_BUG 1
 
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
@@ -59,10 +59,10 @@
 /* #undef CHOWN_CHANGE_TIME_BUG */
 
 /* Define if chown is not POSIX compliant regarding IDs of -1. */
-#define CHOWN_FAILS_TO_HONOR_ID_OF_NEGATIVE_ONE 1
+/* #undef CHOWN_FAILS_TO_HONOR_ID_OF_NEGATIVE_ONE */
 
 /* Define if chown modifies symlinks. */
-#define CHOWN_MODIFIES_SYMLINK 1
+/* #undef CHOWN_MODIFIES_SYMLINK */
 
 /* Define to 1 if chown mishandles trailing slash. */
 #define CHOWN_TRAILING_SLASH_BUG 1
@@ -122,7 +122,7 @@
 /* #undef DOUBLE_SLASH_IS_DISTINCT_ROOT */
 
 /* Define if struct dirent has a member d_ino that actually works. */
-/* #undef D_INO_IN_DIRENT */
+#define D_INO_IN_DIRENT 1
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -130,14 +130,14 @@
 
 /* Define to 1 if your platform has fchownat, but it does not reject an empty
    file name. */
-#define FCHOWNAT_EMPTY_FILENAME_BUG 1
+/* #undef FCHOWNAT_EMPTY_FILENAME_BUG */
 
 /* Define to 1 if your platform has fchownat, but it cannot perform lchown
    tasks. */
-#define FCHOWNAT_NOFOLLOW_BUG 1
+/* #undef FCHOWNAT_NOFOLLOW_BUG */
 
 /* Define this to 1 if F_DUPFD behavior does not match POSIX */
-#define FCNTL_DUPFD_BUGGY 1
+/* #undef FCNTL_DUPFD_BUGGY */
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like 'struct s { int n; short
@@ -184,7 +184,7 @@
 
 /* Define to 1 if mkdir mistakenly creates a directory given with a trailing
    dot component. */
-#define FUNC_MKDIR_DOT_BUG 1
+/* #undef FUNC_MKDIR_DOT_BUG */
 
 /* Define to 1 if realpath() can malloc memory, always gives an absolute path,
    and handles a trailing slash correctly. */
@@ -206,7 +206,7 @@
 
 /* Define this to 1 if getgroups(0,NULL) does not return the number of groups.
    */
-#define GETGROUPS_ZERO_BUG 1
+/* #undef GETGROUPS_ZERO_BUG */
 
 /* Define this to 'void' or 'struct timezone' to match the system's
    declaration of the second argument to gettimeofday. */
@@ -1860,7 +1860,7 @@
 
 /* Define to 1 if you have the declaration of 'sys_siglist', and to 0 if you
    don't. */
-#define HAVE_DECL_SYS_SIGLIST 0
+/* #undef HAVE_DECL_SYS_SIGLIST */
 
 /* Define to 1 if you have the declaration of 'towlower', and to 0 if you
    don't. */
@@ -1908,7 +1908,7 @@
 
 /* Define to 1 if you have the declaration of '_sys_siglist', and to 0 if you
    don't. */
-#define HAVE_DECL__SYS_SIGLIST 0
+/* #undef HAVE_DECL__SYS_SIGLIST */
 
 /* Define to 1 if you have the declaration of '__argv', and to 0 if you don't.
    */
@@ -1943,7 +1943,7 @@
 /* #undef HAVE_ENDMNTENT */
 
 /* Define to 1 if you have the 'endpwent' function. */
-/* #undef HAVE_ENDPWENT */
+#define HAVE_ENDPWENT 1
 
 /* Define if you have the declaration of environ. */
 #define HAVE_ENVIRON_DECL 1
@@ -2005,7 +2005,7 @@
 
 /* Define to 1 if pipes are FIFOs, 0 if sockets. Leave undefined if not known.
    */
-/* #undef HAVE_FIFO_PIPES */
+#define HAVE_FIFO_PIPES 1
 
 /* Define to 1 if you have the 'flockfile' function. */
 #define HAVE_FLOCKFILE 1
@@ -2020,7 +2020,7 @@
 #define HAVE_FORK 1
 
 /* Define to 1 if you have the 'fpathconf' function. */
-/* #undef HAVE_FPATHCONF */
+#define HAVE_FPATHCONF 1
 
 /* whether fpsetprec is present and required */
 /* #undef HAVE_FPSETPREC */
@@ -2038,10 +2038,10 @@
 #define HAVE_FREXP 1
 
 /* Define if the frexpl() function is available. */
-/* #undef HAVE_FREXPL */
+#define HAVE_FREXPL 1
 
 /* Define if the frexpl function is available in libc. */
-/* #undef HAVE_FREXPL_IN_LIBC */
+#define HAVE_FREXPL_IN_LIBC 1
 
 /* Define if the frexp function is available in libc. */
 #define HAVE_FREXP_IN_LIBC 1
@@ -2129,7 +2129,7 @@
 /* #undef HAVE_GETGROUPLIST */
 
 /* Define to 1 if your system has a working `getgroups' function. */
-/* #undef HAVE_GETGROUPS */
+#define HAVE_GETGROUPS 1
 
 /* Define to 1 if you have the 'gethostbyname' function. */
 /* #undef HAVE_GETHOSTBYNAME */
@@ -2147,7 +2147,7 @@
 /* #undef HAVE_GETLOADAVG */
 
 /* Define to 1 if you have the 'getlocalename_l' function. */
-#define HAVE_GETLOCALENAME_L 1
+/* #undef HAVE_GETLOCALENAME_L */
 
 /* Define to 1 if you have the 'getlogin' function. */
 #define HAVE_GETLOGIN 1
@@ -2174,7 +2174,7 @@
 #define HAVE_GETRUSAGE 1
 
 /* Define to 1 if you have the 'getservbyname' function. */
-/* #undef HAVE_GETSERVBYNAME */
+#define HAVE_GETSERVBYNAME 1
 
 /* Define to 1 if you have the 'getsysinfo' function. */
 /* #undef HAVE_GETSYSINFO */
@@ -2208,7 +2208,7 @@
 /* #undef HAVE_HURD_H */
 
 /* Define if you have the iconv() function and it works. */
-#define HAVE_ICONV 1
+/* #undef HAVE_ICONV */
 
 /* Define to 1 if you have the <iconv.h> header file. */
 #define HAVE_ICONV_H 1
@@ -2298,7 +2298,7 @@
 #define HAVE_LC_MESSAGES 1
 
 /* Define if the ldexpl function is available in libc. */
-/* #undef HAVE_LDEXPL_IN_LIBC */
+#define HAVE_LDEXPL_IN_LIBC 1
 
 /* Define if the ldexp function is available in libc. */
 #define HAVE_LDEXP_IN_LIBC 1
@@ -2310,10 +2310,10 @@
 #define HAVE_LIBGEN_H 1
 
 /* Define if you have the libgmp library. */
-#define HAVE_LIBGMP 1
+/* #undef HAVE_LIBGMP */
 
 /* Define to 1 if you have the <libintl.h> header file. */
-#define HAVE_LIBINTL_H 1
+/* #undef HAVE_LIBINTL_H */
 
 /* Define to 1 if you have the 'kstat' library (-lkstat). */
 /* #undef HAVE_LIBKSTAT */
@@ -2439,7 +2439,7 @@
 
 /* Define to 1 if getcwd minimally works, that is, its result can be trusted
    when it succeeds. */
-/* #undef HAVE_MINIMALLY_WORKING_GETCWD */
+#define HAVE_MINIMALLY_WORKING_GETCWD 1
 
 /* Define to 1 if you have the <minix/config.h> header file. */
 /* #undef HAVE_MINIX_CONFIG_H */
@@ -2460,10 +2460,10 @@
 #define HAVE_MKFIFOAT 1
 
 /* Define to 1 if you have the 'mknod' function. */
-/* #undef HAVE_MKNOD */
+#define HAVE_MKNOD 1
 
 /* Define to 1 if you have the `mknodat' function. */
-/* #undef HAVE_MKNODAT */
+#define HAVE_MKNODAT 1
 
 /* Define to 1 if you have the `mkostemp' function. */
 #define HAVE_MKOSTEMP 1
@@ -2616,7 +2616,7 @@
 #define HAVE_PTHREAD_API 1
 
 /* Define to 1 if you have the `pthread_atfork' function. */
-#define HAVE_PTHREAD_ATFORK 1
+/* #undef HAVE_PTHREAD_ATFORK */
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #define HAVE_PTHREAD_H 1
@@ -2743,13 +2743,13 @@
 /* #undef HAVE_SETDTABLESIZE */
 
 /* Define to 1 if you have the 'setegid' function. */
-/* #undef HAVE_SETEGID */
+#define HAVE_SETEGID 1
 
 /* Define to 1 if you have the 'setenv' function. */
 #define HAVE_SETENV 1
 
 /* Define to 1 if you have the 'seteuid' function. */
-/* #undef HAVE_SETEUID */
+#define HAVE_SETEUID 1
 
 /* Define to 1 if you have the 'setgroups' function. */
 /* #undef HAVE_SETGROUPS */
@@ -2940,10 +2940,10 @@
 /* #undef HAVE_STRUCT_FSSTAT_F_FSTYPENAME */
 
 /* Define to 1 if 'decimal_point' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_DECIMAL_POINT 1
+/* #undef HAVE_STRUCT_LCONV_DECIMAL_POINT */
 
 /* Define to 1 if 'int_p_cs_precedes' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES 1
+/* #undef HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES */
 
 /* Define to 1 if 'n_un.n_name' is a member of 'struct nlist'. */
 /* #undef HAVE_STRUCT_NLIST_N_UN_N_NAME */
@@ -2985,7 +2985,7 @@
 /* #undef HAVE_STRUCT_STATVFS_F_FSTYPENAME */
 
 /* Define to 1 if 'f_namemax' is a member of 'struct statvfs'. */
-/* #undef HAVE_STRUCT_STATVFS_F_NAMEMAX */
+#define HAVE_STRUCT_STATVFS_F_NAMEMAX 1
 
 /* Define to 1 if 'f_type' is a member of 'struct statvfs'. */
 /* #undef HAVE_STRUCT_STATVFS_F_TYPE */
@@ -3021,10 +3021,10 @@
 /* #undef HAVE_STRUCT_SYSINFO_MEM_UNIT */
 
 /* Define to 1 if 'tm_gmtoff' is a member of 'struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_GMTOFF */
+#define HAVE_STRUCT_TM_TM_GMTOFF 1
 
 /* Define to 1 if 'tm_zone' is a member of 'struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_ZONE */
+#define HAVE_STRUCT_TM_TM_ZONE 1
 
 /* Define to 1 if 'ut_exit' is a member of 'struct utmpx'. */
 /* #undef HAVE_STRUCT_UTMPX_UT_EXIT */
@@ -3260,7 +3260,7 @@
 
 /* Define if struct tm has the tm_gmtoff member. This macro is obsolete. New
    code should use HAVE_STRUCT_TM_TM_GMTOFF. */
-/* #undef HAVE_TM_GMTOFF */
+#define HAVE_TM_GMTOFF 1
 
 /* Define to 1 if you have the 'towlower' function. */
 /* #undef HAVE_TOWLOWER */
@@ -3385,23 +3385,23 @@
 /* #undef HAVE_WORKING_C32RTOMB */
 
 /* Define to 1 if 'fork' works. */
-/* #undef HAVE_WORKING_FORK */
+#define HAVE_WORKING_FORK 1
 
 /* Define to 1 if fstatat (..., 0) works. For example, it does not work in AIX
    7.1. */
-/* #undef HAVE_WORKING_FSTATAT_ZERO_FLAG */
+#define HAVE_WORKING_FSTATAT_ZERO_FLAG 1
 
 /* Define if the mbrtoc32 function basically works. */
 /* #undef HAVE_WORKING_MBRTOC32 */
 
 /* Define to 1 if O_DIRECTORY works, 0 otherwise. */
-#define HAVE_WORKING_O_DIRECTORY 0
+#define HAVE_WORKING_O_DIRECTORY 1
 
 /* Define to 1 if O_NOATIME works, 0 otherwise. */
-#define HAVE_WORKING_O_NOATIME 0
+#define HAVE_WORKING_O_NOATIME 1
 
 /* Define to 1 if O_NOFOLLOW works, 0 otherwise. */
-#define HAVE_WORKING_O_NOFOLLOW 0
+#define HAVE_WORKING_O_NOFOLLOW 1
 
 /* Define if the renameat2 function exists and it works. */
 /* #undef HAVE_WORKING_RENAMEAT2 */
@@ -3617,7 +3617,7 @@
 /* #undef LIBCRYPTO_SONAME */
 
 /* Define to 1 if linkat can create hardlinks to symlinks */
-#define LINKAT_SYMLINK_NOTSUP 1
+#define LINKAT_SYMLINK_NOTSUP 0
 
 /* Define to 1 if linkat fails to recognize a trailing slash. */
 #define LINKAT_TRAILING_SLASH_BUG 1
@@ -3625,7 +3625,7 @@
 /* Define to 1 if 'link(2)' dereferences symbolic links, 0 if it creates hard
    links to symlinks, -1 if it depends on the variable __xpg4, and -2 if
    unknown. */
-#define LINK_FOLLOWS_SYMLINKS 1
+#define LINK_FOLLOWS_SYMLINKS 0
 
 /* Define if localename.c overrides newlocale(), duplocale(), freelocale(). */
 /* #undef LOCALENAME_ENHANCE_LOCALE_FUNCS */
@@ -3665,11 +3665,11 @@
 
 /* Define if the mbrtowc function does not return (size_t) -2 for empty input.
    */
-#define MBRTOWC_EMPTY_INPUT_BUG 1
+/* #undef MBRTOWC_EMPTY_INPUT_BUG */
 
 /* Define if the mbrtowc function may signal encoding errors in the C locale.
    */
-/* #undef MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ */
+#define MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ 1
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
@@ -3706,7 +3706,7 @@
 #define MKFIFO_TRAILING_SLASH_BUG 1
 
 /* Define to 1 if mknod cannot create a fifo without super-user privileges */
-/* #undef MKNOD_FIFO_BUG */
+#define MKNOD_FIFO_BUG 1
 
 /* Define if (like SVR2) there is no specific function for reading the list of
    mounted file systems, and your system has these header files: <sys/fstyp.h>
@@ -3765,7 +3765,7 @@
 
 /* Define to 1 if fchmodat+AT_SYMLINK_NOFOLLOW does not work right on
    non-symlinks. */
-#define NEED_FCHMODAT_NONSYMLINK_FIX 1
+/* #undef NEED_FCHMODAT_NONSYMLINK_FIX */
 
 /* Define if the compilation of mktime.c should define 'mktime_internal'. */
 #define NEED_MKTIME_INTERNAL 1
@@ -3780,11 +3780,11 @@
 
 /* Define if the vasnprintf implementation needs special code for the 'a' and
    'A' directives. */
-#define NEED_PRINTF_DIRECTIVE_A 1
+/* #undef NEED_PRINTF_DIRECTIVE_A */
 
 /* Define if the vasnprintf implementation needs special code for the 'b'
    directive. */
-#define NEED_PRINTF_DIRECTIVE_B 1
+/* #undef NEED_PRINTF_DIRECTIVE_B */
 
 /* Define if the vasnprintf implementation needs special code for the 'F'
    directive. */
@@ -3800,11 +3800,11 @@
 
 /* Define if the vasnprintf implementation needs special code for 'double'
    arguments. */
-#define NEED_PRINTF_DOUBLE 1
+/* #undef NEED_PRINTF_DOUBLE */
 
 /* Define if the vasnprintf implementation needs special code for surviving
    out-of-memory conditions. */
-#define NEED_PRINTF_ENOMEM 1
+/* #undef NEED_PRINTF_ENOMEM */
 
 /* Define if the vasnprintf implementation needs special code for the # flag
    with a zero precision and a zero value in the 'x' and 'X' directives. */
@@ -3812,7 +3812,7 @@
 
 /* Define if the vasnprintf implementation needs special code for the ' flag.
    */
-#define NEED_PRINTF_FLAG_GROUPING 1
+/* #undef NEED_PRINTF_FLAG_GROUPING */
 
 /* Define if the vasnprintf implementation needs special code for the ' flag,
    for integer directives only. */
@@ -3836,7 +3836,7 @@
 
 /* Define if the vasnprintf implementation needs special code for 'long
    double' arguments. */
-#define NEED_PRINTF_LONG_DOUBLE 1
+/* #undef NEED_PRINTF_LONG_DOUBLE */
 
 /* Define if the vasnprintf implementation needs special code for supporting
    large precisions without arbitrary bounds. */
@@ -3862,7 +3862,7 @@
 /* #undef N_NAME_POINTER */
 
 /* Define to 1 if open() fails to recognize a trailing slash. */
-/* #undef OPEN_TRAILING_SLASH_BUG */
+#define OPEN_TRAILING_SLASH_BUG 1
 
 /* Name of package */
 #define PACKAGE "coreutils"
@@ -3895,7 +3895,7 @@
 #define PACKAGE_VERSION "9.11"
 
 /* Define to the maximum link count that a true pipe can have. */
-/* #undef PIPE_LINK_COUNT_MAX */
+#define PIPE_LINK_COUNT_MAX (1)
 
 /* Define this if you prefer euidaccess to return the correct result even if
    this would make it nonreentrant. Define this only if your entire
@@ -3929,7 +3929,7 @@
 
 /* Define to 1 if pthread_sigmask(), when it fails, returns -1 and sets errno.
    */
-#define PTHREAD_SIGMASK_FAILS_WITH_ERRNO 1
+/* #undef PTHREAD_SIGMASK_FAILS_WITH_ERRNO */
 
 /* Define to 1 if pthread_sigmask may return 0 and have no effect. */
 /* #undef PTHREAD_SIGMASK_INEFFECTIVE */
@@ -3946,14 +3946,14 @@
 
 /* Define to 1 if readlink sets errno instead of truncating a too-long link.
    */
-#define READLINK_TRUNCATE_BUG 1
+/* #undef READLINK_TRUNCATE_BUG */
 
 /* Define if the readutmp module should use the systemd login API. */
 /* #undef READUTMP_USE_SYSTEMD */
 
 /* Define if rename does not work when the destination file exists, as on
    Cygwin 1.5 or Windows. */
-#define RENAME_DEST_EXISTS_BUG 1
+/* #undef RENAME_DEST_EXISTS_BUG */
 
 /* Define if rename fails to leave hard links alone, as on NetBSD 1.6 or
    Cygwin 1.5. */
@@ -3961,11 +3961,11 @@
 
 /* Define if rename does not correctly handle slashes on the destination
    argument, such as on Solaris 11 or NetBSD 1.6. */
-/* #undef RENAME_TRAILING_SLASH_DEST_BUG */
+#define RENAME_TRAILING_SLASH_DEST_BUG 1
 
 /* Define if rename does not correctly handle slashes on the source argument,
    such as on Solaris 9 or cygwin 1.5. */
-/* #undef RENAME_TRAILING_SLASH_SOURCE_BUG */
+#define RENAME_TRAILING_SLASH_SOURCE_BUG 1
 
 /* Define to 1 if gnulib's fchdir() replacement is used. */
 /* #undef REPLACE_FCHDIR */
@@ -4074,13 +4074,13 @@
 /* #undef STRERROR_R_CHAR_P */
 
 /* Define to 1 if strtod does not set errno upon gradual underflow. */
-#define STRTOD_HAS_GRADUAL_UNDERFLOW_PROBLEM 1
+/* #undef STRTOD_HAS_GRADUAL_UNDERFLOW_PROBLEM */
 
 /* Define to 1 if strtod does not set errno upon flush-to-zero underflow. */
 /* #undef STRTOD_HAS_UNDERFLOW_BUG */
 
 /* Define to 1 if strtold does not set errno upon gradual underflow. */
-#define STRTOLD_HAS_GRADUAL_UNDERFLOW_PROBLEM 1
+/* #undef STRTOLD_HAS_GRADUAL_UNDERFLOW_PROBLEM */
 
 /* Define to 1 if strtold does not set errno upon flush-to-zero underflow. */
 /* #undef STRTOLD_HAS_UNDERFLOW_BUG */
@@ -4161,7 +4161,7 @@
 #define USE_LINUX_CRYPTO_API 0
 
 /* Counting lines with Neon enabled */
-/* #undef USE_NEON_WC_LINECOUNT */ /* needs getauxval, which Moxnox lacks */
+/* #undef USE_NEON_WC_LINECOUNT */
 
 /* CRC32 calculation by pclmul hardware instruction enabled */
 #ifdef __x86_64__
@@ -4185,6 +4185,10 @@
 /* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
+#endif
+/* Enable extensions on Cosmopolitan Libc. */
+#ifndef _COSMO_SOURCE
+# define _COSMO_SOURCE 1
 #endif
 /* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
@@ -4278,7 +4282,7 @@
 #define USE_UNLOCKED_IO GNULIB_STDIO_SINGLE_THREAD
 
 /* CRC32 calculation by vmull hardware instruction enabled */
-/* #undef USE_VMULL_CRC32 */ /* needs getauxval, which Moxnox lacks */
+/* #undef USE_VMULL_CRC32 */
 
 /* Define if the native Windows multithreading API can be used. */
 /* #undef USE_WINDOWS_THREADS */
@@ -4406,7 +4410,7 @@
 
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
-#define __GETOPT_PREFIX rpl_
+/* #undef __GETOPT_PREFIX */
 
 /* Define to 1 on platforms where this makes time_t a 64-bit type. */
 /* #undef __MINGW_USE_VC2005_COMPAT */

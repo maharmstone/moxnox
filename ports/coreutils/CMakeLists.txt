@@ -277,8 +277,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/gethrxtime.c
     repo/gnulib/lib/getline.c
     repo/gnulib/lib/getlogin.c
-    repo/gnulib/lib/getopt.c
-    repo/gnulib/lib/getopt1.c
     repo/gnulib/lib/getrandom.c
     repo/gnulib/lib/gettime-res.c
     repo/gnulib/lib/gettime.c
