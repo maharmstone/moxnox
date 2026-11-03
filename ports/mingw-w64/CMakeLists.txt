@@ -111,7 +111,7 @@ add_library(mingw32 STATIC
     repo/mingw-w64-crt/crt/pesect.c
     repo/mingw-w64-crt/crt/xthdloc.c
     repo/mingw-w64-crt/crt/mingw_helpers.c
-    repo/mingw-w64-crt/crt/pseudo-reloc.c
+    pseudo-reloc.cpp
     repo/mingw-w64-crt/crt/usermatherr.c
     repo/mingw-w64-crt/crt/xtxtmode.c
     repo/mingw-w64-crt/crt/crt_handler.c
