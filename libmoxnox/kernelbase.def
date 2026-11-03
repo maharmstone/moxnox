@@ -1,6 +1,5 @@
 LIBRARY "kernelbase.dll"
 EXPORTS
-Sleep
 GetLastError
 TlsGetValue
 VirtualProtect
