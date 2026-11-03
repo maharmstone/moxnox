@@ -58,24 +58,6 @@ static int duplicate_ppstrings (int ac, _TCHAR ***av);
 
 extern int _MINGW_INSTALL_DEBUG_MATHERR;
 
-#ifdef __MINGW_SHOW_INVALID_PARAMETER_EXCEPTION
-#define __UNUSED_PARAM_1(x) x
-#else
-#define __UNUSED_PARAM_1	__UNUSED_PARAM
-#endif
-static void
-__mingw_invalidParameterHandler (const wchar_t * __UNUSED_PARAM_1(expression),
-				 const wchar_t * __UNUSED_PARAM_1(function),
-				 const wchar_t * __UNUSED_PARAM_1(file),
-				 unsigned int    __UNUSED_PARAM_1(line),
-				 uintptr_t __UNUSED_PARAM(pReserved))
-{
-#ifdef __MINGW_SHOW_INVALID_PARAMETER_EXCEPTION
-  wprintf(L"Invalid parameter detected in function %s. File: %s Line: %d\n", function, file, line);
-  wprintf(L"Expression: %s\n", expression);
-#endif
-}
-
 static void
 safe_flush (void)
 {
@@ -169,7 +151,6 @@ __tmainCRTStartup (void)
 
 	_pei386_runtime_relocator ();
 
-	_set_invalid_parameter_handler (__mingw_invalidParameterHandler);
 	_fpreset ();
 
 	if (__mingw_app_type)
