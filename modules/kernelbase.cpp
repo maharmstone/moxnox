@@ -125,7 +125,6 @@ bool CreateProcessW(const char16_t* application_name, char16_t* command_line,
                     const void* environment, const char16_t* current_directory,
                     const STARTUPINFOW* startup_info,
                     PROCESS_INFORMATION* process_information);
-uint32_t GetCurrentThreadId();
 void RaiseException(uint32_t code, uint32_t flags, uint32_t count,
                     const uintptr_t* args);
 
