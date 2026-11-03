@@ -286,33 +286,45 @@ static mode_type parse_mode(const char* mode) {
 
     switch (mode[0]) {
         case 'r':
-            if (mode[1] == '+') {
-                type = mode_type::rplus;
-                mode += 2;
-            } else {
-                type = mode_type::r;
+            mode++;
+
+            if (*mode == 'b')
                 mode++;
-            }
+
+            if (*mode == '+') {
+                type = mode_type::rplus;
+                mode++;
+            } else
+                type = mode_type::r;
+
             break;
 
         case 'w':
-            if (mode[1] == '+') {
-                type = mode_type::wplus;
-                mode += 2;
-            } else {
-                type = mode_type::w;
+            mode++;
+
+            if (*mode == 'b')
                 mode++;
-            }
+
+            if (*mode == '+') {
+                type = mode_type::wplus;
+                mode++;
+            } else
+                type = mode_type::w;
+
             break;
 
         case 'a':
-            if (mode[1] == '+') {
-                type = mode_type::aplus;
-                mode += 2;
-            } else {
-                type = mode_type::a;
+            mode++;
+
+            if (*mode == 'b')
                 mode++;
-            }
+
+            if (*mode == '+') {
+                type = mode_type::aplus;
+                mode++;
+            } else
+                type = mode_type::a;
+
             break;
 
         default:
@@ -320,7 +332,7 @@ static mode_type parse_mode(const char* mode) {
     }
 
     // FIXME - implement MS' extensions?
-    // FIXME - is "rb+" etc. valid?
+
     while (*mode != 0) {
         if (*mode != 't' && *mode != 'b')
             return mode_type::invalid;
