@@ -170,7 +170,9 @@ static void test_kill_cross_process() {
     unique_handle proc{pi.hProcess};
     NtClose(pi.hThread);
 
-    Sleep(100);
+    LARGE_INTEGER t;
+    t.QuadPart = -1000000; // 100ms
+    NtDelayExecution(false, &t);
 
     if (kill((pid_t)pi.dwProcessId, SIGINT) != 0) {
         print("Test 4: kill() failed\n");
