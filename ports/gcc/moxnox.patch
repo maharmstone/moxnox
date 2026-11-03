@@ -545,17 +545,8 @@ new file mode 100644
 index 00000000000..bc3c1d64d98
 --- /dev/null
 +++ b/libgcc/config/mingw/t-moxnox
-@@ -0,0 +1,45 @@
+@@ -0,0 +1,31 @@
 +# Moxnox parts of libgcc. Replaces i386/t-cygming and i386/t-mingw32.
-+
-+# The crtstuff sources include windows.h, which is Win32-tier by
-+# nature: the Windows headers (staged at <sysroot>/mingw-compat)
-+# require the identity macros. Only the crt rules below use these;
-+# the rest of libgcc builds against the self-contained Moxnox
-+# headers with no compatibility flags.
-+MOXNOX_MINGW_COMPAT = -D_WIN32 -D_WIN64 -D__MINGW32__ -D__MINGW64__ \
-+	-D__MSVCRT__ -D__USE_MINGW_ANSI_STDIO=0 \
-+	-idirafter =/mingw-compat/include -include wchar.h
 +
 +# Libraries for the shared libgcc link.  The link rule passes
 +# -nodefaultlibs, so this must be the full closure, matching the
@@ -573,11 +564,6 @@ index 00000000000..bc3c1d64d98
 +CFLAGS-truncxfbf2.c += -mlong-double-80
 +CFLAGS-fixxfbitint.c += -mlong-double-80
 +CFLAGS-floatbitintxf.c += -mlong-double-80
-+
-+# Also Win32-tier: the SEH unwinder is Windows mechanics through and
-+# through.  (enable-execute-stack is not: the Moxnox version uses the
-+# NT system calls directly.)
-+CFLAGS-unwind-seh.c += $(MOXNOX_MINGW_COMPAT)
 +
 +CUSTOM_CRTSTUFF = yes
 +
@@ -2151,14 +2137,6 @@ index 8435a125817..cf93bcf7fac 100644
  
  #ifndef LIBGCC_SONAME
  #define LIBGCC_SONAME "libgcc_s.dll"
---- /dev/null
-+++ b/libgcc/moxnox-seh.h
-@@ -0,0 +1,5 @@
-+#pragma once
-+
-+#define EH_NONCONTINUABLE 0x01
-+
-+NTSYSAPI void WINAPI RtlRaiseException(PEXCEPTION_RECORD);
 diff --git a/libgcc/unwind-seh.c b/libgcc/unwind-seh.c
 index ed038854787..af6e03d599f 100644
 --- a/libgcc/unwind-seh.c
@@ -2254,3 +2232,241 @@ index ed038854787..af6e03d599f 100644
  
    /* If we get here, we got to top-of-stack.  */
    /* ??? We no longer have a context pointer to pass in.  */
+diff --git a/libgcc/moxnox-seh.h b/libgcc/moxnox-seh.h
+new file mode 100644
+index 00000000000..a69b7bdefc1
+--- /dev/null
++++ b/libgcc/moxnox-seh.h
+@@ -0,0 +1,232 @@
++#pragma once
++
++// FIXME - aarch64 version of these structs?
++
++#define EH_NONCONTINUABLE 0x01
++
++#define EXCEPTION_NONCONTINUABLE	0x1
++#define EXCEPTION_UNWINDING		0x2
++#define EXCEPTION_EXIT_UNWIND		0x4
++#define EXCEPTION_TARGET_UNWIND		0x20
++
++#define CONTEXT_AMD64 0x100000
++
++#define CONTEXT_CONTROL (CONTEXT_AMD64 | 0x1)
++#define CONTEXT_INTEGER (CONTEXT_AMD64 | 0x2)
++#define CONTEXT_SEGMENTS (CONTEXT_AMD64 | 0x4)
++#define CONTEXT_FLOATING_POINT (CONTEXT_AMD64 | 0x8)
++#define CONTEXT_DEBUG_REGISTERS (CONTEXT_AMD64 | 0x10)
++
++#define CONTEXT_ALL (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_FLOATING_POINT | CONTEXT_DEBUG_REGISTERS)
++
++#define ExceptionContinueSearch 1
++
++typedef uint32_t DWORD;
++typedef uint64_t ULONG64;
++typedef void* PVOID;
++typedef uintptr_t ULONG_PTR;
++
++#define EXCEPTION_MAXIMUM_PARAMETERS 15
++
++typedef struct _EXCEPTION_RECORD {
++  uint32_t ExceptionCode;
++  uint32_t ExceptionFlags;
++  struct _EXCEPTION_RECORD* ExceptionRecord;
++  void* ExceptionAddress;
++  uint32_t NumberParameters;
++  uintptr_t ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
++} EXCEPTION_RECORD;
++
++typedef struct _RUNTIME_FUNCTION {
++  uint32_t BeginAddress;
++  uint32_t EndAddress;
++  uint32_t UnwindData;
++} RUNTIME_FUNCTION, *PRUNTIME_FUNCTION;
++
++#define UNWIND_HISTORY_TABLE_SIZE 12
++
++struct UNWIND_HISTORY_TABLE_ENTRY {
++  uint64_t ImageBase;
++  RUNTIME_FUNCTION* FunctionEntry;
++};
++
++typedef struct _UNWIND_HISTORY_TABLE {
++  uint32_t Count;
++  uint8_t Search;
++  uint64_t LowAddress;
++  uint64_t HighAddress;
++  struct UNWIND_HISTORY_TABLE_ENTRY Entry[UNWIND_HISTORY_TABLE_SIZE];
++} UNWIND_HISTORY_TABLE;
++
++typedef struct _M128A {
++  uint64_t Low;
++  int64_t High;
++} M128A __attribute__ ((aligned (16)));
++
++typedef struct _XSAVE_FORMAT {
++  uint16_t ControlWord;
++  uint16_t StatusWord;
++  uint8_t TagWord;
++  uint8_t Reserved1;
++  uint16_t ErrorOpcode;
++  uint32_t ErrorOffset;
++  uint16_t ErrorSelector;
++  uint16_t Reserved2;
++  uint32_t DataOffset;
++  uint16_t DataSelector;
++  uint16_t Reserved3;
++  uint32_t MxCsr;
++  uint32_t MxCsr_Mask;
++  M128A FloatRegisters[8];
++  M128A XmmRegisters[16];
++  uint8_t Reserved4[96];
++} XSAVE_FORMAT __attribute__ ((aligned (16)));
++
++typedef struct _CONTEXT {
++  uint64_t P1Home;
++  uint64_t P2Home;
++  uint64_t P3Home;
++  uint64_t P4Home;
++  uint64_t P5Home;
++  uint64_t P6Home;
++  uint32_t ContextFlags;
++  uint32_t MxCsr;
++  uint16_t SegCs;
++  uint16_t SegDs;
++  uint16_t SegEs;
++  uint16_t SegFs;
++  uint16_t SegGs;
++  uint16_t SegSs;
++  uint32_t EFlags;
++  uint64_t Dr0;
++  uint64_t Dr1;
++  uint64_t Dr2;
++  uint64_t Dr3;
++  uint64_t Dr6;
++  uint64_t Dr7;
++  uint64_t Rax;
++  uint64_t Rcx;
++  uint64_t Rdx;
++  uint64_t Rbx;
++  uint64_t Rsp;
++  uint64_t Rbp;
++  uint64_t Rsi;
++  uint64_t Rdi;
++  uint64_t R8;
++  uint64_t R9;
++  uint64_t R10;
++  uint64_t R11;
++  uint64_t R12;
++  uint64_t R13;
++  uint64_t R14;
++  uint64_t R15;
++  uint64_t Rip;
++  union {
++    XSAVE_FORMAT FltSave;
++    struct {
++      M128A Header[2];
++      M128A Legacy[8];
++      M128A Xmm0;
++      M128A Xmm1;
++      M128A Xmm2;
++      M128A Xmm3;
++      M128A Xmm4;
++      M128A Xmm5;
++      M128A Xmm6;
++      M128A Xmm7;
++      M128A Xmm8;
++      M128A Xmm9;
++      M128A Xmm10;
++      M128A Xmm11;
++      M128A Xmm12;
++      M128A Xmm13;
++      M128A Xmm14;
++      M128A Xmm15;
++    };
++  };
++  M128A VectorRegister[26];
++  uint64_t VectorControl;
++  uint64_t DebugControl;
++  uint64_t LastBranchToRip;
++  uint64_t LastBranchFromRip;
++  uint64_t LastExceptionToRip;
++  uint64_t LastExceptionFromRip;
++} CONTEXT __attribute__ ((aligned (16)));
++
++typedef EXCEPTION_DISPOSITION EXCEPTION_ROUTINE(EXCEPTION_RECORD* ExceptionRecord,
++						void* EstablisherFrame,
++						CONTEXT* ContextRecord,
++						void* DispatcherContext);
++
++typedef struct _KNONVOLATILE_CONTEXT_POINTERS {
++  union {
++    M128A* FloatingContext[16];
++    struct {
++      M128A* Xmm0;
++      M128A* Xmm1;
++      M128A* Xmm2;
++      M128A* Xmm3;
++      M128A* Xmm4;
++      M128A* Xmm5;
++      M128A* Xmm6;
++      M128A* Xmm7;
++      M128A* Xmm8;
++      M128A* Xmm9;
++      M128A* Xmm10;
++      M128A* Xmm11;
++      M128A* Xmm12;
++      M128A* Xmm13;
++      M128A* Xmm14;
++      M128A* Xmm15;
++    };
++  };
++  union {
++    uint64_t* IntegerContext[16];
++    struct {
++      uint64_t* Rax;
++      uint64_t* Rcx;
++      uint64_t* Rdx;
++      uint64_t* Rbx;
++      uint64_t* Rsp;
++      uint64_t* Rbp;
++      uint64_t* Rsi;
++      uint64_t* Rdi;
++      uint64_t* R8;
++      uint64_t* R9;
++      uint64_t* R10;
++      uint64_t* R11;
++      uint64_t* R12;
++      uint64_t* R13;
++      uint64_t* R14;
++      uint64_t* R15;
++    };
++  };
++} KNONVOLATILE_CONTEXT_POINTERS;
++
++typedef struct _DISPATCHER_CONTEXT {
++  uint64_t ControlPc;
++  uint64_t ImageBase;
++  RUNTIME_FUNCTION* FunctionEntry;
++  uint64_t EstablisherFrame;
++  uint64_t TargetIp;
++  CONTEXT* ContextRecord;
++  EXCEPTION_ROUTINE* LanguageHandler;
++  void* HandlerData;
++  UNWIND_HISTORY_TABLE* HistoryTable;
++  uint32_t ScopeIndex;
++  uint32_t Fill0;
++} DISPATCHER_CONTEXT;
++
++void RtlRaiseException(EXCEPTION_RECORD* exception_record);
++RUNTIME_FUNCTION* RtlLookupFunctionEntry(uintptr_t pc, uintptr_t* base,
++					 UNWIND_HISTORY_TABLE* table);
++EXCEPTION_ROUTINE* RtlVirtualUnwind(uint32_t type, uint64_t image_base,
++				    uint64_t pc, RUNTIME_FUNCTION* func,
++				    CONTEXT* context, void** handler_data,
++				    uint64_t* establisher_frame,
++				    KNONVOLATILE_CONTEXT_POINTERS* ctx_ptr);
++void RtlUnwindEx(void* target_frame, void* target_ip,
++		 EXCEPTION_RECORD* exception_record, void* return_value,
++		 CONTEXT* original_context,
++		 UNWIND_HISTORY_TABLE* history_table);
++void RtlCaptureContext(CONTEXT* context);
