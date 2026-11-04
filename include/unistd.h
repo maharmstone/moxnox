@@ -37,6 +37,7 @@
 
 #define _PC_PATH_MAX 0
 #define _PC_NAME_MAX 1
+#define _PC_PIPE_BUF 2
 
 #define _CS_PATH 0
 

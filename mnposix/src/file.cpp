@@ -1857,6 +1857,9 @@ long fpathconf(int /*fd*/, int name) {
         case _PC_NAME_MAX:
             return 255;
 
+        case _PC_PIPE_BUF:
+            return 1; // FIXME - POSIX says this should be at least 512
+
         default:
             *_errno() = EINVAL;
             return -1;
