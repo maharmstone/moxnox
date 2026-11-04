@@ -179,14 +179,14 @@
 /* #undef DOUBLE_SLASH_IS_DISTINCT_ROOT */
 
 /* Define if struct dirent has a member d_ino that actually works. */
-/* #undef D_INO_IN_DIRENT */
+#define D_INO_IN_DIRENT 1
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 /* #undef ENABLE_NLS */
 
 /* Define this to 1 if F_DUPFD behavior does not match POSIX */
-#define FCNTL_DUPFD_BUGGY 1
+/* #undef FCNTL_DUPFD_BUGGY */
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like 'struct s { int n; short
@@ -216,7 +216,7 @@
 #define FUNC_FFLUSH_STDIN 1
 
 /* Define to 1 if nl_langinfo (YESEXPR) returns a non-empty string. */
-#define FUNC_NL_LANGINFO_YESEXPR_WORKS 0
+#define FUNC_NL_LANGINFO_YESEXPR_WORKS 1
 
 /* Define this to 'void' or 'struct timezone' to match the system's
    declaration of the second argument to gettimeofday. */
@@ -1222,7 +1222,7 @@
 /* #undef HAVE_GETEXECNAME */
 
 /* Define to 1 if you have the 'getlocalename_l' function. */
-#define HAVE_GETLOCALENAME_L 1
+/* #undef HAVE_GETLOCALENAME_L */
 
 /* Define to 1 if you have the <getopt.h> header file. */
 #define HAVE_GETOPT_H 1
@@ -1247,7 +1247,7 @@
 /* #undef HAVE_GOOD_USELOCALE */
 
 /* Define if you have the iconv() function and it works. */
-/* #undef HAVE_ICONV */
+#define HAVE_ICONV 1
 
 /* Define to 1 if you have the 'inet_pton' function. */
 /* #undef HAVE_INET_PTON */
@@ -1310,7 +1310,7 @@
 #define HAVE_LC_MESSAGES 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
-#define HAVE_LIBINTL_H 1
+/* #undef HAVE_LIBINTL_H */
 
 /* Define to 1 if you have the Perl Compatible Regular Expressions library. */
 /* #undef HAVE_LIBPCRE */
@@ -1587,10 +1587,10 @@
 #define HAVE_STRUCT_DIRENT_D_TYPE 1
 
 /* Define to 1 if 'decimal_point' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_DECIMAL_POINT 1
+/* #undef HAVE_STRUCT_LCONV_DECIMAL_POINT */
 
 /* Define to 1 if 'int_p_cs_precedes' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES 1
+/* #undef HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES */
 
 /* Define to 1 if the system has the type 'struct random_data'. */
 /* #undef HAVE_STRUCT_RANDOM_DATA */
@@ -1752,16 +1752,16 @@
 
 /* Define to 1 if fstatat (..., 0) works. For example, it does not work in AIX
    7.1. */
-/* #undef HAVE_WORKING_FSTATAT_ZERO_FLAG */
+#define HAVE_WORKING_FSTATAT_ZERO_FLAG 1
 
 /* Define if the mbrtoc32 function basically works. */
 /* #undef HAVE_WORKING_MBRTOC32 */
 
 /* Define to 1 if O_NOATIME works. */
-#define HAVE_WORKING_O_NOATIME 0
+#define HAVE_WORKING_O_NOATIME 1
 
 /* Define to 1 if O_NOFOLLOW works. */
-#define HAVE_WORKING_O_NOFOLLOW 0
+#define HAVE_WORKING_O_NOFOLLOW 1
 
 /* Define if you have the sigaltstack() function and it works. */
 /* #undef HAVE_WORKING_SIGALTSTACK */
@@ -1955,7 +1955,7 @@
 
 /* Define if the mbrtowc function may signal encoding errors in the C locale.
    */
-/* #undef MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ */
+#define MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ 1
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
@@ -2010,7 +2010,7 @@
 #define NL_LANGINFO_MTSAFE 1
 
 /* Define to 1 if open() fails to recognize a trailing slash. */
-/* #undef OPEN_TRAILING_SLASH_BUG */
+#define OPEN_TRAILING_SLASH_BUG 1
 
 /* Name of package */
 #define PACKAGE "grep"
@@ -2067,7 +2067,7 @@
 
 /* Define to 1 if pthread_sigmask(), when it fails, returns -1 and sets errno.
    */
-#define PTHREAD_SIGMASK_FAILS_WITH_ERRNO 1
+/* #undef PTHREAD_SIGMASK_FAILS_WITH_ERRNO */
 
 /* Define to 1 if pthread_sigmask may return 0 and have no effect. */
 /* #undef PTHREAD_SIGMASK_INEFFECTIVE */
@@ -2084,10 +2084,10 @@
 
 /* Define to 1 if stat needs help when passed a file name with a trailing
    slash */
-/* #undef REPLACE_FUNC_STAT_FILE */
+#define REPLACE_FUNC_STAT_FILE 1
 
 /* Define if nl_langinfo exists but is overridden by gnulib. */
-/* #undef REPLACE_NL_LANGINFO */
+#define REPLACE_NL_LANGINFO 1
 
 /* Define to 1 if open() should work around the inability to open a directory.
    */
@@ -2178,6 +2178,10 @@
 /* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
+#endif
+/* Enable extensions on Cosmopolitan Libc. */
+#ifndef _COSMO_SOURCE
+# define _COSMO_SOURCE 1
 #endif
 /* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
@@ -2399,7 +2403,7 @@
 
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
-#define __GETOPT_PREFIX rpl_
+/* #undef __GETOPT_PREFIX */
 
 /* Define to 1 on platforms where this makes time_t a 64-bit type. */
 /* #undef __MINGW_USE_VC2005_COMPAT */
