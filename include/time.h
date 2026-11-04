@@ -39,6 +39,13 @@ struct timespec {
     long tv_nsec;
 };
 
+struct itimerspec {
+    struct timespec it_interval;
+    struct timespec it_value;
+};
+
+struct sigevent;
+
 typedef int clockid_t;
 
 #define CLOCK_MONOTONIC 1
@@ -74,6 +81,10 @@ int clock_gettime(clockid_t clock_id, struct timespec* tp);
 int clock_getres(clockid_t clock_id, struct timespec* res);
 int nanosleep(const struct timespec* duration, struct timespec* rem);
 int timespec_get(struct timespec* ts, int base);
+int timer_create(clockid_t clockid, struct sigevent* evp, timer_t* timerid);
+int timer_delete(timer_t timerid);
+int timer_settime(timer_t timerid, int flags, const struct itimerspec* value,
+                  struct itimerspec* ovalue);
 
 #ifdef __cplusplus
 }

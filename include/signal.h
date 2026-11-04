@@ -45,6 +45,18 @@ struct sigaction {
     int sa_flags;
 };
 
+struct sigevent {
+    int sigev_notify;
+    int sigev_signo;
+    union sigval sigev_value;
+    void (*sigev_notify_function)(union sigval);
+    pthread_attr_t* sigev_notify_attributes;
+};
+
+#define SIGEV_NONE 0
+#define SIGEV_SIGNAL 1
+#define SIGEV_THREAD 2
+
 #define SIGHUP 1
 #define SIGINT 2
 #define SIGQUIT 3
