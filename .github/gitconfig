@@ -108,6 +108,7 @@
 	insteadOf = https://https.git.savannah.gnu.org/git/gnulib.git
 	insteadOf = https://git.savannah.gnu.org/git/gnulib.git
 	insteadOf = https://git.savannah.gnu.org/git/gnulib
+	insteadOf = git://git.savannah.gnu.org/gnulib.git
 [url "https://git.burntcomma.com/moxnox/curl"]
 	insteadOf = https://github.com/curl/curl
 [url "https://git.burntcomma.com/moxnox/binutils-gdb"]
@@ -200,3 +201,5 @@
 	insteadOf = https://github.com/pkgconf/pkgconf
 [url "https://git.burntcomma.com/moxnox/texinfo"]
 	insteadOf = git://git.sv.gnu.org/texinfo.git
+[url "https://git.burntcomma.com/moxnox/gettext"]
+	insteadOf = git://git.sv.gnu.org/gettext.git

@@ -262,3 +262,6 @@
 [submodule "ports/texinfo/repo"]
 	path = ports/texinfo/repo
 	url = git://git.sv.gnu.org/texinfo.git
+[submodule "ports/gettext/repo"]
+	path = ports/gettext/repo
+	url = git://git.sv.gnu.org/gettext.git

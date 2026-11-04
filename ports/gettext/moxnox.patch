@@ -1,0 +1,283 @@
+--- a/xgettext.c
++++ b/xgettext.c
+@@ -112,21 +112,27 @@
+ #include "x-java.h"
+ #include "x-csharp.h"
+ #include "x-javascript.h"
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+ #include "x-typescript.h"
+ #include "x-typescriptx.h"
++#endif
+ #include "x-scheme.h"
+ #include "x-lisp.h"
+ #include "x-elisp.h"
+ #include "x-librep.h"
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+ #include "x-rust.h"
+ #include "x-go.h"
++#endif
+ #include "x-ruby.h"
+ #include "x-sh.h"
+ #include "x-awk.h"
+ #include "x-lua.h"
+ #include "x-modula2.h"
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+ #include "x-d.h"
+ #include "x-ocaml.h"
++#endif
+ #include "x-smalltalk.h"
+ #include "x-vala.h"
+ #include "x-tcl.h"
+@@ -207,24 +213,30 @@
+ static flag_context_list_table_ty flag_table_java;
+ static flag_context_list_table_ty flag_table_csharp;
+ static flag_context_list_table_ty flag_table_javascript;
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+ static flag_context_list_table_ty flag_table_typescript;
+ static flag_context_list_table_ty flag_table_typescriptx;
++#endif
+ static flag_context_list_table_ty flag_table_scheme;
+ static flag_context_list_table_ty flag_table_lisp;
+ static flag_context_list_table_ty flag_table_elisp;
+ static flag_context_list_table_ty flag_table_librep;
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+ #if 0 /* declared in x-rust.h */
+ extern flag_context_list_table_ty flag_table_rust_functions;
+ extern flag_context_list_table_ty flag_table_rust_macros;
+ #endif
+ static flag_context_list_table_ty flag_table_go;
++#endif
+ static flag_context_list_table_ty flag_table_ruby;
+ static flag_context_list_table_ty flag_table_sh;
+ static flag_context_list_table_ty flag_table_awk;
+ static flag_context_list_table_ty flag_table_lua;
+ static flag_context_list_table_ty flag_table_modula2;
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+ static flag_context_list_table_ty flag_table_d;
+ static flag_context_list_table_ty flag_table_ocaml;
++#endif
+ static flag_context_list_table_ty flag_table_vala;
+ static flag_context_list_table_ty flag_table_tcl;
+ static flag_context_list_table_ty flag_table_perl;
+@@ -355,21 +367,27 @@
+   init_flag_table_java ();
+   init_flag_table_csharp ();
+   init_flag_table_javascript ();
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+   init_flag_table_typescript ();
+   init_flag_table_typescriptx ();
++#endif
+   init_flag_table_scheme ();
+   init_flag_table_lisp ();
+   init_flag_table_elisp ();
+   init_flag_table_librep ();
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+   init_flag_table_rust ();
+   init_flag_table_go ();
++#endif
+   init_flag_table_ruby ();
+   init_flag_table_sh ();
+   init_flag_table_awk ();
+   init_flag_table_lua ();
+   init_flag_table_modula2 ();
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+   init_flag_table_d ();
+   init_flag_table_ocaml ();
++#endif
+   init_flag_table_vala ();
+   init_flag_table_tcl ();
+   init_flag_table_perl ();
+@@ -455,21 +473,27 @@
+           x_java_extract_all ();
+           x_csharp_extract_all ();
+           x_javascript_extract_all ();
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+           x_typescript_extract_all ();
+           x_typescriptx_extract_all ();
++#endif
+           x_scheme_extract_all ();
+           x_lisp_extract_all ();
+           x_elisp_extract_all ();
+           x_librep_extract_all ();
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+           x_rust_extract_all ();
+           x_go_extract_all ();
++#endif
+           x_ruby_extract_all ();
+           x_sh_extract_all ();
+           x_awk_extract_all ();
+           x_lua_extract_all ();
+           x_modula2_extract_all ();
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+           x_d_extract_all ();
+           x_ocaml_extract_all ();
++#endif
+           x_vala_extract_all ();
+           x_tcl_extract_all ();
+           x_perl_extract_all ();
+@@ -542,21 +566,27 @@
+           x_java_keyword (optarg);
+           x_csharp_keyword (optarg);
+           x_javascript_keyword (optarg);
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+           x_typescript_keyword (optarg);
+           x_typescriptx_keyword (optarg);
++#endif
+           x_scheme_keyword (optarg);
+           x_lisp_keyword (optarg);
+           x_elisp_keyword (optarg);
+           x_librep_keyword (optarg);
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+           x_rust_keyword (optarg);
+           x_go_keyword (optarg);
++#endif
+           x_ruby_keyword (optarg);
+           x_sh_keyword (optarg);
+           x_awk_keyword (optarg);
+           x_lua_keyword (optarg);
+           x_modula2_keyword (optarg);
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+           x_d_keyword (optarg);
+           x_ocaml_keyword (optarg);
++#endif
+           x_vala_keyword (optarg);
+           x_tcl_keyword (optarg);
+           x_perl_keyword (optarg);
+@@ -1661,12 +1691,14 @@
+                                                         name_start, name_end,
+                                                         argnum, value, pass);
+                       }
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+                     if (backend == NULL || strcmp (backend, "D") == 0)
+                       {
+                         flag_context_list_table_insert (&flag_table_d, XFORMAT_PRIMARY,
+                                                         name_start, name_end,
+                                                         argnum, value, pass);
+                       }
++#endif
+                     if (backend == NULL || strcmp (backend, "Vala") == 0)
+                       {
+                         flag_context_list_table_insert (&flag_table_vala, XFORMAT_PRIMARY,
+@@ -1722,12 +1754,14 @@
+                     flag_context_list_table_insert (&flag_table_javascript, XFORMAT_PRIMARY,
+                                                     name_start, name_end,
+                                                     argnum, value, pass);
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+                     flag_context_list_table_insert (&flag_table_typescript, XFORMAT_PRIMARY,
+                                                     name_start, name_end,
+                                                     argnum, value, pass);
+                     flag_context_list_table_insert (&flag_table_typescriptx, XFORMAT_PRIMARY,
+                                                     name_start, name_end,
+                                                     argnum, value, pass);
++#endif
+                     break;
+                   case format_scheme:
+                     flag_context_list_table_insert (&flag_table_scheme, XFORMAT_PRIMARY,
+@@ -1749,6 +1783,7 @@
+                                                     name_start, name_end,
+                                                     argnum, value, pass);
+                     break;
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+                   case format_rust:
+                     if (name_end - name_start > 1 && name_end[-1] == '!')
+                       flag_context_list_table_insert (&flag_table_rust_macros, XFORMAT_PRIMARY,
+@@ -1764,6 +1799,7 @@
+                                                     name_start, name_end,
+                                                     argnum, value, pass);
+                     break;
++#endif
+                   case format_ruby:
+                     flag_context_list_table_insert (&flag_table_ruby, XFORMAT_PRIMARY,
+                                                     name_start, name_end,
+@@ -1796,6 +1832,7 @@
+                                                     name_start, name_end,
+                                                     argnum, value, pass);
+                     break;
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+                   case format_d:
+                     flag_context_list_table_insert (&flag_table_d, XFORMAT_SECONDARY,
+                                                     name_start, name_end,
+@@ -1806,6 +1843,7 @@
+                                                     name_start, name_end,
+                                                     argnum, value, pass);
+                     break;
++#endif
+                   case format_smalltalk:
+                     break;
+                   case format_qt:
+@@ -2504,21 +2542,27 @@
+     SCANNERS_JAVA
+     SCANNERS_CSHARP
+     SCANNERS_JAVASCRIPT
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+     SCANNERS_TYPESCRIPT
+     SCANNERS_TYPESCRIPTX
++#endif
+     SCANNERS_SCHEME
+     SCANNERS_LISP
+     SCANNERS_ELISP
+     SCANNERS_LIBREP
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+     SCANNERS_RUST
+     SCANNERS_GO
++#endif
+     SCANNERS_RUBY
+     SCANNERS_SH
+     SCANNERS_AWK
+     SCANNERS_LUA
+     SCANNERS_MODULA2
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+     SCANNERS_D
+     SCANNERS_OCAML
++#endif
+     SCANNERS_SMALLTALK
+     SCANNERS_VALA
+     SCANNERS_TCL
+@@ -2601,21 +2645,27 @@
+     EXTENSIONS_JAVA
+     EXTENSIONS_CSHARP
+     EXTENSIONS_JAVASCRIPT
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+     EXTENSIONS_TYPESCRIPT
+     EXTENSIONS_TYPESCRIPTX
++#endif
+     EXTENSIONS_SCHEME
+     EXTENSIONS_LISP
+     EXTENSIONS_ELISP
+     EXTENSIONS_LIBREP
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+     EXTENSIONS_RUST
+     EXTENSIONS_GO
++#endif
+     EXTENSIONS_RUBY
+     EXTENSIONS_SH
+     EXTENSIONS_AWK
+     EXTENSIONS_LUA
+     EXTENSIONS_MODULA2
++#if 0 /* Moxnox: tree-sitter backend, not built (see ports/gettext/CMakeLists.txt) */
+     EXTENSIONS_D
+     EXTENSIONS_OCAML
++#endif
+     EXTENSIONS_SMALLTALK
+     EXTENSIONS_VALA
+     EXTENSIONS_TCL
+--- a/msginit.c
++++ b/msginit.c
+@@ -1046,7 +1046,7 @@
+ }
+ 
+ 
+-#if HAVE_PWD_H  /* Only Unix, not native Windows.  */
++#if HAVE_PWD_H && !defined __moxnox__  /* Only Unix, not native Windows.  Moxnox: see get_user_fullname.  */
+ 
+ /* Returns the struct passwd entry for the current user.  */
+ static struct passwd *
+@@ -1098,7 +1098,7 @@
+ static const char *
+ get_user_fullname ()
+ {
+-#if HAVE_PWD_H
++#if HAVE_PWD_H && !defined __moxnox__ /* Moxnox: struct passwd has no pw_gecos (not POSIX) */
+   struct passwd *pwd = get_user_pwd ();
+   if (pwd != NULL)
+     {
