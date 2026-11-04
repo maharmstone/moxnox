@@ -2616,7 +2616,7 @@
 #define HAVE_PTHREAD_API 1
 
 /* Define to 1 if you have the `pthread_atfork' function. */
-/* #undef HAVE_PTHREAD_ATFORK */
+#define HAVE_PTHREAD_ATFORK 1
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #define HAVE_PTHREAD_H 1
