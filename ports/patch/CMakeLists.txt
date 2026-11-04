@@ -22,6 +22,7 @@ add_executable(patch
     repo/src/util.c
     repo/src/version.c
     ${GEN}/lib/parse-datetime.c
+    repo/gnulib/lib/access.c
     repo/gnulib/lib/argmatch.c
     repo/gnulib/lib/backup-find.c
     repo/gnulib/lib/backupfile.c
@@ -36,24 +37,17 @@ add_executable(patch
     repo/gnulib/lib/cloexec.c
     repo/gnulib/lib/close-stream.c
     repo/gnulib/lib/closeout.c
-    repo/gnulib/lib/dup.c
-    repo/gnulib/lib/dup2.c
     repo/gnulib/lib/error.c
     repo/gnulib/lib/exitfail.c
     repo/gnulib/lib/faccessat.c
-    repo/gnulib/lib/fchmodat.c
     repo/gnulib/lib/fchownat.c
-    repo/gnulib/lib/fcntl.c
     repo/gnulib/lib/fdopendir.c
     repo/gnulib/lib/free.c
     repo/gnulib/lib/fstatat.c
-    repo/gnulib/lib/futimens.c
-    repo/gnulib/lib/getcwd-lgpl.c
     repo/gnulib/lib/getdtablesize.c
-    repo/gnulib/lib/getopt.c
-    repo/gnulib/lib/getopt1.c
     repo/gnulib/lib/getrandom.c
     repo/gnulib/lib/gettime.c
+    repo/gnulib/lib/hard-locale.c
     repo/gnulib/lib/hash.c
     repo/gnulib/lib/ialloc.c
     repo/gnulib/lib/lchown.c
@@ -66,8 +60,8 @@ add_executable(patch
     repo/gnulib/lib/memchr.c
     repo/gnulib/lib/mempcpy.c
     repo/gnulib/lib/memrchr.c
-    repo/gnulib/lib/mkdir.c
     repo/gnulib/lib/mktime.c
+    repo/gnulib/lib/open.c
     repo/gnulib/lib/openat-die.c
     repo/gnulib/lib/openat-proc.c
     repo/gnulib/lib/openat.c
@@ -81,7 +75,9 @@ add_executable(patch
     repo/gnulib/lib/renameat.c
     repo/gnulib/lib/renameatu.c
     repo/gnulib/lib/save-cwd.c
-    repo/gnulib/lib/setenv.c
+    repo/gnulib/lib/setlocale-lock.c
+    repo/gnulib/lib/setlocale_null-unlocked.c
+    repo/gnulib/lib/setlocale_null.c
     repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stat.c
     repo/gnulib/lib/stdopen.c
@@ -98,7 +94,6 @@ add_executable(patch
     repo/gnulib/lib/unlinkat.c
     repo/gnulib/lib/unsetenv.c
     repo/gnulib/lib/utimens.c
-    repo/gnulib/lib/utimensat.c
     repo/gnulib/lib/wctype-h.c
     repo/gnulib/lib/xmalloc.c
     repo/gnulib/lib/xstdopen.c

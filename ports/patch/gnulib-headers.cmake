@@ -1,7 +1,6 @@
 gnulib_header(repo/gnulib/lib/error.in.h ${GEN}/lib/error.h)
 gnulib_header(repo/gnulib/lib/fcntl.in.h ${GEN}/lib/fcntl.h)
-gnulib_header(repo/gnulib/lib/getopt-cdefs.in.h ${GEN}/lib/getopt-cdefs.h)
-gnulib_header(repo/gnulib/lib/getopt.in.h ${GEN}/lib/getopt.h)
+gnulib_header(repo/gnulib/lib/locale.in.h ${GEN}/lib/locale.h)
 gnulib_header(repo/gnulib/lib/stddef.in.h ${GEN}/lib/stddef.h)
 gnulib_header(repo/gnulib/lib/stdio.in.h ${GEN}/lib/stdio.h)
 gnulib_header(repo/gnulib/lib/stdlib.in.h ${GEN}/lib/stdlib.h)

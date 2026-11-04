@@ -6,7 +6,7 @@
 
 
 /* Define if access does not correctly handle trailing slashes. */
-/* #undef ACCESS_TRAILING_SLASH_BUG */
+#define ACCESS_TRAILING_SLASH_BUG 1
 
 /* Define to the number of bits in type 'ptrdiff_t'. */
 /* #undef BITSIZEOF_PTRDIFF_T */
@@ -25,13 +25,13 @@
 
 /* Define to 1 if chown fails to change ctime when at least one argument was
    not -1. */
-#define CHOWN_CHANGE_TIME_BUG 1
+/* #undef CHOWN_CHANGE_TIME_BUG */
 
 /* Define if chown is not POSIX compliant regarding IDs of -1. */
-#define CHOWN_FAILS_TO_HONOR_ID_OF_NEGATIVE_ONE 1
+/* #undef CHOWN_FAILS_TO_HONOR_ID_OF_NEGATIVE_ONE */
 
 /* Define if chown modifies symlinks. */
-#define CHOWN_MODIFIES_SYMLINK 1
+/* #undef CHOWN_MODIFIES_SYMLINK */
 
 /* Define to 1 if chown mishandles trailing slash. */
 #define CHOWN_TRAILING_SLASH_BUG 1
@@ -53,21 +53,21 @@
 /* #undef DOUBLE_SLASH_IS_DISTINCT_ROOT */
 
 /* Define if struct dirent has a member d_ino that actually works. */
-/* #undef D_INO_IN_DIRENT */
+#define D_INO_IN_DIRENT 1
 
 /* Name of editor program. */
-#define EDITOR_PROGRAM "/usr/bin/ed"
+#define EDITOR_PROGRAM "ed"
 
 /* Define to 1 if your platform has fchownat, but it does not reject an empty
    file name. */
-#define FCHOWNAT_EMPTY_FILENAME_BUG 1
+/* #undef FCHOWNAT_EMPTY_FILENAME_BUG */
 
 /* Define to 1 if your platform has fchownat, but it cannot perform lchown
    tasks. */
-#define FCHOWNAT_NOFOLLOW_BUG 1
+/* #undef FCHOWNAT_NOFOLLOW_BUG */
 
 /* Define this to 1 if F_DUPFD behavior does not match POSIX */
-#define FCNTL_DUPFD_BUGGY 1
+/* #undef FCNTL_DUPFD_BUGGY */
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like 'struct s { int n; short
@@ -91,7 +91,7 @@
 
 /* Define to 1 if mkdir mistakenly creates a directory given with a trailing
    dot component. */
-#define FUNC_MKDIR_DOT_BUG 1
+/* #undef FUNC_MKDIR_DOT_BUG */
 
 /* Define to 1 if realpath() can malloc memory, always gives an absolute path,
    and handles a trailing slash correctly. */
@@ -113,7 +113,7 @@
 
 /* Define this to 1 if getgroups(0,NULL) does not return the number of groups.
    */
-#define GETGROUPS_ZERO_BUG 1
+/* #undef GETGROUPS_ZERO_BUG */
 
 /* Define this to 'void' or 'struct timezone' to match the system's
    declaration of the second argument to gettimeofday. */
@@ -779,7 +779,7 @@
 /* #undef HAVE_GETEXECNAME */
 
 /* Define to 1 if your system has a working `getgroups' function. */
-/* #undef HAVE_GETGROUPS */
+#define HAVE_GETGROUPS 1
 
 /* Define to 1 if you have the <getopt.h> header file. */
 #define HAVE_GETOPT_H 1
@@ -1032,10 +1032,10 @@
 /* #undef HAVE_STRUCT_STAT_ST_BIRTHTIM_TV_NSEC */
 
 /* Define to 1 if 'tm_gmtoff' is a member of 'struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_GMTOFF */
+#define HAVE_STRUCT_TM_TM_GMTOFF 1
 
 /* Define to 1 if 'tm_zone' is a member of 'struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_ZONE */
+#define HAVE_STRUCT_TM_TM_ZONE 1
 
 /* Define to 1 if you have the 'symlink' function. */
 #define HAVE_SYMLINK 1
@@ -1084,7 +1084,7 @@
 
 /* Define if struct tm has the tm_gmtoff member. This macro is obsolete. New
    code should use HAVE_STRUCT_TM_TM_GMTOFF. */
-/* #undef HAVE_TM_GMTOFF */
+#define HAVE_TM_GMTOFF 1
 
 /* Define to 1 if you have the 'towlower' function. */
 /* #undef HAVE_TOWLOWER */
@@ -1153,16 +1153,16 @@
 
 /* Define to 1 if fstatat (..., 0) works. For example, it does not work in AIX
    7.1. */
-/* #undef HAVE_WORKING_FSTATAT_ZERO_FLAG */
+#define HAVE_WORKING_FSTATAT_ZERO_FLAG 1
 
 /* Define if the mbrtoc32 function basically works. */
 /* #undef HAVE_WORKING_MBRTOC32 */
 
 /* Define to 1 if O_NOATIME works. */
-#define HAVE_WORKING_O_NOATIME 0
+#define HAVE_WORKING_O_NOATIME 1
 
 /* Define to 1 if O_NOFOLLOW works. */
-#define HAVE_WORKING_O_NOFOLLOW 0
+#define HAVE_WORKING_O_NOFOLLOW 1
 
 /* Define if the renameat2 function exists and it works. */
 /* #undef HAVE_WORKING_RENAMEAT2 */
@@ -1329,11 +1329,11 @@
 
 /* Define if the mbrtowc function does not return (size_t) -2 for empty input.
    */
-#define MBRTOWC_EMPTY_INPUT_BUG 1
+/* #undef MBRTOWC_EMPTY_INPUT_BUG */
 
 /* Define if the mbrtowc function may signal encoding errors in the C locale.
    */
-/* #undef MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ */
+#define MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ 1
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
@@ -1362,7 +1362,7 @@
 
 /* Define to 1 if fchmodat+AT_SYMLINK_NOFOLLOW does not work right on
    non-symlinks. */
-#define NEED_FCHMODAT_NONSYMLINK_FIX 1
+/* #undef NEED_FCHMODAT_NONSYMLINK_FIX */
 
 /* Define if the compilation of mktime.c should define 'mktime_internal'. */
 #define NEED_MKTIME_INTERNAL 1
@@ -1383,7 +1383,7 @@
 /* #undef NEED_TIMEZONE_NULL_SUPPORT */
 
 /* Define to 1 if open() fails to recognize a trailing slash. */
-/* #undef OPEN_TRAILING_SLASH_BUG */
+#define OPEN_TRAILING_SLASH_BUG 1
 
 /* Name of package */
 #define PACKAGE "patch"
@@ -1422,11 +1422,11 @@
 
 /* Define to 1 if readlink sets errno instead of truncating a too-long link.
    */
-#define READLINK_TRUNCATE_BUG 1
+/* #undef READLINK_TRUNCATE_BUG */
 
 /* Define if rename does not work when the destination file exists, as on
    Cygwin 1.5 or Windows. */
-#define RENAME_DEST_EXISTS_BUG 1
+/* #undef RENAME_DEST_EXISTS_BUG */
 
 /* Define if rename fails to leave hard links alone, as on NetBSD 1.6 or
    Cygwin 1.5. */
@@ -1434,11 +1434,11 @@
 
 /* Define if rename does not correctly handle slashes on the destination
    argument, such as on Solaris 11 or NetBSD 1.6. */
-/* #undef RENAME_TRAILING_SLASH_DEST_BUG */
+#define RENAME_TRAILING_SLASH_DEST_BUG 1
 
 /* Define if rename does not correctly handle slashes on the source argument,
    such as on Solaris 9 or cygwin 1.5. */
-/* #undef RENAME_TRAILING_SLASH_SOURCE_BUG */
+#define RENAME_TRAILING_SLASH_SOURCE_BUG 1
 
 /* Define to 1 if gnulib's fchdir() replacement is used. */
 /* #undef REPLACE_FCHDIR */
@@ -1511,6 +1511,10 @@
 /* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
+#endif
+/* Enable extensions on Cosmopolitan Libc. */
+#ifndef _COSMO_SOURCE
+# define _COSMO_SOURCE 1
 #endif
 /* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
@@ -1697,7 +1701,7 @@
 
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
-#define __GETOPT_PREFIX rpl_
+/* #undef __GETOPT_PREFIX */
 
 /* Define to 1 on platforms where this makes time_t a 64-bit type. */
 /* #undef __MINGW_USE_VC2005_COMPAT */
