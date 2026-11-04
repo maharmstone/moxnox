@@ -52,6 +52,7 @@
     "patch": ["gnulib"],
     "perl": ["bzip2", "zlib"],
     "pixman": [],
+    "pkgconf": [],
     "python": ["bzip2", "expat", "ncurses", "openssl", "readline", "xz", "zlib"],
     "pyyaml": [],
     "readline": ["ncurses"],

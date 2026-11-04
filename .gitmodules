@@ -256,3 +256,6 @@
 [submodule "ports/libtool/repo"]
 	path = ports/libtool/repo
 	url = git://git.sv.gnu.org/libtool.git
+[submodule "ports/pkgconf/repo"]
+	path = ports/pkgconf/repo
+	url = https://github.com/pkgconf/pkgconf

@@ -196,3 +196,5 @@
 	insteadOf = https://gitlab.gnome.org/GNOME/libxml2
 [url "https://git.burntcomma.com/moxnox/libtool"]
 	insteadOf = git://git.sv.gnu.org/libtool.git
+[url "https://git.burntcomma.com/moxnox/pkgconf"]
+	insteadOf = https://github.com/pkgconf/pkgconf
