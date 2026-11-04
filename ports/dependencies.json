@@ -15,7 +15,7 @@
     "findutils": [],
     "flex": [],
     "freetype": ["libpng"],
-    "gawk": ["mpfr"],
+    "gawk": ["mpfr", "readline"],
     "gcc": ["gmp", "libiconv", "mpc", "mpfr"],
     "git": ["curl", "expat", "zlib"],
     "gmp": [],

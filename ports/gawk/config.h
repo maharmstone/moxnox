@@ -53,7 +53,7 @@
 
 /* Define to 1 if you have the declaration of `tzname', and to 0 if you don't.
    */
-#define HAVE_DECL_TZNAME 1
+/* #undef HAVE_DECL_TZNAME */
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -86,13 +86,13 @@
 #define HAVE_GETTIMEOFDAY 1
 
 /* Define to 1 if you have the `grantpt' function. */
-/* #undef HAVE_GRANTPT */
+#define HAVE_GRANTPT 1
 
 /* Do we have history_list? */
-/* #undef HAVE_HISTORY_LIST */
+#define HAVE_HISTORY_LIST 1
 
 /* Define if you have the iconv() function and it works. */
-/* #undef HAVE_ICONV */
+#define HAVE_ICONV 1
 
 /* Define to 1 if the system has the type `intmax_t'. */
 #define HAVE_INTMAX_T 1
@@ -116,16 +116,16 @@
 #define HAVE_ISWUPPER 1
 
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
-/* #undef HAVE_LANGINFO_CODESET */
+#define HAVE_LANGINFO_CODESET 1
 
 /* Define if your <locale.h> file defines LC_MESSAGES. */
 #define HAVE_LC_MESSAGES 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
-#define HAVE_LIBINTL_H 1
+/* #undef HAVE_LIBINTL_H */
 
 /* Define to 1 if you have a fully functional readline library. */
-/* #undef HAVE_LIBREADLINE */
+#define HAVE_LIBREADLINE 1
 
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
@@ -185,7 +185,7 @@
 /* #undef HAVE_PERSONALITY */
 
 /* Define to 1 if you have the `posix_openpt' function. */
-/* #undef HAVE_POSIX_OPENPT */
+#define HAVE_POSIX_OPENPT 1
 
 /* Define to 1 if you have the `setenv' function. */
 #define HAVE_SETENV 1
@@ -275,7 +275,7 @@
 #define HAVE_STRUCT_STAT_ST_BLKSIZE 1
 
 /* Define to 1 if `tm_zone' is a member of `struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_ZONE */
+#define HAVE_STRUCT_TM_TM_ZONE 1
 
 /* Define to 1 if you have the `system' function. */
 #define HAVE_SYSTEM 1
@@ -318,7 +318,7 @@
 
 /* Define to 1 if your `struct tm' has `tm_zone'. Deprecated, use
    `HAVE_STRUCT_TM_TM_ZONE' instead. */
-/* #undef HAVE_TM_ZONE */
+#define HAVE_TM_ZONE 1
 
 /* Define to 1 if you have the `towlower' function. */
 #define HAVE_TOWLOWER 1
@@ -328,7 +328,7 @@
 
 /* Define to 1 if you don't have `tm_zone' but do have the external array
    `tzname'. */
-#define HAVE_TZNAME 1
+/* #undef HAVE_TZNAME */
 
 /* Define to 1 if you have the `tzset' function. */
 #define HAVE_TZSET 1
@@ -343,7 +343,7 @@
 #define HAVE_UNSIGNED_LONG_LONG_INT 1
 
 /* Define to 1 if you have the `usleep' function. */
-/* #undef HAVE_USLEEP */ /* exported but deliberately not declared (removed in POSIX 2008) */
+/* #undef HAVE_USLEEP */
 
 /* Define to 1 if you have the `waitpid' function. */
 #define HAVE_WAITPID 1
@@ -364,10 +364,10 @@
 #define HAVE_WCTYPE_H 1
 
 /* systems should define this type here */
-/* #undef HAVE_WCTYPE_T */
+#define HAVE_WCTYPE_T 1
 
 /* systems should define this type here */
-/* #undef HAVE_WINT_T */
+#define HAVE_WINT_T 1
 
 /* Define to 1 if you have the `_NSGetExecutablePath' function. */
 /* #undef HAVE__NSGETEXECUTABLEPATH */
@@ -400,10 +400,10 @@
 #define PACKAGE_VERSION "5.3.2"
 
 /* Define to 1 if *printf supports %a format */
-/* #undef PRINTF_HAS_A_FORMAT */
+#define PRINTF_HAS_A_FORMAT 1
 
 /* Define to 1 if *printf supports %F format */
-/* #undef PRINTF_HAS_F_FORMAT */
+#define PRINTF_HAS_F_FORMAT 1
 
 /* The size of `unsigned int', as computed by sizeof. */
 #define SIZEOF_UNSIGNED_INT 4

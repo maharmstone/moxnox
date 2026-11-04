@@ -68,7 +68,7 @@ target_compile_options(gawk PRIVATE ${USERSPACE_CFLAGS}
     $<$<C_COMPILER_ID:GNU>:-Wno-calloc-transposed-args>
 )
 
-target_link_libraries(gawk PRIVATE mpfr moxnox)
+target_link_libraries(gawk PRIVATE mpfr readline moxnox)
 
 install(TARGETS gawk DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
