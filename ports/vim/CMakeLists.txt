@@ -206,7 +206,7 @@ target_include_directories(vim PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 
-target_link_libraries(vim PRIVATE tinfo moxnox)
+target_link_libraries(vim PRIVATE tinfo libiconv moxnox)
 
 install(TARGETS vim DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     ARCHIVE EXCLUDE_FROM_ALL

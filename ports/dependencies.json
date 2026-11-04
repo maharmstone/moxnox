@@ -58,7 +58,7 @@
     "sed": ["gnulib"],
     "tar": ["gnulib", "libiconv"],
     "tzdb": [],
-    "vim": ["ncurses"],
+    "vim": ["libiconv", "ncurses"],
     "wget": ["gnulib", "libiconv", "openssl", "zlib"],
     "xkeyboard-config": [],
     "xz": [],
