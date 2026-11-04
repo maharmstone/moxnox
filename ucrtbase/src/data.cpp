@@ -280,8 +280,15 @@ static void parse_cmdline(u16string_view cmdline, span<u16string_view> argv,
 
 static void do_cmdline() {
     auto peb = NtCurrentTeb()->ProcessEnvironmentBlock;
-    auto cmdline = u16string_view(peb->ProcessParameters->CommandLine.Buffer,
-                                  peb->ProcessParameters->CommandLine.Length / sizeof(char16_t));
+    u16string_view cmdline;
+
+    if (peb->ProcessParameters->CommandLine.Length == 0xffff) {
+        // oversize, need to find Length manually
+        cmdline = u16string_view(peb->ProcessParameters->CommandLine.Buffer);
+    } else {
+        cmdline = u16string_view(peb->ProcessParameters->CommandLine.Buffer,
+                                 peb->ProcessParameters->CommandLine.Length / sizeof(char16_t));
+    }
 
     argc = (int)count_cmdline_args(cmdline);
 
