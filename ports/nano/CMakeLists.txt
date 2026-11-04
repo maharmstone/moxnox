@@ -39,6 +39,10 @@ add_executable(nano
     repo/src/text.c
     repo/src/utils.c
     repo/src/winio.c
+    ../gnulib/repo/lib/regex.c
+    ../gnulib/repo/lib/malloc/dynarray_emplace_enlarge.c
+    ../gnulib/repo/lib/malloc/dynarray_finalize.c
+    ../gnulib/repo/lib/malloc/dynarray_resize.c
 )
 
 target_compile_options(nano PRIVATE ${USERSPACE_CFLAGS} -Wno-sign-conversion -Wno-sign-compare -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-conversion -Wno-implicit-fallthrough -Wno-format $<$<CXX_COMPILER_ID:Clang>:-Wno-implicit-int-conversion -Wno-braced-scalar-init -Wno-shorten-64-to-32>)
@@ -48,9 +52,11 @@ target_include_directories(nano PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${GEN}
     repo/src
+    ../gnulib/repo/lib
+    ${CMAKE_BINARY_DIR}/ports/file/gen
 )
 
-target_link_libraries(nano PRIVATE ncurses gnulib moxnox)
+target_link_libraries(nano PRIVATE ncurses gnulib libmagic moxnox)
 
 install(TARGETS nano DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     ARCHIVE EXCLUDE_FROM_ALL

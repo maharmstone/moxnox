@@ -41,7 +41,7 @@
     "mesa": ["zlib"],
     "mpc": ["gmp", "mpfr"],
     "mpfr": ["gmp"],
-    "nano": ["gnulib", "ncurses"],
+    "nano": ["file", "gnulib", "ncurses"],
     "ncurses": [],
     "netcat": ["openssh"],
     "ninja": [],
