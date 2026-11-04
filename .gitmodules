@@ -259,3 +259,6 @@
 [submodule "ports/pkgconf/repo"]
 	path = ports/pkgconf/repo
 	url = https://github.com/pkgconf/pkgconf
+[submodule "ports/texinfo/repo"]
+	path = ports/texinfo/repo
+	url = git://git.sv.gnu.org/texinfo.git

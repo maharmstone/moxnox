@@ -1,0 +1,20 @@
+--- a/info/man.c
++++ b/info/man.c
+@@ -397,9 +397,17 @@
+ {
+   char *formatted_page = NULL;
+ 
++#ifdef __moxnox__
++  /* putenv() is deliberately unsupported on moxnox: it splices the
++     caller's buffer into the environment.  setenv() copies.  */
++  setenv ("MAN_KEEP_FORMATTING", "1", 1); /* Get codes for bold etc. */
++  setenv ("GROFF_SGR", "1", 1); /* for Debian whose man outputs
++                                   'overstrike' sequences without this */
++#else
+   putenv ("MAN_KEEP_FORMATTING=1"); /* Get codes for bold etc. */
+   putenv ("GROFF_SGR=1"); /* for Debian whose man outputs
+                              'overstrike' sequences without this */
++#endif
+ 
+   (void) get_output_from_program (formatter_args[0], formatter_args,
+                                   &formatted_page, 1);

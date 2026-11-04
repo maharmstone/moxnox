@@ -60,6 +60,7 @@
     "rust": [],
     "sed": ["gnulib"],
     "tar": ["gnulib", "libiconv"],
+    "texinfo": ["gnulib", "libiconv", "ncurses"],
     "tzdb": [],
     "vim": ["libiconv", "ncurses"],
     "wget": ["gnulib", "libiconv", "openssl", "zlib"],
