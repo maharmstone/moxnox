@@ -424,8 +424,8 @@
 
 #define HAVE_SYS_ERRLIST 1
 
-#define HAVE_TZNAME 1
-#define HAVE_DECL_TZNAME 1
+/* #undef HAVE_TZNAME */
+/* #undef HAVE_DECL_TZNAME */
 
 /* Characteristics of some of the system structures. */
 
@@ -457,8 +457,8 @@
 
 #define HAVE_STRUCT_STAT_ST_BLOCKS 1
 
-/* #undef HAVE_STRUCT_TM_TM_ZONE */
-/* #undef HAVE_TM_ZONE */
+#define HAVE_STRUCT_TM_TM_ZONE 1
+#define HAVE_TM_ZONE 1
 
 #define HAVE_TIMEVAL 1
 
@@ -507,7 +507,7 @@
 /* #undef STRTOLD_BROKEN */
 
 /* Define if WCONTINUED is defined in system headers, but rejected by waitpid */
-#define WCONTINUED_BROKEN 1
+/* #undef WCONTINUED_BROKEN */
 
 /* These are checked with BASH_CHECK_DECL */
 
@@ -543,7 +543,7 @@
 
 /* #undef OPENDIR_NOT_ROBUST */
 
-#define PGRP_PIPE 1
+/* #undef PGRP_PIPE */
 
 /* #undef STAT_MACROS_BROKEN */
 
@@ -579,7 +579,7 @@
 
 /* Type and behavior of signal handling functions. */
 
-#define MUST_REINSTALL_SIGHANDLERS 1
+/* #undef MUST_REINSTALL_SIGHANDLERS */
 
 /* #undef HAVE_BSD_SIGNALS */
 
@@ -607,7 +607,7 @@
 /* #undef HAVE_BZERO */
 
 /* Define if you have the chown function.  */
-/* #undef HAVE_CHOWN */
+#define HAVE_CHOWN 1
 
 /* Define if you have the clock_gettime function.  */
 #define HAVE_CLOCK_GETTIME 1
@@ -681,7 +681,7 @@
 #define HAVE_GETPEERNAME 1
 
 /* Define if you have the getpwent function. */
-/* #undef HAVE_GETPWENT */
+#define HAVE_GETPWENT 1
 
 /* Define if you have the getpwnam function. */
 #define HAVE_GETPWNAM 1
@@ -699,10 +699,10 @@
 #define HAVE_GETRUSAGE 1
 
 /* Define if you have the getservbyname function.  */
-/* #undef HAVE_GETSERVBYNAME */
+#define HAVE_GETSERVBYNAME 1
 
 /* Define if you have the getservent function.  */
-/* #undef HAVE_GETSERVENT */
+#define HAVE_GETSERVENT 1
 
 /* Define if you have the gettimeofday function.  */
 #define HAVE_GETTIMEOFDAY 1
@@ -756,7 +756,7 @@
 #define HAVE_LSTAT 1
 
 /* Define if you have the locale_charset function. */
-/* #undef HAVE_LOCALE_CHARSET */
+#define HAVE_LOCALE_CHARSET 1
 
 /* Define if you have the mbrlen function. */
 #define HAVE_MBRLEN 1
@@ -876,7 +876,7 @@
 /* #undef HAVE_SIGINTERRUPT */
 
 /* Define if you have the POSIX.1-style sigsetjmp function.  */
-/* #undef HAVE_POSIX_SIGSETJMP */
+#define HAVE_POSIX_SIGSETJMP 1
 
 /* Define if you have the snprintf function.  */
 #define HAVE_SNPRINTF 1
@@ -1020,7 +1020,7 @@
 #define HAVE_WCWIDTH 1
 
 /* and if it works */
-/* #undef WCWIDTH_BROKEN */
+#define WCWIDTH_BROKEN 1
 
 /* Presence of certain system include files. */
 
@@ -1211,7 +1211,7 @@
 /* #undef _LARGE_FILES */
 
 /* Do strcoll(3) and strcmp(3) give different results in the default locale? */
-#define STRCOLL_BROKEN 1
+/* #undef STRCOLL_BROKEN */
 
 /* #undef DUP2_BROKEN */
 
@@ -1242,7 +1242,7 @@
 
 #define HAVE_BUILTIN_EXPECT 1
 
-#define HAVE_WEAK_SYMBOLS 1
+/* #undef HAVE_WEAK_SYMBOLS */
 
 #define _GL_ATTRIBUTE_MALLOC
 #define _GL_ATTRIBUTE_DEALLOC_FREE
