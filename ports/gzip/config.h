@@ -60,7 +60,7 @@
 /* #undef DOUBLE_SLASH_IS_DISTINCT_ROOT */
 
 /* Define this to 1 if F_DUPFD behavior does not match POSIX */
-#define FCNTL_DUPFD_BUGGY 1
+/* #undef FCNTL_DUPFD_BUGGY */
 
 /* Define as the bit index in the word where to find bit 0 of the exponent of
    'float'. */
@@ -652,7 +652,7 @@
 /* #undef HAVE_FREE_POSIX */
 
 /* Define if the frexpl function is available in libc. */
-/* #undef HAVE_FREXPL_IN_LIBC */
+#define HAVE_FREXPL_IN_LIBC 1
 
 /* Define if the frexp function is available in libc. */
 #define HAVE_FREXP_IN_LIBC 1
@@ -716,7 +716,7 @@
 #define HAVE_LANGINFO_CODESET 1
 
 /* Define if the ldexpl function is available in libc. */
-/* #undef HAVE_LDEXPL_IN_LIBC */
+#define HAVE_LDEXPL_IN_LIBC 1
 
 /* Define if the ldexp function is available in libc. */
 #define HAVE_LDEXP_IN_LIBC 1
@@ -791,7 +791,7 @@
 /* #undef HAVE_NDIR_H */
 
 /* Define to 1 if you have the `nl_langinfo' function. */
-#define HAVE_NL_LANGINFO 1
+/* #undef HAVE_NL_LANGINFO */
 
 /* Define to 1 if you have the 'openat' function. */
 #define HAVE_OPENAT 1
@@ -1013,10 +1013,10 @@
 #define HAVE_WINT_T 1
 
 /* Define to 1 if O_NOATIME works. */
-#define HAVE_WORKING_O_NOATIME 0
+#define HAVE_WORKING_O_NOATIME 1
 
 /* Define to 1 if O_NOFOLLOW works. */
-#define HAVE_WORKING_O_NOFOLLOW 0
+#define HAVE_WORKING_O_NOFOLLOW 1
 
 /* Define if utimes works properly. */
 /* #undef HAVE_WORKING_UTIMES */
@@ -1187,11 +1187,11 @@
 
 /* Define if the vasnprintf implementation needs special code for the 'a' and
    'A' directives. */
-#define NEED_PRINTF_DIRECTIVE_A 1
+/* #undef NEED_PRINTF_DIRECTIVE_A */
 
 /* Define if the vasnprintf implementation needs special code for the 'b'
    directive. */
-#define NEED_PRINTF_DIRECTIVE_B 1
+/* #undef NEED_PRINTF_DIRECTIVE_B */
 
 /* Define if the vasnprintf implementation needs special code for the 'F'
    directive. */
@@ -1207,11 +1207,11 @@
 
 /* Define if the vasnprintf implementation needs special code for 'double'
    arguments. */
-#define NEED_PRINTF_DOUBLE 1
+/* #undef NEED_PRINTF_DOUBLE */
 
 /* Define if the vasnprintf implementation needs special code for surviving
    out-of-memory conditions. */
-#define NEED_PRINTF_ENOMEM 1
+/* #undef NEED_PRINTF_ENOMEM */
 
 /* Define if the vasnprintf implementation needs special code for the # flag
    with a zero precision and a zero value in the 'x' and 'X' directives. */
@@ -1219,7 +1219,7 @@
 
 /* Define if the vasnprintf implementation needs special code for the ' flag.
    */
-#define NEED_PRINTF_FLAG_GROUPING 1
+/* #undef NEED_PRINTF_FLAG_GROUPING */
 
 /* Define if the vasnprintf implementation needs special code for the '-'
    flag. */
@@ -1239,7 +1239,7 @@
 
 /* Define if the vasnprintf implementation needs special code for 'long
    double' arguments. */
-#define NEED_PRINTF_LONG_DOUBLE 1
+/* #undef NEED_PRINTF_LONG_DOUBLE */
 
 /* Define if the vasnprintf implementation needs special code for supporting
    large precisions without arbitrary bounds. */
@@ -1249,7 +1249,7 @@
 /* #undef NEED_SANITIZED_REALLOC */
 
 /* Define to 1 if open() fails to recognize a trailing slash. */
-/* #undef OPEN_TRAILING_SLASH_BUG */
+#define OPEN_TRAILING_SLASH_BUG 1
 
 /* Name of package */
 #define PACKAGE "gzip"
@@ -1261,7 +1261,7 @@
 #define PACKAGE_NAME "gzip"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "gzip 1.14-modified"
+#define PACKAGE_STRING "gzip 1.14"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gzip"
@@ -1270,7 +1270,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.14-modified"
+#define PACKAGE_VERSION "1.14"
 
 /* Define to the type that is the result of default argument promotions of
    type mode_t. */
@@ -1368,6 +1368,10 @@
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
 #endif
+/* Enable extensions on Cosmopolitan Libc. */
+#ifndef _COSMO_SOURCE
+# define _COSMO_SOURCE 1
+#endif
 /* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
 # define _DARWIN_C_SOURCE 1
@@ -1457,7 +1461,7 @@
 
 
 /* Version number of package */
-#define VERSION "1.14-modified"
+#define VERSION "1.14"
 
 /* Define to l, ll, u, ul, ull, etc., as suitable for constants of type
    'wchar_t'. */
@@ -1556,7 +1560,7 @@
 
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
-#define __GETOPT_PREFIX rpl_
+/* #undef __GETOPT_PREFIX */
 
 /* Define to 1 on platforms where this makes time_t a 64-bit type. */
 /* #undef __MINGW_USE_VC2005_COMPAT */
