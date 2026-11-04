@@ -4,6 +4,7 @@ module;
 #include <string_view>
 #include <span>
 #include <algorithm>
+#include <memory>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -108,27 +109,26 @@ static bool arg_needs_quotes(string_view s) {
     return false;
 }
 
-static size_t get_cmdline_len(char* const* argv) {
+static size_t get_cmdline_len(char* const* argv, string_view extra_arg1,
+                              string_view extra_arg2, string_view extra_arg3) {
     size_t ret = 0;
 
-    for (size_t i = 0; argv[i]; i++) {
-        if (i != 0)
+    auto do_arg = [&ret](string_view s, bool first) {
+        if (!first)
             ret++; // separating space
 
-        auto s = string_view(argv[i]);
-
-        if (i == 0) {
+        if (first) {
             // program name: quoted only if it contains whitespace, no escaping
             bool quote = s.find(' ') != string_view::npos ||
                          s.find('\t') != string_view::npos;
 
             ret += utf8_to_utf16_len(s) + (quote ? 2 : 0);
-            continue;
+            return;
         }
 
         if (!arg_needs_quotes(s)) {
             ret += utf8_to_utf16_len(s);
-            continue;
+            return;
         }
 
         ret += 2; // surrounding quotes
@@ -163,30 +163,47 @@ static size_t get_cmdline_len(char* const* argv) {
                 ret += utf8_to_utf16_len(string_view(s.data() + start, j - start));
             }
         }
+    };
+
+    if (!extra_arg1.empty()) {
+        do_arg(extra_arg1, true);
+
+        if (!extra_arg2.empty()) {
+            do_arg(extra_arg2, false);
+
+            if (!extra_arg3.empty())
+                do_arg(extra_arg3, false);
+        }
+    }
+
+    for (size_t i = 0; argv[i]; i++) {
+        if (i == 0 && !extra_arg1.empty()) // program name has been replaced
+            continue;
+
+        do_arg(argv[i], i == 0);
     }
 
     return ret;
 }
 
-static void do_cmdline(char16_t* buf, char* const* argv) {
+static void do_cmdline(char16_t* buf, char* const* argv, string_view extra_arg1,
+                       string_view extra_arg2, string_view extra_arg3) {
     auto out = buf;
 
-    auto emit_utf16 = [&](string_view s) {
-        auto len = utf8_to_utf16_len(s);
+    auto do_arg = [&out](string_view s, bool first) {
+        auto emit_utf16 = [&](string_view s) {
+            auto len = utf8_to_utf16_len(s);
 
-        utf8_to_utf16(span(out, len), s);
-        out += len;
-    };
+            utf8_to_utf16(span(out, len), s);
+            out += len;
+        };
 
-    for (size_t i = 0; argv[i]; i++) {
-        if (i != 0) {
+        if (!first) {
             *out = u' ';
             out++;
         }
 
-        auto s = string_view(argv[i]);
-
-        if (i == 0) {
+        if (first) {
             bool quote = s.find(' ') != string_view::npos ||
                          s.find('\t') != string_view::npos;
 
@@ -202,12 +219,12 @@ static void do_cmdline(char16_t* buf, char* const* argv) {
                 out++;
             }
 
-            continue;
+            return;
         }
 
         if (!arg_needs_quotes(s)) {
             emit_utf16(s);
-            continue;
+            return;
         }
 
         *out = u'"';
@@ -261,6 +278,24 @@ static void do_cmdline(char16_t* buf, char* const* argv) {
 
         *out = u'"';
         out++;
+    };
+
+    if (!extra_arg1.empty()) {
+        do_arg(extra_arg1, true);
+
+        if (!extra_arg2.empty()) {
+            do_arg(extra_arg2, false);
+
+            if (!extra_arg3.empty())
+                do_arg(extra_arg3, false);
+        }
+    }
+
+    for (size_t i = 0; argv[i]; i++) {
+        if (i == 0 && !extra_arg1.empty()) // program name has been replaced
+            continue;
+
+        do_arg(argv[i], i == 0);
     }
 
     *out = 0;
@@ -294,6 +329,161 @@ static void do_environ(span<char16_t> buf, char* const* envp) {
     buf[0] = 0;
 }
 
+static nt_status try_shebang(unique_handle& file, unique_handle& sect,
+                             u16string_view u16pathsv,
+                             unique_ptr<char[]>& extra_arg_buf,
+                             string_view& extra_arg1, string_view& extra_arg2,
+                             string_view& extra_arg3) {
+    auto& peb = *NtCurrentTeb()->ProcessEnvironmentBlock;
+    char s[255];
+    nt_status status;
+    IO_STATUS_BLOCK iosb;
+    OBJECT_ATTRIBUTES oa;
+    UNICODE_STRING us;
+    string_view sv, exe, param;
+    unique_ptr<char16_t[]> u16exebuf;
+    u16string_view u16exe;
+    HANDLE h;
+    unique_handle new_file;
+
+    // FIXME? Linux allows nested shebangs
+
+    static const u16string_view suffix = u".exe";
+
+    // read first line of file and parse shebang
+
+    status = NtReadFile(file.get(), 0, nullptr, nullptr, &iosb, s, sizeof(s),
+                        nullptr, nullptr);
+    if (!success(status))
+        return status;
+
+    if (iosb.Information == 0)
+        return nt_status::INVALID_IMAGE_FORMAT;
+
+    sv = string_view(s, iosb.Information);
+
+    if (sv.size() <= 2)
+        return nt_status::INVALID_IMAGE_FORMAT;
+
+    if (sv[0] != '#' || sv[1] != '!')
+        return nt_status::INVALID_IMAGE_FORMAT;
+
+    sv = string_view(sv.data() + 2, sv.size() - 2);
+
+    if (auto nl = sv.find('\n'); nl != string_view::npos)
+        sv = string_view(sv.data(), nl);
+    else
+        return nt_status::INVALID_IMAGE_FORMAT;
+
+    if (sv.empty())
+        return nt_status::INVALID_IMAGE_FORMAT;
+
+    while (!sv.empty() && (sv.back() == '\r' || sv.back() == ' ' || sv.back() == '\t')) {
+        sv = string_view(sv.data(), sv.size() - 1);
+    }
+
+    while (!sv.empty() && (sv.front() == ' ' || sv.front() == '\t')) {
+        sv = string_view(sv.data() + 1, sv.size() - 1);
+    }
+
+    if (sv.empty())
+        return nt_status::INVALID_IMAGE_FORMAT;
+
+    size_t sp = sv.find(' ');
+
+    if (auto tab = sv.find('\t'); tab != string_view::npos && (sp == string_view::npos || tab < sp))
+        sp = tab;
+
+    if (sp != string_view::npos) {
+        exe = string_view(sv.data(), sp);
+        param = string_view(sv.data() + sp + 1, sv.size() - sp - 1);
+
+        while (!param.empty() && (param.front() == ' ' || param.front() == '\t')) {
+            param = string_view(param.data() + 1, param.size() - 1);
+        }
+    } else
+        exe = sv;
+
+    // try to open path
+
+    auto u16len = utf8_to_utf16_len(exe);
+
+    u16exebuf.reset(new char16_t[u16len + suffix.size()]);
+    if (!u16exebuf)
+        return nt_status::INSUFFICIENT_RESOURCES;
+
+    utf8_to_utf16(span(u16exebuf.get(), u16len), exe);
+
+    u16exe = u16string_view(u16exebuf.get(), u16len);
+
+    memset(&oa, 0, sizeof(oa));
+    oa.Length = sizeof(OBJECT_ATTRIBUTES);
+    oa.ObjectName = &us;
+    oa.RootDirectory = peb.ProcessParameters->CurrentDirectory.Handle;
+
+    us.Length = us.MaximumLength = (uint16_t)(u16exe.size() * sizeof(char16_t));
+    us.Buffer = (char16_t*)u16exe.data();
+
+    status = NtOpenFile(&h, FILE_READ_DATA, &oa, &iosb, 0,
+                        FILE_NON_DIRECTORY_FILE);
+
+    if (status == nt_status::OBJECT_NAME_NOT_FOUND) {
+        // if not found, try again with ".exe"
+
+        memcpy(u16exebuf.get() + u16len, suffix.data(),
+               suffix.size() * sizeof(char16_t));
+        u16exe = u16string_view(u16exebuf.get(), u16len + suffix.size());
+
+        us.Length = us.MaximumLength = (uint16_t)(u16exe.size() * sizeof(char16_t));
+        us.Buffer = (char16_t*)u16exe.data();
+
+        status = NtOpenFile(&h, FILE_READ_DATA, &oa, &iosb, 0,
+                            FILE_NON_DIRECTORY_FILE);
+    }
+
+    if (!success(status))
+        return status;
+
+    new_file.reset(h);
+
+    swap(file, new_file);
+
+    status = NtCreateSection(&h, 0, nullptr, nullptr, PAGE_READONLY, SEC_IMAGE,
+                             file.get());
+    if (!success(status))
+        return status;
+
+    sect.reset(h);
+
+    // prepare arguments
+
+    if (!u16pathsv.empty()) {
+        auto len = utf16_to_utf8_len(u16pathsv);
+
+        extra_arg_buf.reset(new char[exe.size() + len + param.size()]);
+        if (!extra_arg_buf)
+            return nt_status::INSUFFICIENT_RESOURCES;
+
+        memcpy(extra_arg_buf.get(), exe.data(), exe.size());
+
+        utf16_to_utf8(span(extra_arg_buf.get() + exe.size(), len), u16pathsv);
+
+        if (!param.empty())
+            memcpy(extra_arg_buf.get() + exe.size() + len, param.data(), param.size());
+
+        extra_arg1 = string_view(extra_arg_buf.get(), exe.size());
+        extra_arg2 = string_view(extra_arg_buf.get() + exe.size(), len);
+
+        if (!param.empty()) {
+            extra_arg3 = extra_arg2;
+            extra_arg2 = string_view(extra_arg_buf.get() + exe.size() + len,
+                                     param.size());
+        }
+    }
+
+    return nt_status::SUCCESS;
+}
+
 export int do_exec(const char* path, char* const* argv, char* const* envp,
                    unique_handle& proc, unique_handle& thread,
                    CLIENT_ID& client_id, file_actions_list* file_actions,
@@ -320,19 +510,22 @@ export int do_exec(const char* path, char* const* argv, char* const* envp,
     size_t num_exec_block_entries;
     void* their_exec_block = nullptr;
     size_t exec_block_extra = 0;
+    unique_ptr<char[]> extra_arg_buf;
+    string_view extra_arg1, extra_arg2, extra_arg3;
+    unique_ptr<char16_t[]> u16path;
 
     static const string_view mn_exec = "mn_exec";
 
     string_view pathsv = path;
     auto u16pathlen = utf8_to_utf16_len(pathsv);
 
-    auto u16path = (char16_t*)malloc(u16pathlen * sizeof(char16_t));
+    u16path.reset(new char16_t[u16pathlen]);
     if (!u16path)
         return ENOMEM;
 
-    utf8_to_utf16(span(u16path, u16pathlen), pathsv);
+    utf8_to_utf16(span(u16path.get(), u16pathlen), pathsv);
 
-    auto u16pathsv = u16string_view(u16path, u16pathlen);
+    auto u16pathsv = u16string_view(u16path.get(), u16pathlen);
 
     // open file
 
@@ -351,21 +544,26 @@ export int do_exec(const char* path, char* const* argv, char* const* envp,
         static const u16string_view suffix = u".exe";
 
         if (u16pathsv.size() < suffix.size() || u16string_view(u16pathsv.data() + u16pathsv.size() - suffix.size(), suffix.size()) != suffix) {
-            u16path = (char16_t*)realloc(u16path, (u16pathlen + suffix.size()) * sizeof(char16_t));
-            if (!u16path)
+            unique_ptr<char16_t[]> newu16path;
+
+            newu16path.reset(new char16_t[u16pathlen + suffix.size()]);
+            if (!newu16path)
                 return ENOMEM;
 
-            memcpy(u16path + u16pathlen, suffix.data(), suffix.size() * sizeof(char16_t));
+            memcpy(newu16path.get(), u16path.get(), u16pathlen * sizeof(char16_t));
+            memcpy(newu16path.get() + u16pathlen, suffix.data(), suffix.size() * sizeof(char16_t));
 
-            us.Length = us.MaximumLength = (uint16_t)((u16pathlen + suffix.size()) * sizeof(char16_t));
-            us.Buffer = (char16_t*)u16path;
+            swap(u16path, newu16path);
+
+            u16pathsv = u16string_view(u16path.get(), u16pathlen + suffix.size());
+
+            us.Length = us.MaximumLength = (uint16_t)(u16pathsv.size() * sizeof(char16_t));
+            us.Buffer = (char16_t*)u16pathsv.data();
 
             status = NtOpenFile(&h, FILE_READ_DATA, &oa, &iosb, 0,
                                 FILE_NON_DIRECTORY_FILE);
         }
     }
-
-    free(u16path);
 
     if (!success(status))
         return nt_status_to_errno(status);
@@ -376,10 +574,15 @@ export int do_exec(const char* path, char* const* argv, char* const* envp,
 
     status = NtCreateSection(&h, 0, nullptr, nullptr, PAGE_READONLY, SEC_IMAGE,
                              file.get());
+    if (success(status))
+        sect.reset(h);
+    else if (status == nt_status::INVALID_IMAGE_FORMAT) {
+        status = try_shebang(file, sect, u16pathsv, extra_arg_buf, extra_arg1,
+                             extra_arg2, extra_arg3);
+    }
+
     if (!success(status))
         return nt_status_to_errno(status);
-
-    sect.reset(h);
 
     status = NtQuerySection(sect.get(), SECTION_INFORMATION_CLASS::ImageInformation,
                             &sii, sizeof(SECTION_IMAGE_INFORMATION), nullptr);
@@ -572,7 +775,7 @@ export int do_exec(const char* path, char* const* argv, char* const* envp,
 
     // allocate misc block
 
-    auto cmdline_len = get_cmdline_len(argv);
+    auto cmdline_len = get_cmdline_len(argv, extra_arg1, extra_arg2, extra_arg3);
     auto env_len = get_environ_len(envp);
 
     size_t misc_block_size = (cmdline_len + 1 + env_len) * sizeof(char16_t);
@@ -599,7 +802,7 @@ export int do_exec(const char* path, char* const* argv, char* const* envp,
 
     span sp = span((char16_t*)misc_block, misc_block_size / sizeof(char16_t));
 
-    do_cmdline(sp.data(), argv);
+    do_cmdline(sp.data(), argv, extra_arg1, extra_arg2, extra_arg3);
 
     params.CommandLine.Length = (uint16_t)(cmdline_len * sizeof(char16_t));
     params.CommandLine.MaximumLength = (uint16_t)((cmdline_len + 1) * sizeof(char16_t));
