@@ -1,11 +1,5 @@
-/* lib/config.h.  Generated from config.h.in by configure.  */
-/* lib/config.h.in.  Generated from configure.ac by autoheader.  */
-
-/* From src/config.h: */
-
-/* Define if the C++ compiler supports stack-allocated variable-size arrays.
-   */
-#define HAVE_DYNAMIC_ARRAY 1
+/* config.h.  Generated from config.h.in by configure.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 #if defined __GNUC__ && __GNUC__ >= 15 && !defined __clang__
 # pragma GCC diagnostic push
@@ -55,7 +49,7 @@
 #define FUNC_FFLUSH_STDIN 1
 
 /* Define to 1 if ungetc is broken when used on arbitrary bytes. */
-#define FUNC_UNGETC_BROKEN 1
+/* #undef FUNC_UNGETC_BROKEN */
 
 /* Define to a C preprocessor expression that evaluates to 1 or 0, depending
    whether the gnulib module close shall be considered present. */
@@ -179,6 +173,9 @@
 /* Define to 1 when the gnulib module malloc-posix should be tested. */
 #define GNULIB_TEST_MALLOC_POSIX 1
 
+/* Define to 1 when the gnulib module memeq should be tested. */
+#define GNULIB_TEST_MEMEQ 1
+
 /* Define to 1 when the gnulib module memset_explicit should be tested. */
 #define GNULIB_TEST_MEMSET_EXPLICIT 1
 
@@ -206,11 +203,11 @@
 /* Define to 1 when the gnulib module stat should be tested. */
 #define GNULIB_TEST_STAT 1
 
+/* Define to 1 when the gnulib module streq should be tested. */
+#define GNULIB_TEST_STREQ 1
+
 /* Define to 1 when the gnulib module strerror should be tested. */
 #define GNULIB_TEST_STRERROR 1
-
-/* Define to 1 when the gnulib module stringeq should be tested. */
-#define GNULIB_TEST_STRINGEQ 1
 
 /* Define to 1 when the gnulib module vfprintf should be tested. */
 #define GNULIB_TEST_VFPRINTF 1
@@ -357,7 +354,7 @@
 #define HAVE_LSTAT 1
 
 /* Define to 1 if malloc (0) returns nonnull. */
-/* #undef HAVE_MALLOC_0_NONNULL */
+#define HAVE_MALLOC_0_NONNULL 1
 
 /* Define if malloc and calloc set errno on allocation failure. */
 #define HAVE_MALLOC_POSIX 1
@@ -408,6 +405,9 @@
 
 /* Define to 1 if you have the <stdckdint.h> header file. */
 #define HAVE_STDCKDINT_H 1
+
+/* Define to 1 if you have the <stdcountof.h> header file. */
+#define HAVE_STDCOUNTOF_H 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -490,9 +490,6 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
-/* Define to 1 if <locale.h> defines the _locale_t type. */
-/* #undef HAVE_WINDOWS_LOCALE_T */
-
 /* Define to 1 if you have the <winsock2.h> header file. */
 /* #undef HAVE_WINSOCK2_H */
 
@@ -500,16 +497,13 @@
 #define HAVE_WINT_T 1
 
 /* Define to 1 if O_DIRECTORY works, 0 otherwise. */
-#define HAVE_WORKING_O_DIRECTORY 0
+#define HAVE_WORKING_O_DIRECTORY 1
 
 /* Define to 1 if O_NOATIME works, 0 otherwise. */
-#define HAVE_WORKING_O_NOATIME 0
+#define HAVE_WORKING_O_NOATIME 1
 
 /* Define to 1 if O_NOFOLLOW works, 0 otherwise. */
-#define HAVE_WORKING_O_NOFOLLOW 0
-
-/* Define to 1 if you have the <xlocale.h> header file. */
-/* #undef HAVE_XLOCALE_H */
+#define HAVE_WORKING_O_NOFOLLOW 1
 
 /* Define to 1 if you have the '_ftelli64' function. */
 /* #undef HAVE__FTELLI64 */
@@ -652,7 +646,7 @@
 /* #undef NEED_SANITIZED_REALLOC */
 
 /* Define to 1 if open() fails to recognize a trailing slash. */
-/* #undef OPEN_TRAILING_SLASH_BUG */
+#define OPEN_TRAILING_SLASH_BUG 1
 
 /* Name of package */
 #define PACKAGE "gperf"
@@ -688,7 +682,7 @@
 #define REPLACE_FUNC_STAT_FILE 1
 
 /* Define to 1 if strerror(0) does not return a message implying success. */
-#define REPLACE_STRERROR_0 1
+/* #undef REPLACE_STRERROR_0 */
 
 /* Define to l, ll, u, ul, ull, etc., as suitable for constants of type
    'sig_atomic_t'. */
@@ -737,6 +731,10 @@
 /* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
+#endif
+/* Enable extensions on Cosmopolitan Libc. */
+#ifndef _COSMO_SOURCE
+# define _COSMO_SOURCE 1
 #endif
 /* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
@@ -861,14 +859,14 @@
 #endif
 
 
+/* Define if the gnulib module map-c++ is present. */
+#define _GL_HAVE_MAP_HH 1
+
 /* Define to enable the declarations of ISO C 11 types and functions. */
 /* #undef _ISOC11_SOURCE */
 
 /* Define to 1 on platforms where this makes off_t a 64-bit type. */
 /* #undef _LARGE_FILES */
-
-/* Define to 1 on Solaris. */
-/* #undef _LCONV_C99 */
 
 /* Define so that AIX headers are more compatible with GNU/Linux. */
 #define _LINUX_SOURCE_COMPAT 1
@@ -909,7 +907,7 @@
 
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
-#define __GETOPT_PREFIX rpl_
+/* #undef __GETOPT_PREFIX */
 
 /* Define to 1 on platforms where this makes time_t a 64-bit type. */
 /* #undef __MINGW_USE_VC2005_COMPAT */
@@ -1152,11 +1150,9 @@
    we cannot omit the storage-class specifier.  Therefore, the following rule
    applies:
      * The macros
-         _GL_ATTRIBUTE_CONST
          _GL_ATTRIBUTE_DEPRECATED
          _GL_ATTRIBUTE_MAYBE_UNUSED
          _GL_ATTRIBUTE_NODISCARD
-         _GL_ATTRIBUTE_PURE
          _GL_ATTRIBUTE_REPRODUCIBLE
          _GL_ATTRIBUTE_UNSEQUENCED
        which may expand to bracket syntax [[...]], must come first, before the
@@ -1288,6 +1284,22 @@
 #  define _GL_ATTRIBUTE_CONST __attribute__ ((__const__))
 # else
 #  define _GL_ATTRIBUTE_CONST
+# endif
+#endif
+
+/* _GL_ATTRIBUTE_COUNTED_BY (C) declares that the number of elements of
+   the field is given by C, which must be another field in the same struct.
+   The programmer is responsible for guaranteeing some invariants; see
+   <https://gcc.gnu.org/onlinedocs/gcc/Common-Attributes.html> for details.  */
+/* Applies to struct fields of type array or pointer (to data).  */
+#ifndef _GL_ATTRIBUTE_COUNTED_BY
+/* This attributes is supported
+     - for fields of array type: by gcc >= 16, clang >= 18,
+     - for fields of pointer type: by gcc >= 16.2, clang >= 19.  */
+# if _GL_GNUC_PREREQ (16, 2) || (defined __clang__ && __clang_major__ >= 19)
+#  define _GL_ATTRIBUTE_COUNTED_BY(c) __attribute__ ((__counted_by__ (c)))
+# else
+#  define _GL_ATTRIBUTE_COUNTED_BY(c)
 # endif
 #endif
 
@@ -1746,12 +1758,12 @@
 # endif
 #endif
 
-/* The following attributes enable detection of multithread-safety problems
+/* The following attributes enable detection of thread safety problems
    and resource leaks at compile-time, by clang ≥ 15, when the warning option
    -Wthread-safety is enabled.  For usage, see
    <https://clang.llvm.org/docs/ThreadSafetyAnalysis.html>.  */
 #ifndef _GL_ATTRIBUTE_CAPABILITY_TYPE
-# if __clang_major__ >= 15
+# if defined __clang__ && __clang_major__ >= 15
 #  define _GL_ATTRIBUTE_CAPABILITY_TYPE(concept) \
      __attribute__ ((__capability__ (concept)))
 # else
@@ -1759,7 +1771,7 @@
 # endif
 #endif
 #ifndef _GL_ATTRIBUTE_ACQUIRE_CAPABILITY
-# if __clang_major__ >= 15
+# if defined __clang__ && __clang_major__ >= 15
 #  define _GL_ATTRIBUTE_ACQUIRE_CAPABILITY(resource) \
      __attribute__ ((__acquire_capability__ (resource)))
 # else
@@ -1767,7 +1779,7 @@
 # endif
 #endif
 #ifndef _GL_ATTRIBUTE_RELEASE_CAPABILITY
-# if __clang_major__ >= 15
+# if defined __clang__ && __clang_major__ >= 15
 #  define _GL_ATTRIBUTE_RELEASE_CAPABILITY(resource) \
      __attribute__ ((__release_capability__ (resource)))
 # else
@@ -1824,9 +1836,14 @@
 /* #undef pid_t */
 
 /* Define to the equivalent of the C99 'restrict' keyword, or to
-   nothing if this is not supported.  Do not define if restrict is
-   supported only directly.  */
+   nothing if this is not supported.  In particular it is not supported
+   in MSVC 14.44 and in g++ 7 on Solaris 11, although these compilers
+   define __STDC_VERSION__ to 199901L.
+   Do not define if restrict is supported directly.  */
+#if ! (defined __STDC_VERSION__ && 199901L <= __STDC_VERSION__ \
+       && !defined _MSC_VER && !defined __cplusplus)
 #define restrict __restrict__
+#endif
 /* Work around a bug in older versions of Sun C++, which did not
    #define __restrict__ or support _Restrict or __restrict__
    even though the corresponding Sun C compiler ended up with
@@ -1837,6 +1854,31 @@
 # define _Restrict
 # define __restrict__
 #endif
+
+/* Sanitizer features.  */
+#ifdef __has_feature
+# if !defined __SANITIZE_ADDRESS__ && __has_feature (address_sanitizer)
+#  define __SANITIZE_ADDRESS__ 1
+# endif
+# if !defined __SANITIZE_HWADDRESS__ && __has_feature (hwaddress_sanitizer)
+#  define __SANITIZE_HWADDRESS__ 1
+# endif
+# if !defined __SANITIZE_LEAK__ && __has_feature (leak_sanitizer)
+#  define __SANITIZE_LEAK__ 1
+# endif
+# if !defined __SANITIZE_THREAD__ && __has_feature (thread_sanitizer)
+#  define __SANITIZE_THREAD__ 1
+# endif
+  /* Although the following sanitizers are in Clang not GCC,
+     define GCC-like macro names for consistency and convenience.  */
+# if !defined __SANITIZE_MEMORY__ && __has_feature (memory_sanitizer)
+#  define __SANITIZE_MEMORY__ 1
+# endif
+# if !defined __SANITIZE_SCUDO__ && __has_feature (scudo_sanitizer)
+#  define __SANITIZE_SCUDO__ 1
+# endif
+#endif
+
 
 /* Define as 'unsigned int' if <stddef.h> doesn't define. */
 /* #undef size_t */

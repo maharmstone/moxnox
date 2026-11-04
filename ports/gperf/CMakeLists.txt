@@ -15,8 +15,6 @@ add_library(gperf_gnulib STATIC
     ../gnulib/repo/lib/exitfail.c
     ../gnulib/repo/lib/fcntl.c
     ../gnulib/repo/lib/fopen.c
-    ../gnulib/repo/lib/getopt.c
-    ../gnulib/repo/lib/getopt1.c
     ../gnulib/repo/lib/gl_hash_map.c
     ../gnulib/repo/lib/gl_map.c
     ../gnulib/repo/lib/gl_xmap.c

@@ -1,7 +1,5 @@
 gnulib_header(../gnulib/repo/lib/error.in.h ${GEN}/gnu/error.h)
 gnulib_header(../gnulib/repo/lib/fcntl.in.h ${GEN}/gnu/fcntl.h)
-gnulib_header(../gnulib/repo/lib/getopt.in.h ${GEN}/gnu/getopt.h)
-gnulib_header(../gnulib/repo/lib/getopt-cdefs.in.h ${GEN}/gnu/getopt-cdefs.h)
 gnulib_header(../gnulib/repo/lib/stddef.in.h ${GEN}/gnu/stddef.h)
 gnulib_header(../gnulib/repo/lib/stdio.in.h ${GEN}/gnu/stdio.h)
 gnulib_header(../gnulib/repo/lib/string.in.h ${GEN}/gnu/string.h)
