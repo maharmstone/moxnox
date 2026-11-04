@@ -7,7 +7,7 @@ typedef ssize_t regoff_t;
 
 typedef struct {
     size_t re_nsub;
-    void *value;
+    void* buffer;
 } regex_t;
 
 typedef struct {

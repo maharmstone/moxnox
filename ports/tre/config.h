@@ -23,7 +23,7 @@
 #define STDC_HEADERS 1
 
 #define TRE_MULTIBYTE 1
-#define TRE_REGEX_T_FIELD value
+#define TRE_REGEX_T_FIELD buffer
 #define TRE_USE_SYSTEM_REGEX_H 1
 #define TRE_SYSTEM_REGEX_H_PATH <regex.h>
 #define TRE_WCHAR 1
