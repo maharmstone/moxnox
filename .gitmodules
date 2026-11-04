@@ -250,3 +250,6 @@
 [submodule "ports/automake/repo"]
 	path = ports/automake/repo
 	url = git://git.sv.gnu.org/automake.git
+[submodule "ports/libxml2/repo"]
+	path = ports/libxml2/repo
+	url = https://gitlab.gnome.org/GNOME/libxml2

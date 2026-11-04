@@ -191,3 +191,5 @@
 	insteadOf = git://git.sv.gnu.org/autoconf.git
 [url "https://git.burntcomma.com/moxnox/automake"]
 	insteadOf = git://git.sv.gnu.org/automake.git
+[url "https://git.burntcomma.com/moxnox/libxml2"]
+	insteadOf = https://gitlab.gnome.org/GNOME/libxml2

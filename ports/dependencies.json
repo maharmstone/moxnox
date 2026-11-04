@@ -33,6 +33,7 @@
     "librhash": [],
     "libuv": [],
     "libxkbcommon": [],
+    "libxml2": ["libiconv", "readline", "zlib"],
     "llvm": [],
     "m4": ["gnulib", "libiconv"],
     "make": ["gnulib"],
