@@ -130,6 +130,7 @@ add_executable(tar
     repo/gnulib/lib/getopt1.c
     repo/gnulib/lib/getopt.c
     repo/gnulib/lib/gettime.c
+    repo/gnulib/lib/hard-locale.c
     repo/gnulib/lib/hash.c
     repo/gnulib/lib/human.c
     repo/gnulib/lib/ialloc.c
@@ -170,6 +171,8 @@ add_executable(tar
     repo/gnulib/lib/safe-write.c
     repo/gnulib/lib/save-cwd.c
     repo/gnulib/lib/savedir.c
+    repo/gnulib/lib/setlocale-lock.c
+    repo/gnulib/lib/setlocale_null.c
     repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stdopen.c
     repo/gnulib/lib/stpcpy.c

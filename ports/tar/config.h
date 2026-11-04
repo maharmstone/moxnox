@@ -28,16 +28,16 @@
 
 /* Define to 1 if chown fails to change ctime when at least one argument was
    not -1. */
-#define CHOWN_CHANGE_TIME_BUG 1
+/* #undef CHOWN_CHANGE_TIME_BUG */
 
 /* Define if chown is not POSIX compliant regarding IDs of -1. */
 /* #undef CHOWN_FAILS_TO_HONOR_ID_OF_NEGATIVE_ONE */
 
 /* Define if chown modifies symlinks. */
-#define CHOWN_MODIFIES_SYMLINK 1
+/* #undef CHOWN_MODIFIES_SYMLINK */
 
 /* Define to 1 if chown mishandles trailing slash. */
-/* #undef CHOWN_TRAILING_SLASH_BUG */
+#define CHOWN_TRAILING_SLASH_BUG 1
 
 /* Define to the program name of compress compressor program */
 #define COMPRESS_PROGRAM "compress"
@@ -88,7 +88,7 @@
 /* #undef DOUBLE_SLASH_IS_DISTINCT_ROOT */
 
 /* Define if struct dirent has a member d_ino that actually works. */
-/* #undef D_INO_IN_DIRENT */
+#define D_INO_IN_DIRENT 1
 
 /* Enable the use of error_print_progname to print program name with error
    messages. See comment to function tar_print_progname in src/tar.c */
@@ -100,14 +100,14 @@
 
 /* Define to 1 if your platform has fchownat, but it does not reject an empty
    file name. */
-#define FCHOWNAT_EMPTY_FILENAME_BUG 1
+/* #undef FCHOWNAT_EMPTY_FILENAME_BUG */
 
 /* Define to 1 if your platform has fchownat, but it cannot perform lchown
    tasks. */
 /* #undef FCHOWNAT_NOFOLLOW_BUG */
 
 /* Define this to 1 if F_DUPFD behavior does not match POSIX */
-#define FCNTL_DUPFD_BUGGY 1
+/* #undef FCNTL_DUPFD_BUGGY */
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like 'struct s { int n; short
@@ -132,7 +132,7 @@
 
 /* Define to 1 if mkdir mistakenly creates a directory given with a trailing
    dot component. */
-#define FUNC_MKDIR_DOT_BUG 1
+/* #undef FUNC_MKDIR_DOT_BUG */
 
 /* Define to 1 if nl_langinfo (YESEXPR) returns a non-empty string. */
 #define FUNC_NL_LANGINFO_YESEXPR_WORKS 1
@@ -154,7 +154,7 @@
 
 /* Define this to 1 if getgroups(0,NULL) does not return the number of groups.
    */
-#define GETGROUPS_ZERO_BUG 1
+/* #undef GETGROUPS_ZERO_BUG */
 
 /* Define this to 'void' or 'struct timezone' to match the system's
    declaration of the second argument to gettimeofday. */
@@ -772,7 +772,7 @@
 #define GZIP_PROGRAM "gzip"
 
 /* Define to 1 if you have the 'access' function. */
-/* #undef HAVE_ACCESS */
+#define HAVE_ACCESS 1
 
 /* Define to 1 if you have the 'aclsort' function. */
 /* #undef HAVE_ACLSORT */
@@ -1128,7 +1128,7 @@
 
 /* Define to 1 if you have the declaration of 'tzname', and to 0 if you don't.
    */
-#define HAVE_DECL_TZNAME 1
+/* #undef HAVE_DECL_TZNAME */
 
 /* Define to 1 if you have the declaration of 'unsetenv', and to 0 if you
    don't. */
@@ -1267,7 +1267,7 @@
 /* #undef HAVE_GETEXECNAME */
 
 /* Define to 1 if your system has a working `getgroups' function. */
-/* #undef HAVE_GETGROUPS */
+#define HAVE_GETGROUPS 1
 
 /* Define to 1 if you have the `getline' function. */
 #define HAVE_GETLINE 1
@@ -1346,7 +1346,7 @@
 #define HAVE_LIBGEN_H 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
-#define HAVE_LIBINTL_H 1
+/* #undef HAVE_LIBINTL_H */
 
 /* Define to 1 if the bcrypt library is guaranteed to be present. */
 /* #undef HAVE_LIB_BCRYPT */
@@ -1380,7 +1380,7 @@
 
 /* Define if localtime-like functions can loop forever on extreme arguments.
    */
-#define HAVE_LOCALTIME_INFLOOP_BUG 1
+/* #undef HAVE_LOCALTIME_INFLOOP_BUG */
 
 /* Define to 1 if you have the 'localtime_r' function. */
 #define HAVE_LOCALTIME_R 1
@@ -1498,7 +1498,7 @@
 
 /* Define to 1 if getcwd works, except it sometimes fails when it shouldn't,
    setting errno to ERANGE, ENAMETOOLONG, or ENOENT. */
-#define HAVE_PARTLY_WORKING_GETCWD 1
+/* #undef HAVE_PARTLY_WORKING_GETCWD */
 
 /* Define to 1 if you have the 'pathconf' function. */
 #define HAVE_PATHCONF 1
@@ -1685,10 +1685,10 @@
 #define HAVE_STRTOUMAX 1
 
 /* Define to 1 if 'decimal_point' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_DECIMAL_POINT 1
+/* #undef HAVE_STRUCT_LCONV_DECIMAL_POINT */
 
 /* Define to 1 if 'int_p_cs_precedes' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES 1
+/* #undef HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES */
 
 /* Define to 1 if 'st_atimensec' is a member of 'struct stat'. */
 /* #undef HAVE_STRUCT_STAT_ST_ATIMENSEC */
@@ -1718,7 +1718,7 @@
 #define HAVE_STRUCT_STAT_ST_BLOCKS 1
 
 /* Define to 1 if 'tm_zone' is a member of 'struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_ZONE */
+#define HAVE_STRUCT_TM_TM_ZONE 1
 
 /* Define to 1 if your 'struct stat' has 'st_blocks'. Deprecated, use
    'HAVE_STRUCT_STAT_ST_BLOCKS' instead. */
@@ -1812,11 +1812,11 @@
 /* #undef HAVE_TIMEZONE_T */
 
 /* Define if struct tm has the tm_gmtoff member. */
-/* #undef HAVE_TM_GMTOFF */
+#define HAVE_TM_GMTOFF 1
 
 /* Define to 1 if your 'struct tm' has 'tm_zone'. Deprecated, use
    'HAVE_STRUCT_TM_TM_ZONE' instead. */
-/* #undef HAVE_TM_ZONE */
+#define HAVE_TM_ZONE 1
 
 /* Define to 1 if you have the 'towlower' function. */
 /* #undef HAVE_TOWLOWER */
@@ -1826,7 +1826,7 @@
 
 /* Define to 1 if you don't have 'tm_zone' but do have the external array
    'tzname'. */
-#define HAVE_TZNAME 1
+/* #undef HAVE_TZNAME */
 
 /* Define to 1 if you have the <uchar.h> header file. */
 #define HAVE_UCHAR_H 1
@@ -1907,7 +1907,7 @@
 
 /* Define to 1 if fstatat (..., 0) works. For example, it does not work in AIX
    7.1. */
-/* #undef HAVE_WORKING_FSTATAT_ZERO_FLAG */
+#define HAVE_WORKING_FSTATAT_ZERO_FLAG 1
 
 /* Define if the mbrtoc32 function basically works. */
 /* #undef HAVE_WORKING_MBRTOC32 */
@@ -2060,10 +2060,10 @@
 #define ICONV_CONST
 
 /* Define to 1 if linkat can create hardlinks to symlinks */
-#define LINKAT_SYMLINK_NOTSUP 1
+#define LINKAT_SYMLINK_NOTSUP 0
 
 /* Define to 1 if linkat fails to recognize a trailing slash. */
-#define LINKAT_TRAILING_SLASH_BUG 0
+#define LINKAT_TRAILING_SLASH_BUG 1
 
 /* Define to 1 if 'link(2)' dereferences symbolic links, 0 if it creates hard
    links to symlinks, -1 if it depends on the variable __xpg4, and -2 if
@@ -2075,7 +2075,7 @@
 
 /* Define to 1 if 'lstat' dereferences a symlink specified with a trailing
    slash. */
-#define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
+/* #undef LSTAT_FOLLOWS_SLASHED_SYMLINK */
 
 /* Define to the program name of lzip compressor program */
 #define LZIP_PROGRAM "lzip"
@@ -2110,11 +2110,11 @@
 
 /* Define if the mbrtowc function does not return (size_t) -2 for empty input.
    */
-#define MBRTOWC_EMPTY_INPUT_BUG 1
+/* #undef MBRTOWC_EMPTY_INPUT_BUG */
 
 /* Define if the mbrtowc function may signal encoding errors in the C locale.
    */
-/* #undef MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ */
+#define MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ 1
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
@@ -2139,10 +2139,10 @@
 
 
 /* Define to 1 if mkfifo does not reject trailing slash */
-/* #undef MKFIFO_TRAILING_SLASH_BUG */
+#define MKFIFO_TRAILING_SLASH_BUG 1
 
 /* Define to 1 if mknod cannot create a fifo without super-user privileges */
-/* #undef MKNOD_FIFO_BUG */
+#define MKNOD_FIFO_BUG 1
 
 /* Define to mt_model (v.g., for DG/UX), else to mt_type. */
 #define MTIO_CHECK_FIELD mt_type
@@ -2152,7 +2152,7 @@
 
 /* Define to 1 if fchmodat+AT_SYMLINK_NOFOLLOW does not work right on
    non-symlinks. */
-#define NEED_FCHMODAT_NONSYMLINK_FIX 1
+/* #undef NEED_FCHMODAT_NONSYMLINK_FIX */
 
 /* Define if the compilation of mktime.c should define 'mktime_internal'. */
 #define NEED_MKTIME_INTERNAL 1
@@ -2169,7 +2169,7 @@
 #define NL_LANGINFO_MTSAFE 1
 
 /* Define to 1 if open() fails to recognize a trailing slash. */
-/* #undef OPEN_TRAILING_SLASH_BUG */
+#define OPEN_TRAILING_SLASH_BUG 1
 
 /* Name of package */
 #define PACKAGE "tar"
@@ -2213,18 +2213,18 @@
 /* #undef PTRDIFF_T_SUFFIX */
 
 /* Define to 1 if readlink fails to recognize a trailing slash. */
-/* #undef READLINK_TRAILING_SLASH_BUG */
+#define READLINK_TRAILING_SLASH_BUG 1
 
 /* Define to 1 if readlink sets errno instead of truncating a too-long link.
    */
-#define READLINK_TRUNCATE_BUG 1
+/* #undef READLINK_TRUNCATE_BUG */
 
 /* Define to the full path of your rsh, if any. */
 /* #undef REMOTE_SHELL */
 
 /* Define if rename does not work when the destination file exists, as on
    Cygwin 1.5 or Windows. */
-#define RENAME_DEST_EXISTS_BUG 1
+/* #undef RENAME_DEST_EXISTS_BUG */
 
 /* Define if rename fails to leave hard links alone, as on NetBSD 1.6 or
    Cygwin 1.5. */
@@ -2232,22 +2232,22 @@
 
 /* Define if rename does not correctly handle slashes on the destination
    argument, such as on Solaris 11 or NetBSD 1.6. */
-/* #undef RENAME_TRAILING_SLASH_DEST_BUG */
+#define RENAME_TRAILING_SLASH_DEST_BUG 1
 
 /* Define if rename does not correctly handle slashes on the source argument,
    such as on Solaris 9 or cygwin 1.5. */
-/* #undef RENAME_TRAILING_SLASH_SOURCE_BUG */
+#define RENAME_TRAILING_SLASH_SOURCE_BUG 1
 
 /* Define to 1 if gnulib's fchdir() replacement is used. */
 /* #undef REPLACE_FCHDIR */
 
 /* Define to 1 if stat needs help when passed a file name with a trailing
    slash */
-/* #undef REPLACE_FUNC_STAT_FILE */
+#define REPLACE_FUNC_STAT_FILE 1
 
 /* Define to 1 if utime needs help when passed a file name with a trailing
    slash */
-/* #undef REPLACE_FUNC_UTIME_FILE */
+#define REPLACE_FUNC_UTIME_FILE 1
 
 /* Define if nl_langinfo exists but is overridden by gnulib. */
 #define REPLACE_NL_LANGINFO 1
@@ -2323,6 +2323,10 @@
 /* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
+#endif
+/* Enable extensions on Cosmopolitan Libc. */
+#ifndef _COSMO_SOURCE
+# define _COSMO_SOURCE 1
 #endif
 /* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
