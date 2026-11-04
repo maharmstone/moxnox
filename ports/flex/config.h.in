@@ -39,13 +39,13 @@
 /* #undef HAVE_GETTEXT */
 
 /* Define if you have the iconv() function and it works. */
-/* #undef HAVE_ICONV */
+#define HAVE_ICONV 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
-#define HAVE_LIBINTL_H 1
+/* #undef HAVE_LIBINTL_H */
 
 /* Define to 1 if you have the 'm' library (-lm). */
 /* #undef HAVE_LIBM */
@@ -140,7 +140,7 @@
 /* #undef HAVE_VFORK_H */
 
 /* Define to 1 if 'fork' works. */
-/* #undef HAVE_WORKING_FORK */
+#define HAVE_WORKING_FORK 1
 
 /* Define to 1 if 'vfork' works. */
 /* #undef HAVE_WORKING_VFORK */
