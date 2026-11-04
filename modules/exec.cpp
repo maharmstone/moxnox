@@ -804,16 +804,22 @@ export int do_exec(const char* path, char* const* argv, char* const* envp,
 
     do_cmdline(sp.data(), argv, extra_arg1, extra_arg2, extra_arg3);
 
-    params.CommandLine.Length = (uint16_t)(cmdline_len * sizeof(char16_t));
-    params.CommandLine.MaximumLength = (uint16_t)((cmdline_len + 1) * sizeof(char16_t));
+    // UNICODE_STRING only allows us 65,535 bytes
+    if (cmdline_len * sizeof(char16_t) >= 0x10000) {
+        params.CommandLine.Length = 0xffff;
+        params.CommandLine.MaximumLength = 0xffff;
+    } else {
+        params.CommandLine.Length = (uint16_t)(cmdline_len * sizeof(char16_t));
+        params.CommandLine.MaximumLength = max(params.CommandLine.Length, (uint16_t)((cmdline_len + 1) * sizeof(char16_t)));
+    }
+
     params.CommandLine.Buffer = (char16_t*)proc_misc_block;
 
-    sp = span(sp.data() + (params.CommandLine.MaximumLength / sizeof(char16_t)),
-              sp.size() - (params.CommandLine.MaximumLength / sizeof(char16_t)));
+    sp = span(sp.data() + cmdline_len + 1, sp.size() - cmdline_len - 1);
 
     do_environ(sp, envp);
 
-    params.Environment = (uint8_t*)proc_misc_block + params.CommandLine.MaximumLength;
+    params.Environment = (uint8_t*)proc_misc_block + (cmdline_len * sizeof(char16_t)) + sizeof(char16_t);
     params.EnvironmentSize = env_len * sizeof(char16_t);
 
     // copy misc block
