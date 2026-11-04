@@ -253,3 +253,6 @@
 [submodule "ports/libxml2/repo"]
 	path = ports/libxml2/repo
 	url = https://gitlab.gnome.org/GNOME/libxml2
+[submodule "ports/libtool/repo"]
+	path = ports/libtool/repo
+	url = git://git.sv.gnu.org/libtool.git

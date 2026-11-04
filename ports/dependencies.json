@@ -30,6 +30,7 @@
     "libarchive": ["bzip2", "libiconv", "xz", "zlib", "zstd"],
     "libiconv": [],
     "libpng": ["zlib"],
+    "libtool": ["automake"],
     "librhash": [],
     "libuv": [],
     "libxkbcommon": [],

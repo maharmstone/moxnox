@@ -107,6 +107,7 @@
 [url "https://git.burntcomma.com/moxnox/gnulib"]
 	insteadOf = https://https.git.savannah.gnu.org/git/gnulib.git
 	insteadOf = https://git.savannah.gnu.org/git/gnulib.git
+	insteadOf = https://git.savannah.gnu.org/git/gnulib
 [url "https://git.burntcomma.com/moxnox/curl"]
 	insteadOf = https://github.com/curl/curl
 [url "https://git.burntcomma.com/moxnox/binutils-gdb"]
@@ -193,3 +194,5 @@
 	insteadOf = git://git.sv.gnu.org/automake.git
 [url "https://git.burntcomma.com/moxnox/libxml2"]
 	insteadOf = https://gitlab.gnome.org/GNOME/libxml2
+[url "https://git.burntcomma.com/moxnox/libtool"]
+	insteadOf = git://git.sv.gnu.org/libtool.git

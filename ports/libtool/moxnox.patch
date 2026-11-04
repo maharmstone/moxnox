@@ -1,0 +1,319 @@
+--- a/m4/libtool.m4
++++ b/m4/libtool.m4
+@@ -1975,7 +1975,7 @@
+     lt_cv_dlopen_self=yes
+     ;;
+ 
+-  mingw* | windows* | pw32* | cegcc*)
++  mingw* | windows* | pw32* | cegcc* | moxnox*)
+     lt_cv_dlopen=LoadLibrary
+     lt_cv_dlopen_libs=
+     ;;
+@@ -2570,7 +2570,7 @@
+   # libtool to hard-code these into programs
+   ;;
+ 
+-cygwin* | mingw* | windows* | pw32* | cegcc*)
++cygwin* | mingw* | windows* | pw32* | cegcc* | moxnox*)
+   version_type=windows
+   shrext_cmds=.dll
+   need_version=no
+@@ -2616,7 +2616,7 @@
+ m4_if([$1], [],[
+       sys_lib_search_path_spec="$sys_lib_search_path_spec /usr/lib/w32api"])
+       ;;
+-    mingw* | windows* | cegcc*)
++    mingw* | windows* | cegcc* | moxnox*)
+       # MinGW DLLs use traditional 'lib' prefix
+       soname_spec='$libname`echo $release | $SED -e 's/[[.]]/-/g'`$versuffix$shared_ext'
+       ;;
+@@ -2635,7 +2635,7 @@
+     library_names_spec='$libname.dll.lib'
+ 
+     case $build_os in
+-    mingw* | windows*)
++    mingw* | windows* | moxnox*)
+       sys_lib_search_path_spec=
+       lt_save_ifs=$IFS
+       IFS=';'
+@@ -3592,7 +3592,7 @@
+   lt_cv_file_magic_cmd='func_win32_libid'
+   ;;
+ 
+-mingw* | windows* | pw32*)
++mingw* | windows* | pw32* | moxnox*)
+   # Base MSYS/MinGW do not provide the 'file' command needed by
+   # func_win32_libid shell function, so use a weaker test based on 'objdump',
+   # unless we find 'file', for example because we are cross-compiling.
+@@ -3764,7 +3764,7 @@
+ want_nocaseglob=no
+ if test "$build" = "$host"; then
+   case $host_os in
+-  mingw* | windows* | pw32*)
++  mingw* | windows* | pw32* | moxnox*)
+     if ( shopt | grep nocaseglob ) >/dev/null 2>&1; then
+       want_nocaseglob=yes
+     else
+@@ -3907,7 +3907,7 @@
+ [lt_cv_sharedlib_from_linklib_cmd='unknown'
+ 
+ case $host_os in
+-cygwin* | mingw* | windows* | pw32* | cegcc*)
++cygwin* | mingw* | windows* | pw32* | cegcc* | moxnox*)
+   # two different shell functions defined in ltmain.sh;
+   # decide which one to use based on capabilities of $DLLTOOL
+   case `$DLLTOOL --help 2>&1` in
+@@ -3977,7 +3977,7 @@
+ [AC_REQUIRE([AC_CANONICAL_HOST])dnl
+ LIBM=
+ case $host in
+-*-*-beos* | *-*-cegcc* | *-*-cygwin* | *-*-haiku* | *-*-mingw* | *-*-pw32* | *-*-darwin*)
++*-*-beos* | *-*-cegcc* | *-*-cygwin* | *-*-haiku* | *-*-mingw* | *-*-pw32* | *-*-darwin* | *-*-moxnox*)
+   # These system don't have libm, or don't need it
+   ;;
+ *-ncr-sysv4.3*)
+@@ -4052,7 +4052,7 @@
+ aix*)
+   symcode='[[BCDT]]'
+   ;;
+-cygwin* | mingw* | windows* | pw32* | cegcc*)
++cygwin* | mingw* | windows* | pw32* | cegcc* | moxnox*)
+   symcode='[[ABCDGISTW]]'
+   ;;
+ hpux*)
+@@ -4359,7 +4359,7 @@
+     beos* | irix5* | irix6* | nonstopux* | osf3* | osf4* | osf5*)
+       # PIC is the default for these OSes.
+       ;;
+-    mingw* | windows* | cygwin* | os2* | pw32* | cegcc*)
++    mingw* | windows* | cygwin* | os2* | pw32* | cegcc* | moxnox*)
+       # This hack is so that the source file can tell whether it is being
+       # built for inclusion in a dll (and should export symbols for example).
+       # Although the cygwin gcc ignores -fPIC, still need this for old-style
+@@ -4435,7 +4435,7 @@
+ 	  ;;
+ 	esac
+ 	;;
+-      mingw* | windows* | cygwin* | os2* | pw32* | cegcc*)
++      mingw* | windows* | cygwin* | os2* | pw32* | cegcc* | moxnox*)
+ 	# This hack is so that the source file can tell whether it is being
+ 	# built for inclusion in a dll (and should export symbols for example).
+ 	m4_if([$1], [GCJ], [],
+@@ -4687,7 +4687,7 @@
+       # PIC is the default for these OSes.
+       ;;
+ 
+-    mingw* | windows* | cygwin* | pw32* | os2* | cegcc*)
++    mingw* | windows* | cygwin* | pw32* | os2* | cegcc* | moxnox*)
+       # This hack is so that the source file can tell whether it is being
+       # built for inclusion in a dll (and should export symbols for example).
+       # Although the cygwin gcc ignores -fPIC, still need this for old-style
+@@ -4791,7 +4791,7 @@
+       esac
+       ;;
+ 
+-    mingw* | windows* | cygwin* | pw32* | os2* | cegcc*)
++    mingw* | windows* | cygwin* | pw32* | os2* | cegcc* | moxnox*)
+       # This hack is so that the source file can tell whether it is being
+       # built for inclusion in a dll (and should export symbols for example).
+       m4_if([$1], [GCJ], [],
+@@ -5081,7 +5081,7 @@
+   pw32*)
+     _LT_TAGVAR(export_symbols_cmds, $1)=$ltdll_cmds
+     ;;
+-  cygwin* | mingw* | windows* | cegcc*)
++  cygwin* | mingw* | windows* | cegcc* | moxnox*)
+     case $cc_basename in
+     cl* | icl*)
+       _LT_TAGVAR(exclude_expsyms, $1)='_NULL_IMPORT_DESCRIPTOR|_IMPORT_DESCRIPTOR_.*'
+@@ -5251,7 +5251,7 @@
+       fi
+       ;;
+ 
+-    cygwin* | mingw* | windows* | pw32* | cegcc*)
++    cygwin* | mingw* | windows* | pw32* | cegcc* | moxnox*)
+       # _LT_TAGVAR(hardcode_libdir_flag_spec, $1) is actually meaningless,
+       # as there is no search path for DLLs.
+       _LT_TAGVAR(hardcode_libdir_flag_spec, $1)='-L$libdir'
+@@ -5715,7 +5715,7 @@
+       _LT_TAGVAR(export_dynamic_flag_spec, $1)=-rdynamic
+       ;;
+ 
+-    cygwin* | mingw* | windows* | pw32* | cegcc*)
++    cygwin* | mingw* | windows* | pw32* | cegcc* | moxnox*)
+       # When not using gcc, we currently assume that we are using
+       # Microsoft Visual C++ or Intel C++ Compiler.
+       # hardcode_libdir_flag_spec is actually meaningless, as there is
+@@ -6797,7 +6797,7 @@
+         esac
+         ;;
+ 
+-      cygwin* | mingw* | windows* | pw32* | cegcc*)
++      cygwin* | mingw* | windows* | pw32* | cegcc* | moxnox*)
+ 	case $GXX,$cc_basename in
+ 	,cl* | no,cl* | ,icl* | no,icl*)
+ 	  # Native MSVC or ICC
+--- a/build-aux/ltmain.sh
++++ b/build-aux/ltmain.sh
+@@ -2723,7 +2723,7 @@
+     case $host_os in
+       # Solaris2 added to fix http://debbugs.gnu.org/cgi/bugreport.cgi?bug=16452
+       # see also: http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59788
+-      cygwin* | mingw* | windows* | pw32* | cegcc* | solaris2* | os2*)
++      cygwin* | mingw* | windows* | pw32* | cegcc* | solaris2* | os2* | moxnox*)
+         # don't eliminate duplications in $postdeps and $predeps
+         opt_duplicate_compiler_generated_deps=:
+         ;;
+@@ -3813,7 +3813,7 @@
+ 
+     # On Cygwin there's no "real" PIC flag so we must build both object types
+     case $host_os in
+-    cygwin* | mingw* | windows* | pw32* | os2* | cegcc*)
++    cygwin* | mingw* | windows* | pw32* | os2* | cegcc* | moxnox*)
+       pic_mode=default
+       ;;
+     esac
+@@ -4709,7 +4709,7 @@
+ 	      'exit $?'
+ 	  tstripme=$stripme
+ 	  case $host_os in
+-	  cygwin* | mingw* | windows* | pw32* | cegcc*)
++	  cygwin* | mingw* | windows* | pw32* | cegcc* | moxnox*)
+ 	    case $realname in
+ 	    *.dll.a)
+ 	      tstripme=
+@@ -5050,7 +5050,7 @@
+ 	      $RM $export_symbols
+ 	      eval "$SED -n -e '/^: @PROGRAM@ $/d' -e 's/^.* \(.*\)$/\1/p' "'< "$nlist" > "$export_symbols"'
+ 	      case $host in
+-	      *cygwin* | *mingw* | *windows* | *cegcc* )
++	      *cygwin* | *mingw* | *windows* | *cegcc*  | *moxnox*)
+                 eval "echo EXPORTS "'> "$output_objdir/$outputname.def"'
+                 eval 'cat "$export_symbols" >> "$output_objdir/$outputname.def"'
+ 	        ;;
+@@ -5062,7 +5062,7 @@
+ 	      eval '$GREP -f "$output_objdir/$outputname.exp" < "$nlist" > "$nlist"T'
+ 	      eval '$MV "$nlist"T "$nlist"'
+ 	      case $host in
+-	        *cygwin* | *mingw* | *windows* | *cegcc* )
++	        *cygwin* | *mingw* | *windows* | *cegcc*  | *moxnox*)
+ 	          eval "echo EXPORTS "'> "$output_objdir/$outputname.def"'
+ 	          eval 'cat "$nlist" >> "$output_objdir/$outputname.def"'
+ 	          ;;
+@@ -5076,7 +5076,7 @@
+ 	  func_basename "$dlprefile"
+ 	  name=$func_basename_result
+           case $host in
+-	    *cygwin* | *mingw* | *windows* | *cegcc* )
++	    *cygwin* | *mingw* | *windows* | *cegcc*  | *moxnox*)
+ 	      # if an import library, we need to obtain dlname
+ 	      if func_win32_import_lib_p "$dlprefile"; then
+ 	        func_tr_sh "$dlprefile"
+@@ -5259,7 +5259,7 @@
+ 	# Transform the symbol file into the correct name.
+ 	symfileobj=$output_objdir/${my_outputname}S.$objext
+ 	case $host in
+-	*cygwin* | *mingw* | *windows* | *cegcc* )
++	*cygwin* | *mingw* | *windows* | *cegcc*  | *moxnox*)
+ 	  if test -f "$output_objdir/$my_outputname.def"; then
+ 	    compile_command=`$ECHO "$compile_command" | $SED "s%@SYMFILE@%$output_objdir/$my_outputname.def $symfileobj%"`
+ 	    finalize_command=`$ECHO "$finalize_command" | $SED "s%@SYMFILE@%$output_objdir/$my_outputname.def $symfileobj%"`
+@@ -6897,7 +6897,7 @@
+     $debug_cmd
+ 
+     case $host in
+-    *-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-cegcc*)
++    *-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-cegcc* | *-*-moxnox*)
+       # It is impossible to link a dll without this setting, and
+       # we shouldn't force the makefile maintainer to figure out
+       # what system we are compiling for in order to pass an extra
+@@ -7406,7 +7406,7 @@
+ 	  ;;
+ 	esac
+ 	case $host in
+-	*-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-cegcc*)
++	*-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-cegcc* | *-*-moxnox*)
+ 	  testbindir=`$ECHO "$dir" | $SED 's*/lib$*/bin*'`
+ 	  case :$dllsearchpath: in
+ 	  *":$dir:"*) ;;
+@@ -7426,7 +7426,7 @@
+       -l*)
+ 	if test X-lc = "X$arg" || test X-lm = "X$arg"; then
+ 	  case $host in
+-	  *-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-beos* | *-cegcc* | *-*-haiku*)
++	  *-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-beos* | *-cegcc* | *-*-haiku* | *-*-moxnox*)
+ 	    # These systems don't actually have a C or math library (as such)
+ 	    continue
+ 	    ;;
+@@ -7522,7 +7522,7 @@
+ 
+       -no-install)
+ 	case $host in
+-	*-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-*-darwin* | *-cegcc*)
++	*-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-*-darwin* | *-cegcc* | *-*-moxnox*)
+ 	  # The PATH hackery in wrapper scripts is required on Windows
+ 	  # and Darwin in order for the loader to find any dlls it needs.
+ 	  func_warning "'-no-install' is ignored for $host"
+@@ -8451,7 +8451,7 @@
+ 	  fi
+ 	  case $host in
+ 	    # special handling for platforms with PE-DLLs.
+-	    *cygwin* | *mingw* | *windows* | *cegcc* )
++	    *cygwin* | *mingw* | *windows* | *cegcc*  | *moxnox*)
+ 	      # Linker will automatically link against shared library if both
+ 	      # static and shared are present.  Therefore, ensure we extract
+ 	      # symbols from the import library if a shared library is present
+@@ -8601,7 +8601,7 @@
+ 	if test -n "$library_names" &&
+ 	   { test no = "$use_static_libs" || test -z "$old_library"; }; then
+ 	  case $host_os in
+-	  cygwin* | mingw* | windows* | cegcc* | os2*)
++	  cygwin* | mingw* | windows* | cegcc* | os2* | moxnox*)
+ 	      # No point in relinking DLLs because paths are not encoded
+ 	      func_append notinst_deplibs " $lib"
+ 	      need_relink=no
+@@ -8674,7 +8674,7 @@
+ 	    elif test -n "$soname_spec"; then
+ 	      # bleh windows
+ 	      case $host_os in
+-	      cygwin* | mingw* | windows* | cegcc* | os2*)
++	      cygwin* | mingw* | windows* | cegcc* | os2* | moxnox*)
+ 	        func_arith $current - $age
+ 		major=$func_arith_result
+ 		versuffix=-$major
+@@ -9592,7 +9592,7 @@
+       if test yes = "$build_libtool_libs"; then
+ 	if test -n "$rpath"; then
+ 	  case $host in
+-	  *-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-*-beos* | *-cegcc* | *-*-haiku*)
++	  *-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-*-beos* | *-cegcc* | *-*-haiku* | *-*-moxnox*)
+ 	    # these systems don't actually have a c library (as such)!
+ 	    ;;
+ 	  *-*-rhapsody* | *-*-darwin1.[012])
+@@ -10000,7 +10000,7 @@
+ 
+ 	orig_export_symbols=
+ 	case $host_os in
+-	cygwin* | mingw* | windows* | cegcc*)
++	cygwin* | mingw* | windows* | cegcc* | moxnox*)
+ 	  if test -n "$export_symbols" && test -z "$export_symbols_regex"; then
+ 	    # exporting using user supplied symfile
+ 	    func_dll_def_p "$export_symbols" || {
+@@ -10670,7 +10670,7 @@
+ 	  esac
+ 	fi
+ 	case $host in
+-	*-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-cegcc*)
++	*-*-cygwin* | *-*-mingw* | *-*-windows* | *-*-pw32* | *-*-os2* | *-cegcc* | *-*-moxnox*)
+ 	  testbindir=`$ECHO "$libdir" | $SED -e 's*/lib$*/bin*'`
+ 	  case :$dllsearchpath: in
+ 	  *":$libdir:"*) ;;
+@@ -11236,7 +11236,7 @@
+ 	  # tests/bindir.at for full details.
+ 	  tdlname=$dlname
+ 	  case $host,$output,$installed,$module,$dlname in
+-	    *cygwin*,*lai,yes,no,*.dll | *mingw*,*lai,yes,no,*.dll | *windows*,*lai,yes,no,*.dll | *cegcc*,*lai,yes,no,*.dll)
++	    *cygwin*,*lai,yes,no,*.dll | *mingw*,*lai,yes,no,*.dll | *windows*,*lai,yes,no,*.dll | *cegcc*,*lai,yes,no,*.dll | *moxnox*,*lai,yes,no,*.dll)
+ 	      # If a -bindir argument was supplied, place the dll there.
+ 	      if test -n "$bindir"; then
+ 		func_relative_path "$install_libdir" "$bindir"
