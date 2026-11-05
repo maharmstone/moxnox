@@ -126,7 +126,7 @@
 
 
 /* Define if access does not correctly handle trailing slashes. */
-/* #undef ACCESS_TRAILING_SLASH_BUG */
+#define ACCESS_TRAILING_SLASH_BUG 1
 
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
@@ -186,7 +186,7 @@
 /* #undef DOUBLE_SLASH_IS_DISTINCT_ROOT */
 
 /* Define if struct dirent has a member d_ino that actually works. */
-/* #undef D_INO_IN_DIRENT */
+#define D_INO_IN_DIRENT 1
 
 /* Define to 1 if the changeword(REGEXP) functionality is wanted */
 /* #undef ENABLE_CHANGEWORD */
@@ -196,7 +196,7 @@
 /* #undef ENABLE_NLS */
 
 /* Define this to 1 if F_DUPFD behavior does not match POSIX */
-#define FCNTL_DUPFD_BUGGY 1
+/* #undef FCNTL_DUPFD_BUGGY */
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like 'struct s { int n; short
@@ -242,7 +242,7 @@
 
 /* Define to 1 if mkdir mistakenly creates a directory given with a trailing
    dot component. */
-#define FUNC_MKDIR_DOT_BUG 1
+/* #undef FUNC_MKDIR_DOT_BUG */
 
 /* Define to 1 if realpath() can malloc memory, always gives an absolute path,
    and handles a trailing slash correctly. */
@@ -1490,16 +1490,16 @@
 /* #undef HAVE_FREE_POSIX */
 
 /* Define if the frexp() function is available and works. */
-/* #undef HAVE_FREXP */
+#define HAVE_FREXP 1
 
 /* Define if the frexpl() function is available. */
-/* #undef HAVE_FREXPL */
+#define HAVE_FREXPL 1
 
 /* Define if the frexpl function is available in libc. */
-/* #undef HAVE_FREXPL_IN_LIBC */
+#define HAVE_FREXPL_IN_LIBC 1
 
 /* Define if the frexp function is available in libc. */
-/* #undef HAVE_FREXP_IN_LIBC */
+#define HAVE_FREXP_IN_LIBC 1
 
 /* Define to 1 if the system has the fseeko function. */
 /* #undef HAVE_FSEEKO */
@@ -1536,7 +1536,7 @@
 #define HAVE_GETGID 1
 
 /* Define to 1 if you have the 'getlocalename_l' function. */
-#define HAVE_GETLOCALENAME_L 1
+/* #undef HAVE_GETLOCALENAME_L */
 
 /* Define to 1 if you have the <getopt.h> header file. */
 #define HAVE_GETOPT_H 1
@@ -1636,7 +1636,7 @@
 #define HAVE_LC_MESSAGES 1
 
 /* Define if the ldexpl function is available in libc. */
-/* #undef HAVE_LDEXPL_IN_LIBC */
+#define HAVE_LDEXPL_IN_LIBC 1
 
 /* Define if the ldexp function is available in libc. */
 #define HAVE_LDEXP_IN_LIBC 1
@@ -1645,7 +1645,7 @@
 /* #undef HAVE_LIBCX_SPAWN2_H */
 
 /* Define to 1 if you have the <libintl.h> header file. */
-#define HAVE_LIBINTL_H 1
+/* #undef HAVE_LIBINTL_H */
 
 /* Define if you have the libsigsegv library. */
 /* #undef HAVE_LIBSIGSEGV */
@@ -1713,7 +1713,7 @@
 
 /* Define to 1 if getcwd minimally works, that is, its result can be trusted
    when it succeeds. */
-/* #undef HAVE_MINIMALLY_WORKING_GETCWD */
+#define HAVE_MINIMALLY_WORKING_GETCWD 1
 
 /* Define to 1 if you have the <minix/config.h> header file. */
 /* #undef HAVE_MINIX_CONFIG_H */
@@ -2011,10 +2011,10 @@
 #define HAVE_STRSIGNAL 1
 
 /* Define to 1 if 'decimal_point' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_DECIMAL_POINT 1
+/* #undef HAVE_STRUCT_LCONV_DECIMAL_POINT */
 
 /* Define to 1 if 'int_p_cs_precedes' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES 1
+/* #undef HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES */
 
 /* Define to 1 if the system has the type 'struct random_data'. */
 /* #undef HAVE_STRUCT_RANDOM_DATA */
@@ -2188,13 +2188,13 @@
 
 /* Define to 1 if fstatat (..., 0) works. For example, it does not work in AIX
    7.1. */
-/* #undef HAVE_WORKING_FSTATAT_ZERO_FLAG */
+#define HAVE_WORKING_FSTATAT_ZERO_FLAG 1
 
 /* Define if the mbrtoc32 function basically works. */
 /* #undef HAVE_WORKING_MBRTOC32 */
 
 /* Define to 1 if O_DIRECTORY works, 0 otherwise. */
-#define HAVE_WORKING_O_DIRECTORY 0
+#define HAVE_WORKING_O_DIRECTORY 1
 
 /* Define to 1 if O_NOATIME works, 0 otherwise. */
 #define HAVE_WORKING_O_NOATIME 1
@@ -2401,7 +2401,7 @@
 
 /* Define to 1 if 'lstat' dereferences a symlink specified with a trailing
    slash. */
-#define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
+/* #undef LSTAT_FOLLOWS_SLASHED_SYMLINK */
 
 /* Define to a substitute value for mmap()'s MAP_ANONYMOUS flag. */
 /* #undef MAP_ANONYMOUS */
@@ -2420,11 +2420,11 @@
 
 /* Define if the mbrtowc function does not return (size_t) -2 for empty input.
    */
-#define MBRTOWC_EMPTY_INPUT_BUG 1
+/* #undef MBRTOWC_EMPTY_INPUT_BUG */
 
 /* Define if the mbrtowc function may signal encoding errors in the C locale.
    */
-/* #undef MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ */
+#define MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ 1
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
@@ -2458,7 +2458,7 @@
 /* #undef MIPS_NAN2008_LONG_DOUBLE */
 
 /* Define to 1 if mkfifo does not reject trailing slash */
-/* #undef MKFIFO_TRAILING_SLASH_BUG */
+#define MKFIFO_TRAILING_SLASH_BUG 1
 
 /* Define to 1 on musl libc. */
 /* #undef MUSL_LIBC */
@@ -2468,11 +2468,11 @@
 
 /* Define if the vasnprintf implementation needs special code for the 'a' and
    'A' directives. */
-#define NEED_PRINTF_DIRECTIVE_A 1
+/* #undef NEED_PRINTF_DIRECTIVE_A */
 
 /* Define if the vasnprintf implementation needs special code for the 'b'
    directive. */
-#define NEED_PRINTF_DIRECTIVE_B 1
+/* #undef NEED_PRINTF_DIRECTIVE_B */
 
 /* Define if the vasnprintf implementation needs special code for the 'F'
    directive. */
@@ -2488,11 +2488,11 @@
 
 /* Define if the vasnprintf implementation needs special code for 'double'
    arguments. */
-#define NEED_PRINTF_DOUBLE 1
+/* #undef NEED_PRINTF_DOUBLE */
 
 /* Define if the vasnprintf implementation needs special code for surviving
    out-of-memory conditions. */
-#define NEED_PRINTF_ENOMEM 1
+/* #undef NEED_PRINTF_ENOMEM */
 
 /* Define if the vasnprintf implementation needs special code for the # flag
    with a zero precision and a zero value in the 'x' and 'X' directives. */
@@ -2500,7 +2500,7 @@
 
 /* Define if the vasnprintf implementation needs special code for the ' flag.
    */
-#define NEED_PRINTF_FLAG_GROUPING 1
+/* #undef NEED_PRINTF_FLAG_GROUPING */
 
 /* Define if the vasnprintf implementation needs special code for the ' flag,
    for integer directives only. */
@@ -2524,7 +2524,7 @@
 
 /* Define if the vasnprintf implementation needs special code for 'long
    double' arguments. */
-#define NEED_PRINTF_LONG_DOUBLE 1
+/* #undef NEED_PRINTF_LONG_DOUBLE */
 
 /* Define if the vasnprintf implementation needs special code for supporting
    large precisions without arbitrary bounds. */
@@ -2543,7 +2543,7 @@
 #define NL_LANGINFO_MTSAFE 1
 
 /* Define to 1 if open() fails to recognize a trailing slash. */
-/* #undef OPEN_TRAILING_SLASH_BUG */
+#define OPEN_TRAILING_SLASH_BUG 1
 
 /* Name of package */
 #define PACKAGE "m4"
@@ -2610,37 +2610,37 @@
 /* #undef PTRDIFF_T_SUFFIX */
 
 /* Define to 1 if readlink fails to recognize a trailing slash. */
-/* #undef READLINK_TRAILING_SLASH_BUG */
+#define READLINK_TRAILING_SLASH_BUG 1
 
 /* Define to 1 if readlink sets errno instead of truncating a too-long link.
    */
-#define READLINK_TRUNCATE_BUG 1
+/* #undef READLINK_TRUNCATE_BUG */
 
 /* Define if rename does not work when the destination file exists, as on
    Cygwin 1.5 or Windows. */
-#define RENAME_DEST_EXISTS_BUG 1
+/* #undef RENAME_DEST_EXISTS_BUG */
 
 /* Define if rename fails to leave hard links alone, as on NetBSD 1.6 or
    Cygwin 1.5. */
 /* #undef RENAME_HARD_LINK_BUG */
 
 /* Define to 1 if a file can be renamed while open, or to 0 if not. */
-#define RENAME_OPEN_FILE_WORKS 0
+#define RENAME_OPEN_FILE_WORKS 1
 
 /* Define if rename does not correctly handle slashes on the destination
    argument, such as on Solaris 11 or NetBSD 1.6. */
-/* #undef RENAME_TRAILING_SLASH_DEST_BUG */
+#define RENAME_TRAILING_SLASH_DEST_BUG 1
 
 /* Define if rename does not correctly handle slashes on the source argument,
    such as on Solaris 9 or cygwin 1.5. */
-/* #undef RENAME_TRAILING_SLASH_SOURCE_BUG */
+#define RENAME_TRAILING_SLASH_SOURCE_BUG 1
 
 /* Define to 1 if gnulib's fchdir() replacement is used. */
 /* #undef REPLACE_FCHDIR */
 
 /* Define to 1 if stat needs help when passed a file name with a trailing
    slash */
-/* #undef REPLACE_FUNC_STAT_FILE */
+#define REPLACE_FUNC_STAT_FILE 1
 
 /* Define if nl_langinfo exists but is overridden by gnulib. */
 #define REPLACE_NL_LANGINFO 1
@@ -2714,7 +2714,7 @@
 /* #undef STRERROR_R_CHAR_P */
 
 /* Define to 1 if strtod does not set errno upon gradual underflow. */
-#define STRTOD_HAS_GRADUAL_UNDERFLOW_PROBLEM 1
+/* #undef STRTOD_HAS_GRADUAL_UNDERFLOW_PROBLEM */
 
 /* Define to 1 if strtod does not set errno upon flush-to-zero underflow. */
 /* #undef STRTOD_HAS_UNDERFLOW_BUG */
@@ -2758,6 +2758,10 @@
 /* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
+#endif
+/* Enable extensions on Cosmopolitan Libc. */
+#ifndef _COSMO_SOURCE
+# define _COSMO_SOURCE 1
 #endif
 /* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
@@ -2970,7 +2974,7 @@
 
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
-#define __GETOPT_PREFIX rpl_
+/* #undef __GETOPT_PREFIX */
 
 /* Define to 1 on platforms where this makes time_t a 64-bit type. */
 /* #undef __MINGW_USE_VC2005_COMPAT */

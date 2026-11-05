@@ -85,8 +85,6 @@ add_executable(m4
     repo/gnulib/lib/fstatat.c
     repo/gnulib/lib/getcwd.c
     repo/gnulib/lib/getdtablesize.c
-    repo/gnulib/lib/getopt.c
-    repo/gnulib/lib/getopt1.c
     repo/gnulib/lib/getrandom.c
     repo/gnulib/lib/gl_avltree_oset.c
     repo/gnulib/lib/gl_linked_list.c
@@ -96,6 +94,7 @@ add_executable(m4
     repo/gnulib/lib/gl_xlist.c
     repo/gnulib/lib/gl_xoset.c
     repo/gnulib/lib/glthread/spin.c
+    repo/gnulib/lib/hard-locale.c
     repo/gnulib/lib/hash.c
     repo/gnulib/lib/hashcode-named-file.c
     repo/gnulib/lib/hashcode-string2.c
@@ -164,6 +163,7 @@ add_executable(m4
     repo/gnulib/lib/spawnattr_setsigmask.c
     repo/gnulib/lib/spawni.c
     repo/gnulib/lib/spawnp.c
+    repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stpcpy.c
     repo/gnulib/lib/strchrnul.c
     repo/gnulib/lib/striconv.c
