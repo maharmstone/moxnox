@@ -889,7 +889,7 @@
  *	This symbol, if defined, indicates that the closedir() routine
  *	does not return a value.
  */
-#define VOID_CLOSEDIR		/**/
+/*#define VOID_CLOSEDIR		/ **/
 
 /* HAS_FD_SET:
  *	This symbol, when defined, indicates presence of the fd_set typedef
@@ -942,7 +942,7 @@
  *	available to operate on a symbolic link (instead of following the
  *	link).
  */
-/*#define HAS_LCHOWN		/ **/
+#define HAS_LCHOWN		/**/
 
 /* HAS_OPEN3:
  *	This manifest constant lets the C program know that the three
@@ -1012,7 +1012,7 @@
  *	traditional longjmp() if siglongjmp isn't available.
  *	See HAS_SIGSETJMP.
  */
-/*#define HAS_SIGSETJMP	/ **/
+#define HAS_SIGSETJMP	/**/
 #ifdef HAS_SIGSETJMP
 #define Sigjmp_buf sigjmp_buf
 #define Sigsetjmp(buf,save_mask) sigsetjmp((buf),(save_mask))
@@ -1143,8 +1143,8 @@
 #define I_TIME		/**/
 #define I_SYS_TIME		/**/
 /*#define I_SYS_TIME_KERNEL		/ **/
-/*#define HAS_TM_TM_ZONE		/ **/
-/*#define HAS_TM_TM_GMTOFF		/ **/
+#define HAS_TM_TM_ZONE		/**/
+#define HAS_TM_TM_GMTOFF		/**/
 
 /* VAL_O_NONBLOCK:
  *	This symbol is to be used during open() or fcntl(F_SETFL) to turn on
@@ -1773,7 +1773,7 @@
  *	This symbol, if defined, indicates that the long double is
  *	the 128-bit VAX format H.
  */
-/*#define  HAS_LDEXPL		/ **/
+#define  HAS_LDEXPL		/**/
 #define HAS_LONG_DOUBLE		/**/
 #ifdef HAS_LONG_DOUBLE
 #define LONG_DOUBLESIZE 8		/**/
@@ -2256,7 +2256,7 @@
  *	Perl has been cross-compiled to.  Undefined if not a cross-compile.
  */
 #ifndef USE_CROSS_COMPILE
-#define USE_CROSS_COMPILE	/**/
+/*#define USE_CROSS_COMPILE	/ **/
 #define PERL_TARGETARCH	"@PERL_TARGETARCH@"	/**/
 #endif
 
@@ -2289,7 +2289,7 @@
  *	This symbol, if defined, indicates that the accept4 routine is
  *	available to accept socket connections.
  */
-/*#define HAS_ACCEPT4	/ **/
+#define HAS_ACCEPT4	/**/
 
 /* HAS_ACOSH:
  *	This symbol, if defined, indicates that the acosh routine is
@@ -2393,7 +2393,7 @@
  *	This symbol, if defined, indicates that the copysignl routine is
  *	available.  If aintl is also present we can emulate modfl.
  */
-/*#define HAS_COPYSIGNL		/ **/
+#define HAS_COPYSIGNL		/**/
 
 /* USE_CPLUSPLUS:
  *	This symbol, if defined, indicates that a C++ compiler was
@@ -2653,7 +2653,7 @@
  *	available to break a long double floating-point number into
  *	a normalized fraction and an integral power of 2.
  */
-/*#define HAS_FREXPL		/ **/
+#define HAS_FREXPL		/**/
 
 /* HAS_STRUCT_FS_DATA:
  *	This symbol, if defined, indicates that the struct fs_data
@@ -2802,7 +2802,7 @@
  *	This symbol, if defined, indicates that the ilogbl routine is
  *	available.  If scalbnl is also present we can emulate frexpl.
  */
-/*#define HAS_ILOGBL		/ **/
+#define HAS_ILOGBL		/**/
 
 /* HAS_INETNTOP:
  *	This symbol, if defined, indicates that the inet_ntop() function
@@ -2814,7 +2814,7 @@
  *	This symbol, if defined, indicates that the inet_pton() function
  *	is available to parse IPv4 and IPv6 strings.
  */
-/*#define HAS_INETPTON		/ **/
+#define HAS_INETPTON		/**/
 
 /* HAS_INT64_T:
  *	This symbol will defined if the C compiler supports int64_t.
@@ -2937,7 +2937,7 @@
  *	available to return the long long value closest to a long double
  *	(according to the current rounding mode).
  */
-/*#define HAS_LLRINTL		/ **/
+#define HAS_LLRINTL		/**/
 
 /* HAS_LLROUND:
  *	This symbol, if defined, indicates that the llround routine is
@@ -2950,7 +2950,7 @@
  *	available to return the nearest long long value away from zero of
  *	the long double argument value.
  */
-/*#define HAS_LLROUNDL		/ **/
+#define HAS_LLROUNDL		/**/
 
 /* HAS_LOG1P:
  *	This symbol, if defined, indicates that the log1p routine is
@@ -2982,7 +2982,7 @@
  *	available to return the integral value closest to a long double
  *	(according to the current rounding mode).
  */
-/*#define HAS_LRINTL		/ **/
+#define HAS_LRINTL		/**/
 
 /* HAS_LROUND:
  *	This symbol, if defined, indicates that the lround routine is
@@ -2995,7 +2995,7 @@
  *	available to return the nearest integral value away from zero of
  *	the long double argument value.
  */
-/*#define HAS_LROUNDL		/ **/
+#define HAS_LROUNDL		/**/
 
 /* HAS_MADVISE:
  *	This symbol, if defined, indicates that the madvise system call is
@@ -3062,7 +3062,7 @@
  *	a prototype for the modfl() function.  Otherwise, it is up
  *	to the program to supply one.
  */
-/*#define HAS_MODFL		/ **/
+#define HAS_MODFL		/**/
 #define HAS_MODFL_PROTO		/**/
 
 /* HAS_MPROTECT:
@@ -3268,7 +3268,7 @@
  *	This symbol, if defined, indicates that the scalbnl routine is
  *	available.  If ilogbl is also present we can emulate frexpl.
  */
-/*#define HAS_SCALBNL		/ **/
+#define HAS_SCALBNL		/**/
 
 /* HAS_SENDMSG:
  *	This symbol, if defined, indicates that the sendmsg routine is
@@ -3365,7 +3365,7 @@
  *	This symbol, if defined, indicates that the sqrtl routine is
  *	available to do long double square roots.
  */
-/*#define HAS_SQRTL		/ **/
+#define HAS_SQRTL		/**/
 
 /* HAS_SETRESGID_PROTO:
  *	This symbol, if defined, indicates that the system provides
@@ -3429,7 +3429,7 @@
  *	This symbol, if defined, indicates that the strlcpy () routine is
  *	available to do string copying.
  */
-/*#define HAS_STRLCPY		/ **/
+#define HAS_STRLCPY		/**/
 
 /* HAS_STRNLEN:
  *	This symbol, if defined, indicates that the strnlen () routine is
@@ -3555,7 +3555,7 @@
  *	This symbol, if defined, indicates that the truncl routine is
  *	available. If copysignl is also present we can emulate modfl.
  */
-/*#define HAS_TRUNCL		/ **/
+#define HAS_TRUNCL		/**/
 
 /* U32_ALIGNMENT_REQUIRED:
  *	This symbol, if defined, indicates that you must access
@@ -3673,7 +3673,7 @@
  *	This symbol, if defined, indicates that <bfd.h> exists and
  *	can be included.
  */
-#define I_BFD		/**/
+/*#define I_BFD		/ **/
 
 /* I_CRYPT:
  *	This symbol, if defined, indicates that <crypt.h> exists and
@@ -4240,7 +4240,7 @@
  *	is either n or 32*ceil(n/32), especially many little-endians do
  *	the latter.  This is only useful if you have select(), naturally.
  */
-#define SELECT_MIN_BITS	1	/**/
+#define SELECT_MIN_BITS	1024	/**/
 
 /* ST_DEV_SIZE:
  *	This variable contains the size of struct stat's st_dev in bytes.
@@ -4260,7 +4260,7 @@
  *	1 for unsigned, -1 for signed.
  */
 #define ST_INO_SIGN 1	/* st_ino sign */
-#define ST_INO_SIZE 2	/* st_ino size */
+#define ST_INO_SIZE 8	/* st_ino size */
 
 /* STARTPERL:
  *	This variable contains the string to put in front of a perl
@@ -4298,10 +4298,10 @@
  *	This symbol contains the minimum value for the time_t offset that
  *	the system function localtime () accepts, and defaults to 0
  */
-#define GMTIME_MAX		-1822887969	/**/
-#define GMTIME_MIN		-43200	/**/
-#define LOCALTIME_MAX	-1824493569	/**/
-#define LOCALTIME_MIN	0	/**/
+#define GMTIME_MAX		2085964671	/**/
+#define GMTIME_MIN		-2037677056	/**/
+#define LOCALTIME_MAX	2085964671	/**/
+#define LOCALTIME_MIN	-2037676981	/**/
 
 /* USE_64_BIT_INT:
  *	This symbol, if defined, indicates that 64-bit integers should
@@ -4671,7 +4671,7 @@
  *	will work; otherwise an exclusive locking mutex is required to prevent
  *	races.
  */
-/*#define GETENV_PRESERVES_OTHER_THREAD	/ **/
+#define GETENV_PRESERVES_OTHER_THREAD	/**/
 
 /* HAS_GETGRENT_R:
  *	This symbol, if defined, indicates that the getgrent_r routine
@@ -5219,7 +5219,7 @@
  *	error. Hence it is important for these flags to be consistent between
  *	probing and use.
  */
-/*#define PERL_THREAD_LOCAL 	/ **/
+#define PERL_THREAD_LOCAL _Thread_local	/**/
 
 /* HAS_TMPNAM_R:
  *	This symbol, if defined, indicates that the tmpnam_r routine
