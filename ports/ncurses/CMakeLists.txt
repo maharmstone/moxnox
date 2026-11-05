@@ -455,9 +455,17 @@ target_include_directories(ncurses PUBLIC ${GEN})
 target_include_directories(ncurses PRIVATE repo/ncurses repo/include)
 target_link_libraries(ncurses PUBLIC tinfo)
 
+add_custom_command(
+    OUTPUT ${GEN}/ncurses.h
+    COMMAND ${CMAKE_COMMAND} -E copy ${GEN}/curses.h ${GEN}/ncurses.h
+    DEPENDS ${GEN}/curses.h
+    VERBATIM
+)
+
 add_custom_target(ncurses_generated_headers
     DEPENDS
         ${GEN}/hashsize.h
+        ${GEN}/ncurses.h
         ${GEN}/parametrized.h
         ${GEN}/ncurses_def.h
         ${GEN}/init_keytry.h
