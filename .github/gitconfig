@@ -27,7 +27,7 @@
 [url "https://git.burntcomma.com/moxnox/nano"]
 	insteadOf = git://git.sv.gnu.org/nano.git
 [url "https://git.burntcomma.com/moxnox/readline"]
-	insteadOf = https://git.savannah.gnu.org/git/readline.git/
+	insteadOf = https://git.savannah.gnu.org/git/readline.git
 [url "https://git.burntcomma.com/moxnox/tre"]
 	insteadOf = https://github.com/laurikari/tre/
 [url "https://git.burntcomma.com/moxnox/vim"]
@@ -51,7 +51,7 @@
 [url "https://git.burntcomma.com/moxnox/gmp"]
 	insteadOf = https://github.com/gmp-mirror/gmp
 [url "https://git.burntcomma.com/moxnox/libiconv"]
-	insteadOf = https://https.git.savannah.gnu.org/git/libiconv.git/
+	insteadOf = https://https.git.savannah.gnu.org/git/libiconv.git
 [url "https://git.burntcomma.com/moxnox/make"]
 	insteadOf = git://git.savannah.gnu.org/make
 [url "https://git.burntcomma.com/moxnox/bzip2"]
@@ -67,7 +67,7 @@
 [url "https://git.burntcomma.com/moxnox/diffutils"]
 	insteadOf = https://git.savannah.gnu.org/git/diffutils.git
 [url "https://git.burntcomma.com/moxnox/patch"]
-	insteadOf = https://https.git.savannah.gnu.org/git/patch.git/
+	insteadOf = https://https.git.savannah.gnu.org/git/patch.git
 [url "https://git.burntcomma.com/moxnox/gawk"]
 	insteadOf = https://git.savannah.gnu.org/git/gawk.git
 [url "https://git.burntcomma.com/moxnox/gzip"]
@@ -85,9 +85,9 @@
 [url "https://git.burntcomma.com/moxnox/wget"]
 	insteadOf = git://git.git.savannah.gnu.org/wget.git
 [url "https://git.burntcomma.com/moxnox/tar"]
-	insteadOf = https://https.git.savannah.gnu.org/git/tar.git/
+	insteadOf = https://https.git.savannah.gnu.org/git/tar.git
 [url "https://git.burntcomma.com/moxnox/m4"]
-	insteadOf = https://https.git.savannah.gnu.org/git/m4.git/
+	insteadOf = https://https.git.savannah.gnu.org/git/m4.git
 [url "https://git.burntcomma.com/moxnox/flex"]
 	insteadOf = https://github.com/westes/flex
 [url "https://git.burntcomma.com/moxnox/openssh-portable"]
@@ -105,8 +105,8 @@
 [url "https://git.burntcomma.com/moxnox/musl"]
 	insteadOf = git://git.musl-libc.org/musl
 [url "https://git.burntcomma.com/moxnox/gnulib"]
-	insteadOf = https://https.git.savannah.gnu.org/git/gnulib.git/
-	insteadOf = https://git.savannah.gnu.org/git/gnulib.git/
+	insteadOf = https://https.git.savannah.gnu.org/git/gnulib.git
+	insteadOf = https://git.savannah.gnu.org/git/gnulib.git
 [url "https://git.burntcomma.com/moxnox/curl"]
 	insteadOf = https://github.com/curl/curl
 [url "https://git.burntcomma.com/moxnox/binutils-gdb"]
