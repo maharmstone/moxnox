@@ -1185,11 +1185,11 @@ usb_device::~usb_device() {
         remove_entry_list(c.le);
 
         auto& cd = *(usb_configuration_descriptor*)c.data;
-        auto cd_size = cd.wTotalLength;
+        auto conf_size = offsetof(usb_device_config, data) + cd.wTotalLength;
 
         c.~usb_device_config();
 
-        if (cd_size < PAGE_SIZE)
+        if (conf_size < PAGE_SIZE)
             free(&c);
         else
             free_folio(phys_memory_pfn(&c) << PAGE_SHIFT);
