@@ -46,6 +46,7 @@
     "mako": [],
     "markupsafe": [],
     "mesa": ["zlib"],
+    "meson": ["ninja", "python"],
     "mpc": ["gmp", "mpfr"],
     "mpfr": ["gmp"],
     "nano": ["file", "gnulib", "ncurses"],

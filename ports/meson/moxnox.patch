@@ -1,0 +1,304 @@
+diff --git a/mesonbuild/backend/backends.py b/mesonbuild/backend/backends.py
+index 46f63b7..678879a 100644
+--- a/mesonbuild/backend/backends.py
++++ b/mesonbuild/backend/backends.py
+@@ -661,7 +661,7 @@ class Backend:
+         else:
+             if exe_cmd[0].endswith('.jar'):
+                 exe_cmd = ['java', '-jar'] + exe_cmd
+-            elif exe_cmd[0].endswith('.exe') and not (mesonlib.is_windows() or mesonlib.is_cygwin() or mesonlib.is_wsl() or machine.is_os2()):
++            elif exe_cmd[0].endswith('.exe') and not (mesonlib.is_windows() or mesonlib.is_cygwin() or mesonlib.is_moxnox() or mesonlib.is_wsl() or machine.is_os2()):
+                 exe_cmd = ['mono'] + exe_cmd
+             exe_wrapper = None
+ 
+diff --git a/mesonbuild/build.py b/mesonbuild/build.py
+index 6b502e8..c8b8ce0 100644
+--- a/mesonbuild/build.py
++++ b/mesonbuild/build.py
+@@ -167,6 +167,7 @@ DEFAULT_STATIC_LIBRARY_NAMES: T.Mapping[str, T.Tuple[str, str]] = {
+     'windows': ('', 'lib'),
+     'darwin': ('lib', 'a'),
+     'cygwin': ('lib', 'a'),
++    'moxnox': ('lib', 'a'),
+ }
+ 
+ DEFAULT_SHARED_LIBRARY_NAMES: T.Mapping[str, T.Tuple[str, str, str]] = {
+@@ -174,6 +175,7 @@ DEFAULT_SHARED_LIBRARY_NAMES: T.Mapping[str, T.Tuple[str, str, str]] = {
+     'windows': ('', 'dll', 'dll.lib'),
+     'darwin': ('lib', 'dylib', ''),
+     'cygwin': ('cyg', 'dll', 'dll.a'),
++    'moxnox': ('lib', 'dll', 'dll.a'),
+ }
+ 
+ def _process_install_tag(install_tag: T.Optional[T.List[T.Optional[str]]],
+@@ -1954,6 +1956,8 @@ class BuildTarget(Target):
+         m = self.environment.machines[self.for_machine]
+         if m.is_cygwin():
+             return 'cygwin'
++        elif m.is_moxnox():
++            return 'moxnox'
+         elif m.is_windows():
+             return 'windows'
+         elif m.is_darwin():
+@@ -2218,7 +2222,7 @@ class Executable(BuildTarget, LinkableTarget):
+             self.prefix = ''
+         if not hasattr(self, 'suffix'):
+             # Executable for Windows or C#/Mono
+-            if machine.is_windows() or machine.is_cygwin() or 'cs' in self.compilers:
++            if machine.is_windows() or machine.is_cygwin() or machine.is_moxnox() or 'cs' in self.compilers:
+                 self.suffix = 'exe'
+             elif machine.system.startswith('wasm') or machine.system == 'emscripten':
+                 self.suffix = 'js'
+@@ -2255,7 +2259,7 @@ class Executable(BuildTarget, LinkableTarget):
+         # If using export_dynamic, set the import library name
+         if self.export_dynamic:
+             implib_basename = self.implib_name or self.name + '.exe'
+-            if machine.is_windows() or machine.is_cygwin():
++            if machine.is_windows() or machine.is_cygwin() or machine.is_moxnox():
+                 if self.get_using_msvc():
+                     self.import_filename = f'{implib_basename}.lib'
+                 else:
+@@ -2642,6 +2646,17 @@ class SharedLibrary(BuildTarget, LinkableTarget):
+                 filename_tpl = '{0.prefix}{0.name}-{0.soversion}.{0.suffix}'
+             else:
+                 filename_tpl = '{0.prefix}{0.name}.{0.suffix}'
++        elif self.environment.machines[self.for_machine].is_moxnox():
++            # Shared library is of the form libfoo.dll, libfoo-N.dll with a soversion
++            prefix = prefix if prefix is not None else 'lib'
++            suffix = suffix if suffix is not None else 'dll'
++            # Import library is called libfoo.dll.a
++            import_suffix = import_suffix if import_suffix is not None else '.dll.a'
++            import_filename_tpl = '{0.prefix}{0.name}' + import_suffix
++            if self.soversion:
++                filename_tpl = '{0.prefix}{0.name}-{0.soversion}.{0.suffix}'
++            else:
++                filename_tpl = '{0.prefix}{0.name}.{0.suffix}'
+         elif self.environment.machines[self.for_machine].is_cygwin():
+             suffix = 'dll'
+             # Shared library is of the form cygfoo.dll
+diff --git a/mesonbuild/compilers/asm.py b/mesonbuild/compilers/asm.py
+index 81faff9..c38a070 100644
+--- a/mesonbuild/compilers/asm.py
++++ b/mesonbuild/compilers/asm.py
+@@ -84,7 +84,7 @@ class NasmCompiler(ASMCompiler):
+                 cpu = '64'
+         else:
+             cpu = '32'
+-        if self.info.is_windows() or self.info.is_cygwin():
++        if self.info.is_windows() or self.info.is_cygwin() or self.info.is_moxnox():
+             plat = 'win'
+             define = f'WIN{cpu}'
+         elif self.info.is_darwin():
+diff --git a/mesonbuild/compilers/mixins/clike.py b/mesonbuild/compilers/mixins/clike.py
+index bc6f619..a642d79 100644
+--- a/mesonbuild/compilers/mixins/clike.py
++++ b/mesonbuild/compilers/mixins/clike.py
+@@ -1039,6 +1039,8 @@ class CLikeCompiler(Compiler):
+                 shlibext = ['dll.a', 'lib', 'dll']
+             # Yep, static libraries can also be foo.lib
+             stlibext += ['lib']
++        elif self.info.is_moxnox():
++            shlibext = ['dll.a', 'dll']
+         elif self.info.is_cygwin():
+             shlibext = ['dll', 'dll.a']
+             prefixes = ['cyg'] + prefixes
+@@ -1390,7 +1392,7 @@ class CLikeCompiler(Compiler):
+     def has_func_attribute(self, name: str) -> T.Tuple[bool, bool]:
+         # Just assume that if we're not on windows that dllimport and dllexport
+         # don't work
+-        if not (self.info.is_windows() or self.info.is_cygwin()):
++        if not (self.info.is_windows() or self.info.is_cygwin() or self.info.is_moxnox()):
+             if name in {'dllimport', 'dllexport'}:
+                 return False, False
+ 
+diff --git a/mesonbuild/compilers/mixins/gnu.py b/mesonbuild/compilers/mixins/gnu.py
+index 5aee5ed..6c05a9c 100644
+--- a/mesonbuild/compilers/mixins/gnu.py
++++ b/mesonbuild/compilers/mixins/gnu.py
+@@ -363,7 +363,7 @@ class GnuLikeCompiler(Compiler, metaclass=mesonlib.SimpleABC):
+         self.base_options = {
+             OptionKey(o) for o in ['b_pch', 'b_lto', 'b_pgo', 'b_coverage',
+                                    'b_ndebug', 'b_staticpic', 'b_pie']}
+-        if not (self.info.is_windows() or self.info.is_cygwin() or self.info.is_openbsd()):
++        if not (self.info.is_windows() or self.info.is_cygwin() or self.info.is_moxnox() or self.info.is_openbsd()):
+             self.base_options.add(OptionKey('b_lundef'))
+         if not self.info.is_windows() or self.info.is_cygwin():
+             self.base_options.add(OptionKey('b_asneeded'))
+@@ -374,7 +374,7 @@ class GnuLikeCompiler(Compiler, metaclass=mesonlib.SimpleABC):
+         self.can_compile_suffixes.add('sx')
+ 
+     def get_pic_args(self) -> T.List[str]:
+-        if self.info.is_windows() or self.info.is_cygwin() or self.info.is_darwin() or self.info.is_os2():
++        if self.info.is_windows() or self.info.is_cygwin() or self.info.is_moxnox() or self.info.is_darwin() or self.info.is_os2():
+             return [] # On Window, OS X and OS/2, pic is always on.
+         return ['-fPIC']
+ 
+diff --git a/mesonbuild/envconfig.py b/mesonbuild/envconfig.py
+index 65d0823..639ff51 100644
+--- a/mesonbuild/envconfig.py
++++ b/mesonbuild/envconfig.py
+@@ -318,6 +318,12 @@ class MachineInfo(HoldableObject):
+         """
+         return self.system == 'cygwin'
+ 
++    def is_moxnox(self) -> bool:
++        """
++        Machine is Moxnox?
++        """
++        return self.system == 'moxnox'
++
+     @lazy_property
+     def pure_path_class(self) -> T.Type[PurePath]:
+         """Get the appropriate PurePath class for this machine."""
+@@ -413,7 +419,7 @@ class MachineInfo(HoldableObject):
+     # static libraries, and executables.
+     # Versioning is added to these names in the backends as-needed.
+     def get_exe_suffix(self) -> str:
+-        if self.is_windows() or self.is_cygwin() or self.is_os2():
++        if self.is_windows() or self.is_cygwin() or self.is_os2() or self.is_moxnox():
+             return 'exe'
+         else:
+             return ''
+@@ -528,6 +534,7 @@ KERNEL_MAPPINGS: T.Mapping[str, str] = {'freebsd': 'freebsd',
+                                         'android': 'linux',
+                                         'linux': 'linux',
+                                         'cygwin': 'nt',
++                                        'moxnox': 'nt',
+                                         'darwin': 'xnu',
+                                         'ios': 'xnu',
+                                         'tvos': 'xnu',
+diff --git a/mesonbuild/linkers/linkers.py b/mesonbuild/linkers/linkers.py
+index bc318a8..26ca0ef 100644
+--- a/mesonbuild/linkers/linkers.py
++++ b/mesonbuild/linkers/linkers.py
+@@ -711,14 +711,14 @@ class GnuLikeDynamicLinkerMixin(DynamicLinkerBase):
+         # On Windows targets, .def files may be specified on the linker command
+         # line like an object file.
+         m = self.environment.machines[self.for_machine]
+-        if m.is_windows() or m.is_cygwin():
++        if m.is_windows() or m.is_cygwin() or m.is_moxnox():
+             return [defsfile]
+         # For other targets, discard the .def file.
+         return []
+ 
+     def export_dynamic_args(self) -> T.List[str]:
+         m = self.environment.machines[self.for_machine]
+-        if m.is_windows() or m.is_cygwin():
++        if m.is_windows() or m.is_cygwin() or m.is_moxnox():
+             return self._apply_prefix('--export-all-symbols')
+         return self._apply_prefix('-export-dynamic')
+ 
+@@ -740,7 +740,7 @@ class GnuLikeDynamicLinkerMixin(DynamicLinkerBase):
+                         soversion: str, darwin_versions: T.Tuple[str, str]
+                         ) -> T.List[str]:
+         m = self.environment.machines[self.for_machine]
+-        if m.is_windows() or m.is_cygwin():
++        if m.is_windows() or m.is_cygwin() or m.is_moxnox():
+             # For PE/COFF the soname argument has no effect
+             return []
+         sostr = '' if soversion is None else '.' + soversion
+@@ -750,7 +750,7 @@ class GnuLikeDynamicLinkerMixin(DynamicLinkerBase):
+                          extra_paths: T.Optional[T.List[str]] = None
+                          ) -> T.Tuple[T.List[str], T.Set[bytes]]:
+         m = self.environment.machines[self.for_machine]
+-        if m.is_windows() or m.is_cygwin():
++        if m.is_windows() or m.is_cygwin() or m.is_moxnox():
+             return ([], set())
+         rpath_paths = target.determine_rpath_dirs()
+         if not rpath_paths and not target.install_rpath and not target.build_rpath and not extra_paths:
+diff --git a/mesonbuild/mtest.py b/mesonbuild/mtest.py
+index 8b96ff0..8f52771 100644
+--- a/mesonbuild/mtest.py
++++ b/mesonbuild/mtest.py
+@@ -90,6 +90,9 @@ def is_windows() -> bool:
+ def is_cygwin() -> bool:
+     return sys.platform == 'cygwin'
+ 
++def is_moxnox() -> bool:
++    return platform.system().lower() == 'moxnox'
++
+ def is_os2() -> bool:
+     return platform.system().lower() == 'os/2'
+ 
+@@ -1291,7 +1294,7 @@ async def read_decode(reader: asyncio.StreamReader,
+             await queue.put(None)
+ 
+ def run_with_mono(fname: str) -> bool:
+-    return fname.endswith('.exe') and not (is_windows() or is_cygwin() or is_os2())
++    return fname.endswith('.exe') and not (is_windows() or is_cygwin() or is_moxnox() or is_os2())
+ 
+ def check_testdata(objs: T.List[TestSerialisation]) -> T.List[TestSerialisation]:
+     if not isinstance(objs, list):
+diff --git a/mesonbuild/programs.py b/mesonbuild/programs.py
+index 4d4ea9e..b9ceaaf 100644
+--- a/mesonbuild/programs.py
++++ b/mesonbuild/programs.py
+@@ -105,6 +105,11 @@ class ExternalProgram(Program):
+                                 cmd = trial_ext
+                                 break
+                     self.command = [cmd] + args
++            elif mesonlib.is_moxnox():
++                # Executables carry the .exe suffix, which callers routinely omit
++                cmd = self.command[0]
++                if os.path.isabs(cmd) and not os.path.exists(cmd) and os.path.exists(cmd + '.exe'):
++                    self.command = [cmd + '.exe'] + self.command[1:]
+         else:
+             if search_dirs is None:
+                 # For compat with old behaviour
+@@ -296,6 +301,10 @@ class ExternalProgram(Program):
+                     trial_ext = f'{trial}.{ext}'
+                     if os.path.exists(trial_ext):
+                         return [trial_ext]
++            elif mesonlib.is_moxnox():
++                trial_ext = f'{trial}.exe'
++                if os.path.exists(trial_ext):
++                    return [trial_ext]
+         return []
+ 
+     def _search_windows_special_cases(self, name: str, command: T.Optional[str], exclude_paths: T.Optional[T.List[str]]) -> list[str]:
+@@ -369,6 +378,10 @@ class ExternalProgram(Program):
+             paths = OrderedSet(path.split(os.pathsep)).difference(exclude_paths)
+             path = os.pathsep.join(paths)
+         command = shutil.which(name, path=path)
++        if not command and mesonlib.is_moxnox():
++            command = shutil.which(f'{name}.exe', path=path)
++            if command:
++                return [command]
+         if not command and mesonlib.is_os2():
+             for ext in ['exe', 'cmd']:
+                 command = shutil.which(f'{name}.{ext}', path=path)
+diff --git a/mesonbuild/scripts/symbolextractor.py b/mesonbuild/scripts/symbolextractor.py
+index efe46dc..1c5e76e 100644
+--- a/mesonbuild/scripts/symbolextractor.py
++++ b/mesonbuild/scripts/symbolextractor.py
+@@ -311,7 +311,7 @@ def gen_symbols(libfilename: str, impfilename: str, outfilename: str, cross_host
+             # No import library. Not sure how the DLL is being used, so just
+             # rebuild everything that links to it every time.
+             dummy_syms(outfilename)
+-    elif mesonlib.is_cygwin():
++    elif mesonlib.is_cygwin() or mesonlib.is_moxnox():
+         if os.path.isfile(impfilename):
+             cygwin_syms(impfilename, outfilename)
+         else:
+diff --git a/mesonbuild/utils/universal.py b/mesonbuild/utils/universal.py
+index 976c7ac..4e22206 100644
+--- a/mesonbuild/utils/universal.py
++++ b/mesonbuild/utils/universal.py
+@@ -135,6 +135,7 @@ __all__ = [
+     'is_android',
+     'is_ascii_string',
+     'is_cygwin',
++    'is_moxnox',
+     'is_debianlike',
+     'is_dragonflybsd',
+     'is_freebsd',
+@@ -779,6 +780,9 @@ def is_wsl() -> bool:
+ def is_cygwin() -> bool:
+     return sys.platform == 'cygwin'
+ 
++def is_moxnox() -> bool:
++    return _PLATFORM_SYSTEM_LOWER == 'moxnox'
++
+ 
+ def is_debianlike() -> bool:
+     return os.path.isfile('/etc/debian_version')

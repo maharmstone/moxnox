@@ -286,3 +286,6 @@
 [submodule "ports/libffi/repo"]
 	path = ports/libffi/repo
 	url = https://github.com/libffi/libffi
+[submodule "ports/meson/repo"]
+	path = ports/meson/repo
+	url = https://github.com/mesonbuild/meson
