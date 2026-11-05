@@ -80,12 +80,14 @@ add_library(findutils_gnulib STATIC
     repo/gnulib/lib/closeout.c
     repo/gnulib/lib/cycle-check.c
     repo/gnulib/lib/dirname-lgpl.c
+    repo/gnulib/lib/dup-safer-flag.c
     repo/gnulib/lib/dup-safer.c
     repo/gnulib/lib/dup2.c
     repo/gnulib/lib/error.c
     repo/gnulib/lib/exitfail.c
     repo/gnulib/lib/faccessat.c
     repo/gnulib/lib/fcntl.c
+    repo/gnulib/lib/fd-safer-flag.c
     repo/gnulib/lib/fd-safer.c
     repo/gnulib/lib/fdopendir.c
     repo/gnulib/lib/filemode.c
@@ -101,6 +103,7 @@ add_library(findutils_gnulib STATIC
     repo/gnulib/lib/getopt.c
     repo/gnulib/lib/getopt1.c
     repo/gnulib/lib/gettime.c
+    repo/gnulib/lib/hard-locale.c
     repo/gnulib/lib/hash.c
     repo/gnulib/lib/human.c
     repo/gnulib/lib/i-ring.c
@@ -150,6 +153,9 @@ add_library(findutils_gnulib STATIC
     repo/gnulib/lib/se-selinux.c
     repo/gnulib/lib/selinux-at.c
     repo/gnulib/lib/setenv.c
+    repo/gnulib/lib/setlocale-lock.c
+    repo/gnulib/lib/setlocale_null-unlocked.c
+    repo/gnulib/lib/setlocale_null.c
     repo/gnulib/lib/snprintf.c
     repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stat.c
