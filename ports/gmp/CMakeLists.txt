@@ -609,3 +609,11 @@ target_link_libraries(gmp PRIVATE moxnox)
 
 install(TARGETS gmp DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 install(FILES ${GEN}/gmp.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+
+set(prefix "")
+set(exec_prefix "\${prefix}")
+set(libdir "\${exec_prefix}/lib")
+set(includedir "\${prefix}/include")
+set(PACKAGE_VERSION ${PROJECT_VERSION})
+configure_file(gmp.pc.in ${GEN}/gmp.pc @ONLY)
+install(FILES ${GEN}/gmp.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
