@@ -266,7 +266,7 @@ add_library(mpfr SHARED
     repo/src/zeta_ui.c
 )
 
-set_target_properties(mpfr PROPERTIES OUTPUT_NAME "mpfr-6" PREFIX "lib")
+set_target_properties(mpfr PROPERTIES OUTPUT_NAME "mpfr-6" ARCHIVE_OUTPUT_NAME "mpfr" PREFIX "lib")
 
 target_compile_definitions(mpfr PRIVATE
     MPFR_DLL_EXPORT
