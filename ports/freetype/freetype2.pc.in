@@ -1,0 +1,14 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: FreeType 2
+URL: https://freetype.org
+Description: A free, high-quality, and portable font engine.
+Version: @FREETYPE_PC_VERSION@
+Requires:
+Requires.private: libpng
+Libs: -L${libdir} -lfreetype
+Libs.private:
+Cflags: -I${includedir}/freetype2

@@ -78,3 +78,8 @@ install(DIRECTORY repo/include/freetype/ DESTINATION ${CMAKE_INSTALL_PREFIX}/inc
     PATTERN "ftstdlib.h" EXCLUDE
 )
 install(FILES ftmodule.h ftoption.h ftstdlib.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/freetype2/freetype/config)
+
+file(STRINGS repo/builds/unix/configure.raw FREETYPE_VERSION_INFO_LINE REGEX "^version_info=")
+string(REGEX REPLACE "^version_info='([0-9]+):([0-9]+):([0-9]+)'.*" "\\1.\\2.\\3" FREETYPE_PC_VERSION "${FREETYPE_VERSION_INFO_LINE}")
+configure_file(freetype2.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freetype2.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freetype2.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
