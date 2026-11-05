@@ -339,3 +339,11 @@ target_link_libraries(mpfr PRIVATE moxnox)
 
 install(TARGETS mpfr DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 install(FILES ${GEN}/mpfr.h ${GEN}/mpf2mpfr.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+
+set(prefix "")
+set(exec_prefix "\${prefix}")
+set(libdir "\${exec_prefix}/lib")
+set(includedir "\${prefix}/include")
+set(PACKAGE_VERSION ${PROJECT_VERSION})
+configure_file(repo/mpfr.pc.in ${GEN}/mpfr.pc @ONLY)
+install(FILES ${GEN}/mpfr.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
