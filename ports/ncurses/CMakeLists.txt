@@ -612,6 +612,21 @@ install(FILES
 )
 install(FILES ${GEN}/curses.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include RENAME ncurses.h)
 
+function(ncurses_pc name description requires libs)
+    set(NCURSES_PC_NAME ${name})
+    set(NCURSES_PC_DESCRIPTION "${description}")
+    set(NCURSES_PC_REQUIRES "${requires}")
+    set(NCURSES_PC_LIBS "${libs}")
+    configure_file(ncurses-lib.pc.in ${GEN}/${name}.pc @ONLY)
+    install(FILES ${GEN}/${name}.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+endfunction()
+
+ncurses_pc(ncurses "library" "" "-lncurses -ltinfo")
+ncurses_pc(tinfo "terminal interface library" "" "-ltinfo")
+ncurses_pc(form "add-on library" "ncurses" "-lform")
+ncurses_pc(menu "add-on library" "ncurses" "-lmenu")
+ncurses_pc(panel "add-on library" "ncurses" "-lpanel")
+
 # clear
 
 add_executable(clear

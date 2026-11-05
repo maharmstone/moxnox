@@ -1,0 +1,16 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+abi_version=@NCURSES_MAJOR@
+major_version=@NCURSES_MAJOR@
+version=@NCURSES_MAJOR@.@NCURSES_MINOR@.@NCURSES_PATCH@
+
+Name: @NCURSES_PC_NAME@
+Description: ncurses @NCURSES_MAJOR@.@NCURSES_MINOR@ @NCURSES_PC_DESCRIPTION@
+Version: ${version}
+URL: https://invisible-island.net/ncurses
+Requires.private: @NCURSES_PC_REQUIRES@
+Libs: -L${libdir} @NCURSES_PC_LIBS@
+Libs.private:
+Cflags: -I${includedir}
