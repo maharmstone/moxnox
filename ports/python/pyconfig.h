@@ -125,7 +125,7 @@
 #define HAVE_BUILTIN_ATOMIC 1
 
 /* Define to 1 if you have the <bzlib.h> header file. */
-/* #undef HAVE_BZLIB_H */
+#define HAVE_BZLIB_H 1
 
 /* Define to 1 if you have the 'chflags' function. */
 /* #undef HAVE_CHFLAGS */
@@ -185,40 +185,40 @@
 /* #undef HAVE_CTERMID_R */
 
 /* Define if you have the 'filter' function. */
-/* #undef HAVE_CURSES_FILTER */
+#define HAVE_CURSES_FILTER 1
 
 /* Define to 1 if you have the <curses.h> header file. */
-/* #undef HAVE_CURSES_H */
+#define HAVE_CURSES_H 1
 
 /* Define if you have the 'has_key' function. */
-/* #undef HAVE_CURSES_HAS_KEY */
+#define HAVE_CURSES_HAS_KEY 1
 
 /* Define if you have the 'immedok' function. */
-/* #undef HAVE_CURSES_IMMEDOK */
+#define HAVE_CURSES_IMMEDOK 1
 
 /* Define if you have the 'is_pad' function. */
-/* #undef HAVE_CURSES_IS_PAD */
+#define HAVE_CURSES_IS_PAD 1
 
 /* Define if you have the 'is_term_resized' function. */
-/* #undef HAVE_CURSES_IS_TERM_RESIZED */
+#define HAVE_CURSES_IS_TERM_RESIZED 1
 
 /* Define if you have the 'resizeterm' function. */
-/* #undef HAVE_CURSES_RESIZETERM */
+#define HAVE_CURSES_RESIZETERM 1
 
 /* Define if you have the 'resize_term' function. */
-/* #undef HAVE_CURSES_RESIZE_TERM */
+#define HAVE_CURSES_RESIZE_TERM 1
 
 /* Define if you have the 'syncok' function. */
-/* #undef HAVE_CURSES_SYNCOK */
+#define HAVE_CURSES_SYNCOK 1
 
 /* Define if you have the 'typeahead' function. */
-/* #undef HAVE_CURSES_TYPEAHEAD */
+#define HAVE_CURSES_TYPEAHEAD 1
 
 /* Define if you have the 'use_env' function. */
-/* #undef HAVE_CURSES_USE_ENV */
+#define HAVE_CURSES_USE_ENV 1
 
 /* Define if you have the 'wchgat' function. */
-/* #undef HAVE_CURSES_WCHGAT */
+#define HAVE_CURSES_WCHGAT 1
 
 /* Define to 1 if you have the <db.h> header file. */
 /* #undef HAVE_DB_H */
@@ -257,7 +257,7 @@
 
 /* Define to 1 if you have the declaration of `tzname', and to 0 if you don't.
    */
-#define HAVE_DECL_TZNAME 1
+/* #undef HAVE_DECL_TZNAME */
 
 /* Define to 1 if you have the declaration of `UT_NAMESIZE', and to 0 if you
    don't. */
@@ -863,7 +863,7 @@
 /* #undef HAVE_NCURSES_CURSES_H */
 
 /* Define to 1 if you have the <ncurses.h> header file. */
-/* #undef HAVE_NCURSES_H */
+#define HAVE_NCURSES_H 1
 
 /* Define to 1 if you have the <ncurses/ncurses.h> header file. */
 /* #undef HAVE_NCURSES_NCURSES_H */
@@ -921,7 +921,7 @@
 /* #undef HAVE_PANELW */
 
 /* Define to 1 if you have the <panel.h> header file. */
-/* #undef HAVE_PANEL_H */
+#define HAVE_PANEL_H 1
 
 /* Define to 1 if you have the `pathconf' function. */
 #define HAVE_PATHCONF 1
@@ -1319,7 +1319,7 @@
 #define HAVE_STRUCT_STAT_ST_RDEV 1
 
 /* Define to 1 if `tm_zone' is a member of `struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_ZONE */
+#define HAVE_STRUCT_TM_TM_ZONE 1
 
 /* Define if you have the 'symlink' function. */
 #define HAVE_SYMLINK 1
@@ -1486,7 +1486,7 @@
 #define HAVE_TERMIOS_H 1
 
 /* Define to 1 if you have the <term.h> header file. */
-/* #undef HAVE_TERM_H */
+#define HAVE_TERM_H 1
 
 /* Define to 1 if you have the `timegm' function. */
 /* #undef HAVE_TIMEGM */
@@ -1508,7 +1508,7 @@
 
 /* Define to 1 if your `struct tm' has `tm_zone'. Deprecated, use
    `HAVE_STRUCT_TM_TM_ZONE' instead. */
-/* #undef HAVE_TM_ZONE */
+#define HAVE_TM_ZONE 1
 
 /* Define to 1 if you have the `truncate' function. */
 #define HAVE_TRUNCATE 1
@@ -1518,7 +1518,7 @@
 
 /* Define to 1 if you don't have `tm_zone' but do have the external array
    `tzname'. */
-#define HAVE_TZNAME 1
+/* #undef HAVE_TZNAME */
 
 /* Define to 1 if you have the `umask' function. */
 #define HAVE_UMASK 1
@@ -1620,7 +1620,7 @@
 #define HAVE_WRITEV 1
 
 /* Define if the zlib library has inflateCopy */
-/* #undef HAVE_ZLIB_COPY */
+#define HAVE_ZLIB_COPY 1
 
 /* Define to 1 if you have the <zlib.h> header file. */
 /* #undef HAVE_ZLIB_H */
@@ -1640,7 +1640,7 @@
 /* #undef MAJOR_IN_SYSMACROS */
 
 /* Define if mvwdelch in curses.h is an expression. */
-/* #undef MVWDELCH_IS_EXPRESSION */
+#define MVWDELCH_IS_EXPRESSION 1
 
 /* Define to the address where bug reports for this package should be sent. */
 /* #undef PACKAGE_BUGREPORT */
@@ -1893,7 +1893,7 @@
 
 
 /* Define if WINDOW in curses.h offers a field _flags. */
-/* #undef WINDOW_HAS_FLAGS */
+#define WINDOW_HAS_FLAGS 1
 
 /* Define if you want build the _decimal module using a coroutine-local rather
    than a thread-local context */
@@ -2034,33 +2034,10 @@
 #define STRICT_SYSV_CURSES /* Don't use ncurses extensions */
 #endif
 
-
 /* --- Moxnox port additions ------------------------------------------- */
 
 /* The CRT is always UTF-8, whatever the locale says. */
 #define _Py_FORCE_UTF8_LOCALE 1
-
-/* _bz2 is built against the bzip2 port, which configure cannot see. */
-#define HAVE_BZLIB_H 1
-
-/* _curses and _curses_panel are built against the ncurses port, which
- * configure cannot see without development paths. */
-#define HAVE_CURSES_H 1
-#define HAVE_CURSES_FILTER 1
-#define HAVE_CURSES_HAS_KEY 1
-#define HAVE_CURSES_IMMEDOK 1
-#define HAVE_CURSES_IS_PAD 1
-#define HAVE_CURSES_IS_TERM_RESIZED 1
-#define HAVE_CURSES_RESIZETERM 1
-#define HAVE_CURSES_RESIZE_TERM 1
-#define HAVE_CURSES_SYNCOK 1
-#define HAVE_CURSES_TYPEAHEAD 1
-#define HAVE_CURSES_USE_ENV 1
-#define HAVE_CURSES_WCHGAT 1
-#define HAVE_PANEL_H 1
-#define HAVE_PANELW 1
-#define HAVE_TERM_H 1
-#define MVWDELCH_IS_EXPRESSION 1
 
 #endif /*Py_PYCONFIG_H*/
 
