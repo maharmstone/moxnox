@@ -1943,6 +1943,7 @@ add_library(libEGL SHARED
     ${GEN}/src/git_sha1.h
 )
 
+set_target_properties(libEGL PROPERTIES ARCHIVE_OUTPUT_NAME EGL)
 target_compile_definitions(libEGL PRIVATE
     ${MESA_COMMON_DEFINES}
     _EGL_NATIVE_PLATFORM=_EGL_PLATFORM_SURFACELESS
