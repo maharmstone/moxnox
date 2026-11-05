@@ -61,7 +61,7 @@ add_library(libiconv SHARED
     ${GEN}/include/localcharset.h
 )
 
-set_target_properties(libiconv PROPERTIES OUTPUT_NAME "iconv-2" PREFIX "lib")
+set_target_properties(libiconv PROPERTIES OUTPUT_NAME "iconv-2" ARCHIVE_OUTPUT_NAME "iconv" PREFIX "lib")
 
 target_compile_options(libiconv PRIVATE ${USERSPACE_CFLAGS} -fvisibility=default -std=gnu17)
 
