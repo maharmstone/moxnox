@@ -35,6 +35,21 @@ install(TARGETS zstd DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES repo/lib/zstd.h repo/lib/zdict.h repo/lib/zstd_errors.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
+foreach(part MAJOR MINOR RELEASE)
+    file(STRINGS repo/lib/zstd.h ZSTD_VERSION_LINE REGEX "^#define ZSTD_VERSION_${part} ")
+    string(REGEX REPLACE "^#define ZSTD_VERSION_${part} +([0-9]+).*" "\\1" ZSTD_VERSION_${part} "${ZSTD_VERSION_LINE}")
+endforeach()
+
+set(PREFIX "")
+set(EXEC_PREFIX "\${prefix}")
+set(INCLUDEDIR "\${prefix}/include")
+set(LIBDIR "\${exec_prefix}/lib")
+set(VERSION ${ZSTD_VERSION_MAJOR}.${ZSTD_VERSION_MINOR}.${ZSTD_VERSION_RELEASE})
+set(LIBS_MT "")
+set(LIBS_PRIVATE "")
+configure_file(repo/lib/libzstd.pc.in ${CMAKE_CURRENT_BINARY_DIR}/libzstd.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libzstd.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+
 # FIXME - zlib dependency?
 
 set(ZSTD_PROG ${CMAKE_CURRENT_SOURCE_DIR}/repo/programs)
