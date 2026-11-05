@@ -145,6 +145,7 @@ add_executable(wget
     repo/gnulib/lib/getopt.c
     repo/gnulib/lib/getpass.c
     repo/gnulib/lib/group-member.c
+    repo/gnulib/lib/hard-locale.c
     repo/gnulib/lib/ialloc.c
     repo/gnulib/lib/iswctype.c
     repo/gnulib/lib/localeconv.c
@@ -179,6 +180,9 @@ add_executable(wget
     repo/gnulib/lib/save-cwd.c
     repo/gnulib/lib/secure_getenv.c
     repo/gnulib/lib/select.c
+    repo/gnulib/lib/setlocale-lock.c
+    repo/gnulib/lib/setlocale_null-unlocked.c
+    repo/gnulib/lib/setlocale_null.c
     repo/gnulib/lib/sha1.c
     repo/gnulib/lib/sha1-stream.c
     repo/gnulib/lib/sha256.c
@@ -187,6 +191,7 @@ add_executable(wget
     repo/gnulib/lib/spawn_faction_init.c
     repo/gnulib/lib/spawni.c
     repo/gnulib/lib/spawnp.c
+    repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stdlib.c
     repo/gnulib/lib/strchrnul.c
     repo/gnulib/lib/strerror.c

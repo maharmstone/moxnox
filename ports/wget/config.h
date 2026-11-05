@@ -6,7 +6,7 @@
 
 
 /* Define if access does not correctly handle trailing slashes. */
-/* #undef ACCESS_TRAILING_SLASH_BUG */
+#define ACCESS_TRAILING_SLASH_BUG 1
 
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
@@ -53,7 +53,7 @@
 /* #undef DOUBLE_SLASH_IS_DISTINCT_ROOT */
 
 /* Define if struct dirent has a member d_ino that actually works. */
-/* #undef D_INO_IN_DIRENT */
+#define D_INO_IN_DIRENT 1
 
 /* Define if you want the debug output support compiled in. */
 #define ENABLE_DEBUG 1
@@ -82,7 +82,7 @@
 /* #undef ENABLE_XATTR */
 
 /* Define this to 1 if F_DUPFD behavior does not match POSIX */
-#define FCNTL_DUPFD_BUGGY 1
+/* #undef FCNTL_DUPFD_BUGGY */
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like 'struct s { int n; short
@@ -106,7 +106,7 @@
 
 /* Define to 1 if mkdir mistakenly creates a directory given with a trailing
    dot component. */
-#define FUNC_MKDIR_DOT_BUG 1
+/* #undef FUNC_MKDIR_DOT_BUG */
 
 /* Define to 1 if nl_langinfo (YESEXPR) returns a non-empty string. */
 #define FUNC_NL_LANGINFO_YESEXPR_WORKS 1
@@ -134,7 +134,7 @@
 
 /* Define this to 1 if getgroups(0,NULL) does not return the number of groups.
    */
-#define GETGROUPS_ZERO_BUG 1
+/* #undef GETGROUPS_ZERO_BUG */
 
 /* Define this to 'void' or 'struct timezone' to match the system's
    declaration of the second argument to gettimeofday. */
@@ -1337,7 +1337,7 @@
 #define HAVE_GETGID 1
 
 /* Define to 1 if your system has a working `getgroups' function. */
-/* #undef HAVE_GETGROUPS */
+#define HAVE_GETGROUPS 1
 
 /* Define to 1 if you have the 'gethostbyname' function. */
 /* #undef HAVE_GETHOSTBYNAME */
@@ -1460,7 +1460,7 @@
 /* #undef HAVE_LIBGNUTLS */
 
 /* Define to 1 if you have the <libintl.h> header file. */
-#define HAVE_LIBINTL_H 1
+/* #undef HAVE_LIBINTL_H */
 
 /* Define if libpcre is available. */
 /* #undef HAVE_LIBPCRE */
@@ -1559,7 +1559,7 @@
 
 /* Define to 1 if getcwd minimally works, that is, its result can be trusted
    when it succeeds. */
-/* #undef HAVE_MINIMALLY_WORKING_GETCWD */
+#define HAVE_MINIMALLY_WORKING_GETCWD 1
 
 /* Define to 1 if you have the <minix/config.h> header file. */
 /* #undef HAVE_MINIX_CONFIG_H */
@@ -1847,7 +1847,7 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the 'strlcpy' function. */
-/* #undef HAVE_STRLCPY */
+#define HAVE_STRLCPY 1
 
 /* Define to 1 if you have the 'strncasecmp' function. */
 #define HAVE_STRNCASECMP 1
@@ -1880,10 +1880,10 @@
 #define HAVE_STRUCT_FLOCK_L_TYPE 1
 
 /* Define to 1 if 'decimal_point' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_DECIMAL_POINT 1
+/* #undef HAVE_STRUCT_LCONV_DECIMAL_POINT */
 
 /* Define to 1 if 'int_p_cs_precedes' is a member of 'struct lconv'. */
-#define HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES 1
+/* #undef HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES */
 
 /* Define to 1 if 'sa_sigaction' is a member of 'struct sigaction'. */
 #define HAVE_STRUCT_SIGACTION_SA_SIGACTION 1
@@ -1922,10 +1922,10 @@
 /* #undef HAVE_STRUCT_STAT_ST_BIRTHTIM_TV_NSEC */
 
 /* Define to 1 if 'tm_gmtoff' is a member of 'struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_GMTOFF */
+#define HAVE_STRUCT_TM_TM_GMTOFF 1
 
 /* Define to 1 if 'tm_zone' is a member of 'struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_ZONE */
+#define HAVE_STRUCT_TM_TM_ZONE 1
 
 /* Define to 1 if you have the 'symlink' function. */
 #define HAVE_SYMLINK 1
@@ -1998,7 +1998,7 @@
 
 /* Define if struct tm has the tm_gmtoff member. This macro is obsolete. New
    code should use HAVE_STRUCT_TM_TM_GMTOFF. */
-/* #undef HAVE_TM_GMTOFF */
+#define HAVE_TM_GMTOFF 1
 
 /* Define to 1 if you have the 'towlower' function. */
 /* #undef HAVE_TOWLOWER */
@@ -2094,7 +2094,7 @@
 
 /* Define to 1 if fstatat (..., 0) works. For example, it does not work in AIX
    7.1. */
-/* #undef HAVE_WORKING_FSTATAT_ZERO_FLAG */
+#define HAVE_WORKING_FSTATAT_ZERO_FLAG 1
 
 /* Define if the mbrtoc32 function basically works. */
 /* #undef HAVE_WORKING_MBRTOC32 */
@@ -2272,7 +2272,7 @@
 
 /* Define to 1 if 'lstat' dereferences a symlink specified with a trailing
    slash. */
-#define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
+/* #undef LSTAT_FOLLOWS_SLASHED_SYMLINK */
 
 /* Define to a substitute value for mmap()'s MAP_ANONYMOUS flag. */
 /* #undef MAP_ANONYMOUS */
@@ -2291,11 +2291,11 @@
 
 /* Define if the mbrtowc function does not return (size_t) -2 for empty input.
    */
-#define MBRTOWC_EMPTY_INPUT_BUG 1
+/* #undef MBRTOWC_EMPTY_INPUT_BUG */
 
 /* Define if the mbrtowc function may signal encoding errors in the C locale.
    */
-/* #undef MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ */
+#define MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ 1
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
@@ -2343,7 +2343,7 @@
 #define NO_INLINE_GETPASS 1
 
 /* Define to 1 if open() fails to recognize a trailing slash. */
-/* #undef OPEN_TRAILING_SLASH_BUG */
+#define OPEN_TRAILING_SLASH_BUG 1
 
 /* Define to be the name of the operating system. */
 #define OS_TYPE "moxnox"
@@ -2384,22 +2384,22 @@
 /* #undef PTHREAD_SIGMASK_INEFFECTIVE */
 
 /* Define to 1 if pthread_sigmask() unblocks signals incorrectly. */
-/* #undef PTHREAD_SIGMASK_UNBLOCK_BUG */
+#define PTHREAD_SIGMASK_UNBLOCK_BUG 1
 
 /* Define to l, ll, u, ul, ull, etc., as suitable for constants of type
    'ptrdiff_t'. */
 /* #undef PTRDIFF_T_SUFFIX */
 
 /* Define to 1 if readlink fails to recognize a trailing slash. */
-/* #undef READLINK_TRAILING_SLASH_BUG */
+#define READLINK_TRAILING_SLASH_BUG 1
 
 /* Define to 1 if readlink sets errno instead of truncating a too-long link.
    */
-#define READLINK_TRUNCATE_BUG 1
+/* #undef READLINK_TRUNCATE_BUG */
 
 /* Define if rename does not work when the destination file exists, as on
    Cygwin 1.5 or Windows. */
-#define RENAME_DEST_EXISTS_BUG 1
+/* #undef RENAME_DEST_EXISTS_BUG */
 
 /* Define if rename fails to leave hard links alone, as on NetBSD 1.6 or
    Cygwin 1.5. */
@@ -2407,22 +2407,22 @@
 
 /* Define if rename does not correctly handle slashes on the destination
    argument, such as on Solaris 11 or NetBSD 1.6. */
-/* #undef RENAME_TRAILING_SLASH_DEST_BUG */
+#define RENAME_TRAILING_SLASH_DEST_BUG 1
 
 /* Define if rename does not correctly handle slashes on the source argument,
    such as on Solaris 9 or cygwin 1.5. */
-/* #undef RENAME_TRAILING_SLASH_SOURCE_BUG */
+#define RENAME_TRAILING_SLASH_SOURCE_BUG 1
 
 /* Define to 1 if gnulib's fchdir() replacement is used. */
 /* #undef REPLACE_FCHDIR */
 
 /* Define to 1 if stat needs help when passed a file name with a trailing
    slash */
-/* #undef REPLACE_FUNC_STAT_FILE */
+#define REPLACE_FUNC_STAT_FILE 1
 
 /* Define to 1 if utime needs help when passed a file name with a trailing
    slash */
-/* #undef REPLACE_FUNC_UTIME_FILE */
+#define REPLACE_FUNC_UTIME_FILE 1
 
 /* Define if nl_langinfo exists but is overridden by gnulib. */
 #define REPLACE_NL_LANGINFO 1
@@ -2768,7 +2768,7 @@
 
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
-#define __GETOPT_PREFIX rpl_
+/* #undef __GETOPT_PREFIX */
 
 /* Define to 1 on platforms where this makes time_t a 64-bit type. */
 /* #undef __MINGW_USE_VC2005_COMPAT */
