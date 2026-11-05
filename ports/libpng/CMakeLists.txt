@@ -43,6 +43,18 @@ set(LIBPNG_PUBLIC_HEADERS
 install(FILES ${LIBPNG_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 install(FILES ${LIBPNG_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/libpng16)
 
+foreach(var PNGLIB_MAJOR PNGLIB_MINOR PNGLIB_VERSION PNGLIB_ABI_VERSION)
+    get_directory_property(${var} DIRECTORY repo DEFINITION ${var})
+endforeach()
+set(prefix "")
+set(exec_prefix "\${prefix}")
+set(libdir "\${exec_prefix}/lib")
+set(includedir "\${prefix}/include")
+set(LIBS "-lz")
+configure_file(repo/libpng.pc.in ${CMAKE_CURRENT_BINARY_DIR}/libpng${PNGLIB_ABI_VERSION}.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libpng${PNGLIB_ABI_VERSION}.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+install(CODE "file(CREATE_LINK libpng${PNGLIB_ABI_VERSION}.pc \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/pkgconfig/libpng.pc\" SYMBOLIC)")
+
 add_custom_target(libpng)
 add_dependencies(libpng
     png_shared
