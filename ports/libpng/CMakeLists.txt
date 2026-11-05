@@ -6,7 +6,7 @@ set(SKIP_INSTALL_ALL ON)
 
 set(ld-version-script OFF)
 
-set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/ports/zlib/libzlib.dll.a)
+set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/ports/zlib/libz.dll.a)
 set(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../zlib/repo)
 
 set(CMAKE_MESSAGE_LOG_LEVEL NOTICE)

@@ -78,7 +78,7 @@ set_target_properties(OpenSSL::Crypto PROPERTIES
 )
 
 set(CURL_ZLIB ON)
-set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/ports/zlib/libzlib.dll.a)
+set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/ports/zlib/libz.dll.a)
 set(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../zlib/repo)
 
 set(CURL_ZSTD ON)
