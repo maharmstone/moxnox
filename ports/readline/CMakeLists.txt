@@ -99,3 +99,12 @@ install(FILES
     repo/tilde.h
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include/readline
 )
+
+set(prefix "")
+set(exec_prefix "\${prefix}")
+set(libdir "\${exec_prefix}/lib")
+set(includedir "\${prefix}/include")
+set(LIBVERSION ${PROJECT_VERSION})
+set(TERMCAP_PKG_CONFIG_LIB tinfo)
+configure_file(repo/readline.pc.in ${RL_GEN}/readline.pc @ONLY)
+install(FILES ${RL_GEN}/readline.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
