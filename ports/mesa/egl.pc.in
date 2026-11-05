@@ -1,0 +1,9 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: egl
+Description: Mesa EGL Library
+Version: @MESA_VERSION@
+Libs: -L${libdir} -lEGL
+Cflags: -I${includedir}

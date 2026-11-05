@@ -1997,6 +1997,10 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include/EGL
 )
 
+file(STRINGS repo/VERSION MESA_VERSION)
+configure_file(egl.pc.in ${GEN}/egl.pc @ONLY)
+install(FILES ${GEN}/egl.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+
 # ---------------------------------------------------------------------------
 
 add_executable(mesa-test mesa-test.cpp)
