@@ -99,7 +99,7 @@ add_library(mpc SHARED
     repo/src/urandom.c
 )
 
-set_target_properties(mpc PROPERTIES OUTPUT_NAME "mpc-3" PREFIX "lib")
+set_target_properties(mpc PROPERTIES OUTPUT_NAME "mpc-3" ARCHIVE_OUTPUT_NAME "mpc" PREFIX "lib")
 
 target_include_directories(mpc PRIVATE
     ${GEN}
