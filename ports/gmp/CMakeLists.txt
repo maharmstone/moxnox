@@ -573,7 +573,7 @@ add_library(gmp SHARED
     repo/rand/randmui.c
 )
 
-set_target_properties(gmp PROPERTIES OUTPUT_NAME "gmp-10" PREFIX "lib")
+set_target_properties(gmp PROPERTIES OUTPUT_NAME "gmp-10" ARCHIVE_OUTPUT_NAME "gmp" PREFIX "lib")
 
 target_compile_definitions(gmp PRIVATE HAVE_CONFIG_H __GMP_WITHIN_GMP)
 
