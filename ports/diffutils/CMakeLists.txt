@@ -40,6 +40,7 @@ add_library(diffutils_gnulib STATIC
     repo/gnulib/lib/careadlinkat.c
     repo/gnulib/lib/chdir-long.c
     repo/gnulib/lib/cloexec.c
+    repo/gnulib/lib/dup2.c
     repo/gnulib/lib/error.c
     repo/gnulib/lib/exclude.c
     repo/gnulib/lib/exitfail.c
