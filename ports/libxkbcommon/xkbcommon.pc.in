@@ -1,0 +1,14 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+xkb_root=@XKB_CONFIG_ROOT@
+xkb_extra_path=@XKB_CONFIG_EXTRA_PATH@
+xkb_unversioned_extensions_path=@XKB_CONFIG_UNVERSIONED_EXTENSIONS_PATH@
+xkb_versioned_extensions_path=@XKB_CONFIG_VERSIONED_EXTENSIONS_PATH@
+
+Name: xkbcommon
+Description: XKB API common to servers and clients
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lxkbcommon
+Cflags: -I${includedir}

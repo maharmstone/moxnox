@@ -113,6 +113,14 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include/xkbcommon
 )
 
+foreach(define ROOT EXTRA_PATH UNVERSIONED_EXTENSIONS_PATH VERSIONED_EXTENSIONS_PATH)
+    file(STRINGS config.h XKB_CONFIG_LINE REGEX "^#define DFLT_XKB_CONFIG_${define} ")
+    string(REGEX REPLACE "^#define DFLT_XKB_CONFIG_${define} \"([^\"]*)\".*" "\\1" XKB_CONFIG_${define} "${XKB_CONFIG_LINE}")
+endforeach()
+
+configure_file(xkbcommon.pc.in ${GEN}/xkbcommon.pc @ONLY)
+install(FILES ${GEN}/xkbcommon.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+
 ###
 
 add_library(xkbcommon_tools STATIC
