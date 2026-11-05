@@ -1,0 +1,7 @@
+datadir=@CMAKE_INSTALL_PREFIX@/share
+xkb_root=@XKB_BASE@
+xkb_base=@CMAKE_INSTALL_PREFIX@/share/X11/xkb
+
+Name: XKeyboardConfig
+Description: X Keyboard configuration data
+Version: @PROJECT_VERSION@

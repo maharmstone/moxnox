@@ -101,3 +101,7 @@ install(FILES repo/rules/base.extras.xml DESTINATION ${XKB_BASE}/rules RENAME ev
 
 install(DIRECTORY DESTINATION ${CMAKE_INSTALL_PREFIX}/share/X11)
 install(CODE "file(CREATE_LINK /share/xkeyboard-config-2 \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/share/X11/xkb\" SYMBOLIC)")
+
+configure_file(xkeyboard-config.pc.in ${GEN}/xkeyboard-config-${PROJECT_VERSION_MAJOR}.pc @ONLY)
+install(FILES ${GEN}/xkeyboard-config-${PROJECT_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pkgconfig)
+install(CODE "file(CREATE_LINK xkeyboard-config-${PROJECT_VERSION_MAJOR}.pc \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/share/pkgconfig/xkeyboard-config.pc\" SYMBOLIC)")
