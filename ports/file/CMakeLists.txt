@@ -450,7 +450,7 @@ target_compile_definitions(libmagic PRIVATE HAVE_CONFIG_H MAGIC="/share/misc/mag
 target_include_directories(libmagic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${GEN}
                            ${CMAKE_CURRENT_SOURCE_DIR}/repo/src)
 target_compile_options(libmagic PRIVATE ${FILE_CFLAGS})
-target_link_libraries(libmagic PRIVATE zlib moxnox)
+target_link_libraries(libmagic PRIVATE zlib zstd liblzma bzip2 moxnox)
 
 add_executable(file
     ${GEN}/src/file.h

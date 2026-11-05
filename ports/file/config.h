@@ -8,7 +8,7 @@
 #define BUILTIN_ELF 1
 
 /* Enable bzlib compression support */
-/* #undef BZLIBSUPPORT */
+#define BZLIBSUPPORT 1
 
 /* Define for ELF core file support */
 #define ELFCORE 1
@@ -23,7 +23,7 @@
 /* #undef HAVE_BYTESWAP_H */
 
 /* Define to 1 if you have the <bzlib.h> header file. */
-/* #undef HAVE_BZLIB_H */
+#define HAVE_BZLIB_H 1
 
 /* Define to 1 if you have the 'ctime_r' function. */
 /* #undef HAVE_CTIME_R */
@@ -85,7 +85,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the 'bz2' library (-lbz2). */
-/* #undef HAVE_LIBBZ2 */
+#define HAVE_LIBBZ2 1
 
 /* Define to 1 if you have the 'gnurx' library (-lgnurx). */
 /* #undef HAVE_LIBGNURX */
@@ -97,7 +97,7 @@
 /* #undef HAVE_LIBLZ */
 
 /* Define to 1 if you have the 'lzma' library (-llzma). */
-/* #undef HAVE_LIBLZMA */
+#define HAVE_LIBLZMA 1
 
 /* Define to 1 if you have the 'seccomp' library (-lseccomp). */
 /* #undef HAVE_LIBSECCOMP */
@@ -106,7 +106,7 @@
 #define HAVE_LIBZ 1
 
 /* Define to 1 if you have the 'zstd' library (-lzstd). */
-/* #undef HAVE_LIBZSTD */
+#define HAVE_LIBZSTD 1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -124,7 +124,7 @@
 /* #undef HAVE_LZLIB_H */
 
 /* Define to 1 if you have the <lzma.h> header file. */
-/* #undef HAVE_LZMA_H */
+#define HAVE_LZMA_H 1
 
 /* Define to 1 if mbrtowc and mbstate_t are properly declared. */
 #define HAVE_MBRTOWC 1
@@ -187,7 +187,7 @@
 /* #undef HAVE_STRLCAT */
 
 /* Define to 1 if you have the 'strlcpy' function. */
-/* #undef HAVE_STRLCPY */
+#define HAVE_STRLCPY 1
 
 /* Define to 1 if you have the 'strndup' function. */
 #define HAVE_STRNDUP 1
@@ -202,10 +202,10 @@
 #define HAVE_STRUCT_STAT_ST_RDEV 1
 
 /* Define to 1 if 'tm_gmtoff' is a member of 'struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_GMTOFF */
+#define HAVE_STRUCT_TM_TM_GMTOFF 1
 
 /* Define to 1 if 'tm_zone' is a member of 'struct tm'. */
-/* #undef HAVE_STRUCT_TM_TM_ZONE */
+#define HAVE_STRUCT_TM_TM_ZONE 1
 
 /* Define to 1 if you have the <sys/bswap.h> header file. */
 /* #undef HAVE_SYS_BSWAP_H */
@@ -241,7 +241,7 @@
 #define HAVE_TM_ISDST 1
 
 /* HAVE_TM_ZONE */
-/* #undef HAVE_TM_ZONE */
+#define HAVE_TM_ZONE 1
 
 /* HAVE_TZNAME */
 #define HAVE_TZNAME 1
@@ -287,7 +287,7 @@
 #define HAVE_WCWIDTH 1
 
 /* Define to 1 if 'fork' works. */
-/* #undef HAVE_WORKING_FORK */
+#define HAVE_WORKING_FORK 1
 
 /* Define to 1 if 'vfork' works. */
 /* #undef HAVE_WORKING_VFORK */
@@ -299,10 +299,10 @@
 #define HAVE_ZLIB_H 1
 
 /* Define to 1 if you have the <zstd_errors.h> header file. */
-/* #undef HAVE_ZSTD_ERRORS_H */
+#define HAVE_ZSTD_ERRORS_H 1
 
 /* Define to 1 if you have the <zstd.h> header file. */
-/* #undef HAVE_ZSTD_H */
+#define HAVE_ZSTD_H 1
 
 /* Enable lrziplib compression support */
 /* #undef LRZIPLIBSUPPORT */
@@ -353,6 +353,10 @@
 /* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
+#endif
+/* Enable extensions on Cosmopolitan Libc. */
+#ifndef _COSMO_SOURCE
+# define _COSMO_SOURCE 1
 #endif
 /* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
@@ -458,13 +462,13 @@
 #endif
 
 /* Enable xzlib compression support */
-/* #undef XZLIBSUPPORT */
+#define XZLIBSUPPORT 1
 
 /* Enable zlib compression support */
 #define ZLIBSUPPORT 1
 
 /* Enable zstdlib compression support */
-/* #undef ZSTDLIBSUPPORT */
+#define ZSTDLIBSUPPORT 1
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

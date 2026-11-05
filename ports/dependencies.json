@@ -11,7 +11,7 @@
     "curl": ["openssl", "zlib", "zstd"],
     "diffutils": ["gnulib"],
     "expat": [],
-    "file": ["zlib"],
+    "file": ["bzip2", "xz", "zlib", "zstd"],
     "findutils": [],
     "flex": [],
     "freetype": ["libpng"],
