@@ -44,3 +44,5 @@
 #define TTY_NAME_MAX 100
 
 #define TZNAME_MAX 6
+
+#define IOV_MAX 1024 // FIXME?

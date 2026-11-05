@@ -70,6 +70,9 @@ long sysconf(int name) {
         case _SC_TTY_NAME_MAX:
             return TTY_NAME_MAX;
 
+        case _SC_IOV_MAX:
+            return IOV_MAX;
+
         default:
             *_errno() = EINVAL;
             return -1;
