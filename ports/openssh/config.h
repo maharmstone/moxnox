@@ -98,16 +98,16 @@
 /* #undef BSD_AUTH */
 
 /* Define if you want to specify the path to your lastlog file */
-#define CONF_LASTLOG_FILE "/var/log/lastlog"
+/* #undef CONF_LASTLOG_FILE */
 
 /* Define if you want to specify the path to your utmp file */
-#define CONF_UTMP_FILE "/var/run/utmp"
+/* #undef CONF_UTMP_FILE */
 
 /* Define if you want to specify the path to your wtmpx file */
 /* #undef CONF_WTMPX_FILE */
 
 /* Define if you want to specify the path to your wtmp file */
-#define CONF_WTMP_FILE "/var/log/wtmp"
+/* #undef CONF_WTMP_FILE */
 
 /* Need to call setpgrp as root */
 /* #undef DISABLE_FD_PASSING */
@@ -317,7 +317,7 @@
 #define HAVE_CONTROL_IN_MSGHDR 1
 
 /* Define to 1 if you have the 'crypt' function. */
-/* #undef HAVE_CRYPT */
+#define HAVE_CRYPT 1
 
 /* Define to 1 if you have the <crypto/sha2.h> header file. */
 /* #undef HAVE_CRYPTO_SHA2_H */
@@ -836,7 +836,7 @@
 /* #undef HAVE_INET_ATON */
 
 /* Define to 1 if you have the 'inet_ntoa' function. */
-/* #undef HAVE_INET_NTOA */
+#define HAVE_INET_NTOA 1
 
 /* Define to 1 if you have the 'inet_ntop' function. */
 #define HAVE_INET_NTOP 1
@@ -860,7 +860,7 @@
 #define HAVE_IN_ADDR_T 1
 
 /* Define to 1 if the system has the type 'in_port_t'. */
-/* #undef HAVE_IN_PORT_T */
+#define HAVE_IN_PORT_T 1
 
 /* Define if you have isblank(3C). */
 #define HAVE_ISBLANK 1
@@ -1359,7 +1359,7 @@
 /* #undef HAVE_STRLCAT */
 
 /* Define to 1 if you have the 'strlcpy' function. */
-/* #undef HAVE_STRLCPY */
+#define HAVE_STRLCPY 1
 
 /* Define to 1 if you have the 'strmode' function. */
 /* #undef HAVE_STRMODE */
@@ -1734,7 +1734,7 @@
 /* #undef HAVE___SS_FAMILY_IN_SS */
 
 /* Define if __va_copy exists */
-/* #undef HAVE___VA_COPY */
+#define HAVE___VA_COPY 1
 
 /* Define if compiler implements __func__ */
 #define HAVE___func__ 1
@@ -1886,10 +1886,10 @@
 /* #undef SANDBOX_DARWIN */
 
 /* no privsep sandboxing */
-#define SANDBOX_NULL 1
+/* #undef SANDBOX_NULL */
 
 /* Sandbox using setrlimit(2) */
-/* #undef SANDBOX_RLIMIT */
+#define SANDBOX_RLIMIT 1
 
 /* Sandbox using seccomp filter */
 /* #undef SANDBOX_SECCOMP_FILTER */
@@ -2073,7 +2073,7 @@
 #endif
 
 /* Define if xauth is found in your path */
-#define XAUTH_PATH "/usr/bin/xauth"
+/* #undef XAUTH_PATH */
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
@@ -2085,7 +2085,7 @@
 /* #undef _PATH_BTMP */
 
 /* Full path of your "passwd" program */
-#define _PATH_PASSWD_PROG "/usr/bin/passwd"
+/* #undef _PATH_PASSWD_PROG */
 
 /* Specify location of ssh.pid */
 #define _PATH_SSH_PIDDIR "/var/run"
