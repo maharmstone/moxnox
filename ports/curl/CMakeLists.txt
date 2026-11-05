@@ -61,7 +61,7 @@ set(CURL_CA_PATH "none" CACHE STRING "" FORCE)
 set(CURL_USE_OPENSSL ON)
 set(OPENSSL_INCLUDE_DIR ${CMAKE_BINARY_DIR}/ports/openssl/gen/include)
 set(OPENSSL_SSL_LIBRARY ${CMAKE_BINARY_DIR}/ports/openssl/libssl.dll.a)
-set(OPENSSL_CRYPTO_LIBRARY ${CMAKE_BINARY_DIR}/ports/openssl/liblibcrypto.dll.a)
+set(OPENSSL_CRYPTO_LIBRARY ${CMAKE_BINARY_DIR}/ports/openssl/libcrypto.dll.a)
 
 file(MAKE_DIRECTORY ${OPENSSL_INCLUDE_DIR})
 add_library(OpenSSL::SSL SHARED IMPORTED)

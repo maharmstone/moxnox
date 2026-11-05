@@ -3,6 +3,7 @@ set(GEN "${CMAKE_CURRENT_BINARY_DIR}/gen")
 file(MAKE_DIRECTORY "${GEN}/providers/implementations/rands/seeding")
 file(MAKE_DIRECTORY "${GEN}/include/internal")
 file(MAKE_DIRECTORY "${GEN}/include/openssl")
+file(MAKE_DIRECTORY "${GEN}/pkgconfig")
 file(MAKE_DIRECTORY "${GEN}/crypto/rand")
 file(MAKE_DIRECTORY "${GEN}/crypto/bio")
 file(MAKE_DIRECTORY "${GEN}/crypto")
@@ -79,6 +80,9 @@ set(OPENSSL_GENERATED_FILES
     ${GEN}/providers/common/include/prov/der_slh_dsa.h
     ${GEN}/providers/common/include/prov/der_sm2.h
     ${GEN}/providers/common/include/prov/der_wrap.h
+    ${GEN}/exporters/libcrypto.pc
+    ${GEN}/exporters/libssl.pc
+    ${GEN}/exporters/openssl.pc
 )
 
 add_custom_command(
@@ -91,6 +95,23 @@ add_custom_command(
 )
 
 add_custom_target(openssl_generate DEPENDS ${OPENSSL_GENERATED_FILES})
+
+set(OPENSSL_PKGCONFIG_FILES)
+foreach(pc libcrypto libssl openssl)
+    add_custom_command(
+        OUTPUT ${GEN}/pkgconfig/${pc}.pc
+        COMMAND ${HOST_SED}
+            -e [[s|^prefix=.*|prefix=/|]]
+            -e [[s|^libdir=.*|libdir=/lib|]]
+            -e [[s|^includedir=.*|includedir=/include|]]
+            -e [[/^Libs.private:/d]]
+            ${GEN}/exporters/${pc}.pc > ${GEN}/pkgconfig/${pc}.pc
+        DEPENDS ${GEN}/exporters/${pc}.pc
+        VERBATIM
+    )
+    list(APPEND OPENSSL_PKGCONFIG_FILES ${GEN}/pkgconfig/${pc}.pc)
+endforeach()
+add_custom_target(openssl_pkgconfig ALL DEPENDS ${OPENSSL_PKGCONFIG_FILES})
 
 function(openssl_patch relpath)
     add_custom_command(
@@ -1228,6 +1249,7 @@ target_compile_options(libcrypto PRIVATE
 set_target_properties(libcrypto PROPERTIES
     PREFIX ""
     OUTPUT_NAME "libcrypto"
+    IMPORT_PREFIX ""
 )
 
 target_link_libraries(libcrypto PRIVATE moxnox)
@@ -1328,6 +1350,7 @@ set_target_properties(libssl PROPERTIES
 target_link_libraries(libssl PRIVATE libcrypto moxnox)
 
 install(TARGETS libssl DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+install(FILES ${OPENSSL_PKGCONFIG_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 
 install(DIRECTORY repo/include/openssl/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/openssl
     PATTERN "*.in" EXCLUDE
