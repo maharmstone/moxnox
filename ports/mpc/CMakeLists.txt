@@ -121,3 +121,13 @@ target_link_libraries(mpc PRIVATE moxnox)
 
 install(TARGETS mpc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 install(FILES ${GEN}/mpc.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+
+set(prefix "")
+set(exec_prefix "\${prefix}")
+set(libdir "\${exec_prefix}/lib")
+set(includedir "\${prefix}/include")
+set(VERSION ${PROJECT_VERSION})
+set(REQUIRES_MPFR_VERSION 4.1.0)
+set(REQUIRES_GMP_VERSION 5.0.0)
+configure_file(repo/mpc.pc.in ${GEN}/mpc.pc @ONLY)
+install(FILES ${GEN}/mpc.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
