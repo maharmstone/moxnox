@@ -88,6 +88,7 @@ void unmap_proc_pages(process& proc, uint64_t va, uint64_t num_pages) {
             free_folio(pte.pfn << PAGE_SHIFT);
 
         pte.p = 0;
+        pte.owned = 0;
     }
 }
 #elifdef __aarch64__
@@ -143,6 +144,7 @@ void unmap_proc_pages(process& proc, uint64_t va, uint64_t num_pages) {
             free_folio(pte.pfn << PAGE_SHIFT);
 
         pte.valid = 0;
+        pte.owned = 0;
     }
 }
 #endif
