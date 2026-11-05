@@ -435,7 +435,7 @@ add_library(libmagic SHARED
     repo/src/swap.c
 )
 
-set_target_properties(libmagic PROPERTIES OUTPUT_NAME "magic-1" PREFIX "lib")
+set_target_properties(libmagic PROPERTIES OUTPUT_NAME "magic-1" ARCHIVE_OUTPUT_NAME "magic" PREFIX "lib")
 
 set(FILE_CFLAGS
     ${USERSPACE_CFLAGS}
