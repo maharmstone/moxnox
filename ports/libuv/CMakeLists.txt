@@ -93,7 +93,7 @@ foreach(target uv uv_a)
     # here), and selects uv/posix.h only for platforms it knows: force-including
     # it primes the include guard and defines UV_PLATFORM_LOOP_FIELDS
     target_include_directories(${target} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-    target_compile_options(${target} PUBLIC "SHELL:-include ${REPO}/include/uv/posix.h")
+    target_compile_options(${target} PUBLIC "$<BUILD_INTERFACE:SHELL:-include ${REPO}/include/uv/posix.h>")
 endforeach()
 
 target_compile_options(uv PRIVATE ${USERSPACE_CFLAGS})
