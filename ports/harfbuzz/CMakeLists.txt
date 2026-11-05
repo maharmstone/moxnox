@@ -71,3 +71,8 @@ install(FILES
     repo/src/hb.h
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include/harfbuzz
 )
+
+file(STRINGS repo/src/hb-version.h HB_VERSION_LINE REGEX "^#define HB_VERSION_STRING ")
+string(REGEX REPLACE "^#define HB_VERSION_STRING \"([0-9.]+)\".*" "\\1" HB_VERSION "${HB_VERSION_LINE}")
+configure_file(harfbuzz.pc.in ${CMAKE_CURRENT_BINARY_DIR}/harfbuzz.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/harfbuzz.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
