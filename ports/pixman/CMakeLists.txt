@@ -106,12 +106,17 @@ target_compile_options(pixman PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions 
 
 target_link_libraries(pixman PUBLIC pixman_mod)
 
+set_target_properties(pixman PROPERTIES ARCHIVE_OUTPUT_NAME pixman-1)
+
 install(TARGETS pixman DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
     CXX_MODULES_BMI EXCLUDE_FROM_ALL
 )
 
 install(FILES repo/pixman/pixman.h ${CMAKE_CURRENT_BINARY_DIR}/pixman-version.h
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include/pixman-1)
+
+configure_file(pixman-1.pc.in ${CMAKE_CURRENT_BINARY_DIR}/pixman-1.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pixman-1.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 
 ###
 

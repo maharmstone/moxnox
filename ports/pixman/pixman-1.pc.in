@@ -1,0 +1,9 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: Pixman
+Description: The pixman library (version 1)
+Version: @PIXMAN_VERSION_MAJOR@.@PIXMAN_VERSION_MINOR@.@PIXMAN_VERSION_MICRO@
+Libs: -L${libdir} -lpixman-1
+Cflags: -I${includedir}/pixman-1
