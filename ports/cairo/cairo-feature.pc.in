@@ -1,0 +1,8 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+includedir=${prefix}/include
+
+Name: @CAIRO_FEATURE@
+Description: @CAIRO_FEATURE_DESCRIPTION@ for cairo graphics library
+Version: @CAIRO_VERSION@
+Requires: @CAIRO_FEATURE_REQUIRES@
+Cflags: -I${includedir}

@@ -160,6 +160,31 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include/cairo
 )
 
+foreach(part MAJOR MINOR MICRO)
+    file(STRINGS repo/src/cairo-version.h CAIRO_VERSION_LINE REGEX "^#define CAIRO_VERSION_${part} ")
+    string(REGEX REPLACE "^#define CAIRO_VERSION_${part} ([0-9]+).*" "\\1" CAIRO_VERSION_${part} "${CAIRO_VERSION_LINE}")
+endforeach()
+set(CAIRO_VERSION ${CAIRO_VERSION_MAJOR}.${CAIRO_VERSION_MINOR}.${CAIRO_VERSION_MICRO})
+
+configure_file(cairo.pc.in ${CMAKE_CURRENT_BINARY_DIR}/cairo.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cairo.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+
+function(cairo_feature_pc name description requires)
+    set(CAIRO_FEATURE cairo-${name})
+    set(CAIRO_FEATURE_DESCRIPTION "${description}")
+    set(CAIRO_FEATURE_REQUIRES "${requires}")
+    configure_file(cairo-feature.pc.in ${CMAKE_CURRENT_BINARY_DIR}/cairo-${name}.pc @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cairo-${name}.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+endfunction()
+
+cairo_feature_pc(png "PNG functions" "cairo, libpng >= 1.4.0")
+cairo_feature_pc(svg "SVG surface backend" "cairo, libpng >= 1.4.0")
+cairo_feature_pc(ft "FreeType font backend" "cairo, freetype2 >= 23.0.17")
+cairo_feature_pc(script "script surface backend" "cairo, zlib")
+cairo_feature_pc(ps "PostScript surface backend" "cairo, zlib")
+cairo_feature_pc(pdf "PDF surface backend" "cairo, zlib")
+cairo_feature_pc(tee "Tee surface backend" "cairo")
+
 add_executable(cairo-test cairo-test.cpp)
 
 target_compile_options(cairo-test PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
