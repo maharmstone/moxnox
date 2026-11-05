@@ -466,4 +466,13 @@ install(TARGETS file DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 install(TARGETS libmagic DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 install(FILES ${GEN}/magic.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
+set(prefix "")
+set(exec_prefix "\${prefix}")
+set(libdir "\${exec_prefix}/lib")
+set(includedir "\${prefix}/include")
+set(VERSION ${PROJECT_VERSION})
+set(LIBS "-lzstd -llzma -lbz2 -lz")
+configure_file(repo/libmagic.pc.in ${GEN}/libmagic.pc @ONLY)
+install(FILES ${GEN}/libmagic.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+
 install(FILES ${GEN}/magic DESTINATION ${CMAKE_INSTALL_PREFIX}/share/misc)
