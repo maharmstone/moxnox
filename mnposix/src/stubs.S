@@ -8,7 +8,6 @@ do_stub "posix_spawnattr_setschedpolicy"
 do_stub "posix_spawnattr_setschedparam"
 do_stub "pthread_cancel"
 do_stub "pthread_atfork"
-do_stub "timer_delete"
 do_stub "timer_settime"
 
 stubs_end

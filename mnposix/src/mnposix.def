@@ -287,3 +287,4 @@ setlogmask
 crypt
 ctermid
 timer_create
+timer_delete

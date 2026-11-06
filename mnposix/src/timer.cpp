@@ -62,3 +62,15 @@ int timer_create(clockid_t clockid, sigevent* evp, timer_t* timerid) {
 
     return 0;
 }
+
+extern "C"
+int timer_delete(timer_t timerid) {
+    auto& t = *(posix_timer*)timerid;
+    bool current_state;
+
+    NtCancelTimer(t.h.get(), &current_state);
+
+    delete &t;
+
+    return 0;
+}
