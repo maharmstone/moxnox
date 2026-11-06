@@ -406,6 +406,8 @@ target_compile_options(libpython PRIVATE
 
 target_link_libraries(libpython PRIVATE moxnox ncurses libssl libcrypto)
 
+set_target_properties(libpython PROPERTIES ARCHIVE_OUTPUT_NAME python3.13)
+
 install(TARGETS libpython DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(DIRECTORY repo/Include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/python3.13
@@ -431,6 +433,20 @@ add_dependencies(python_exe python_patched_headers)
 install(TARGETS python_exe DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 install(CODE "file(CREATE_LINK python.exe \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/python3.exe\" SYMBOLIC)")
 install(CODE "file(CREATE_LINK python.exe \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/python3.13.exe\" SYMBOLIC)")
+
+set(prefix "")
+set(exec_prefix "\${prefix}")
+set(libdir "\${exec_prefix}/lib")
+set(includedir "\${prefix}/include")
+set(VERSION 3.13)
+set(ABIFLAGS "")
+set(LIBS "")
+set(LIBPYTHON "")
+configure_file(repo/Misc/python.pc.in ${GEN}/python-3.13.pc @ONLY)
+configure_file(repo/Misc/python-embed.pc.in ${GEN}/python-3.13-embed.pc @ONLY)
+install(FILES ${GEN}/python-3.13.pc ${GEN}/python-3.13-embed.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+install(CODE "file(CREATE_LINK python-3.13.pc \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/pkgconfig/python3.pc\" SYMBOLIC)")
+install(CODE "file(CREATE_LINK python-3.13-embed.pc \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/pkgconfig/python3-embed.pc\" SYMBOLIC)")
 
 install(DIRECTORY repo/Lib/
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/python3.13
