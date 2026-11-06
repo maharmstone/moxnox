@@ -388,6 +388,7 @@ target_include_directories(libpython PUBLIC
 target_compile_definitions(libpython PRIVATE
     Py_BUILD_CORE
     PLATFORM="moxnox"
+    ABIFLAGS=""
 )
 
 target_compile_options(libpython PRIVATE
@@ -433,6 +434,10 @@ add_dependencies(python_exe python_patched_headers)
 install(TARGETS python_exe DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 install(CODE "file(CREATE_LINK python.exe \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/python3.exe\" SYMBOLIC)")
 install(CODE "file(CREATE_LINK python.exe \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/python3.13.exe\" SYMBOLIC)")
+
+set(PYTHON_HOST_TRIPLE ${CMAKE_SYSTEM_PROCESSOR}-pc-moxnox)
+configure_file(_sysconfigdata__moxnox_.py.in ${GEN}/_sysconfigdata__moxnox_.py @ONLY)
+install(FILES ${GEN}/_sysconfigdata__moxnox_.py DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/python3.13)
 
 set(prefix "")
 set(exec_prefix "\${prefix}")
