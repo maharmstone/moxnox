@@ -14,14 +14,6 @@ target_compile_features(harfbuzz PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 
 target_compile_definitions(harfbuzz PRIVATE HB_LEAN HB_NO_AAT HB_NO_MT)
 
-get_target_property(libs harfbuzz LINK_LIBRARIES)
-list(REMOVE_ITEM libs Threads::Threads)
-set_target_properties(harfbuzz PROPERTIES LINK_LIBRARIES "${libs}")
-
-get_target_property(libs harfbuzz INTERFACE_LINK_LIBRARIES)
-list(REMOVE_ITEM libs Threads::Threads)
-set_target_properties(harfbuzz PROPERTIES INTERFACE_LINK_LIBRARIES "${libs}")
-
 target_compile_options(harfbuzz PRIVATE
     ${USERSPACE_CFLAGS}
     -g0
