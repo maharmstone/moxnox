@@ -50,3 +50,7 @@ set_target_properties(librhash PROPERTIES ARCHIVE_OUTPUT_NAME rhash)
 install(TARGETS librhash DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES repo/librhash/rhash.h repo/librhash/rhash_torrent.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+
+set(RHASH_VERSION ${RHASH_VERSION_MAJOR}.${RHASH_VERSION_MINOR}.${RHASH_VERSION_PATCH})
+configure_file(librhash.pc.in ${CMAKE_CURRENT_BINARY_DIR}/librhash.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/librhash.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
