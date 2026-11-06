@@ -34,7 +34,6 @@ target_compile_options(tre PRIVATE -fno-exceptions ${USERSPACE_CFLAGS} -Wno-sign
 target_compile_options(tre PRIVATE "SHELL:-include ${CMAKE_SOURCE_DIR}/ports/tre/tre-internal-fix.h")
 
 add_library(musl_crypt STATIC
-    ../ports/musl/repo/src/crypt/crypt.c
     ../ports/musl/repo/src/crypt/crypt_r.c
     ../ports/musl/repo/src/crypt/crypt_blowfish.c
     ../ports/musl/repo/src/crypt/crypt_sha256.c
@@ -80,6 +79,7 @@ add_library(mnposix SHARED
     src/syslog.cpp
     src/locale.cpp
     src/hostid.cpp
+    src/crypt.cpp
 )
 
 target_compile_options(mnposix PRIVATE -fno-exceptions -fno-builtin ${USERSPACE_CFLAGS})
