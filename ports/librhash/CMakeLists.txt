@@ -45,6 +45,8 @@ math(EXPR RHASH_XVERSION
     OUTPUT_FORMAT HEXADECIMAL)
 target_compile_definitions(librhash PRIVATE RHASH_XVERSION=${RHASH_XVERSION})
 
+set_target_properties(librhash PROPERTIES ARCHIVE_OUTPUT_NAME rhash)
+
 install(TARGETS librhash DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES repo/librhash/rhash.h repo/librhash/rhash_torrent.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
