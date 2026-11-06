@@ -1,3 +1,5 @@
+project(binutils VERSION 2.47)
+
 set(REPO ${CMAKE_CURRENT_SOURCE_DIR}/repo)
 
 find_package(BISON REQUIRED)
@@ -119,7 +121,15 @@ target_include_directories(libiberty PUBLIC
     ${REPO}/include
 )
 
-target_compile_definitions(libiberty PRIVATE _CRTIMP= HAVE_CONFIG_H)
+target_compile_definitions(libiberty PRIVATE
+    _CRTIMP=
+    HAVE_CONFIG_H
+    PACKAGE_NAME=libiberty
+    "PACKAGE_STRING=\"libiberty ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=libiberty
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
+)
 
 # bfd
 
@@ -135,8 +145,8 @@ set(supports_plugins 0)
 configure_file(${REPO}/bfd/bfd-in2.h ${BFD_GEN_DIR}/bfd.h @ONLY)
 
 # bfdver.h - generated from version.h
-set(bfd_version 244000000)
-set(bfd_version_string "\"2.44.20260428\"")
+set(bfd_version 247000000) # FIXME
+set(bfd_version_string "\"${PROJECT_VERSION}\"")
 set(bfd_version_package "\"(GNU Binutils) \"")
 set(report_bugs_to "\"https://sourceware.org/bugzilla/\"")
 configure_file(${REPO}/bfd/version.h ${BFD_GEN_DIR}/bfdver.h @ONLY)
@@ -269,6 +279,11 @@ target_compile_definitions(bfd PRIVATE
     OBJ_MAYBE_ELF
     OBJ_MAYBE_ELF_SFRAME
     "DEBUGDIR=\"/lib/debug\""
+    PACKAGE_NAME=bfd
+    "PACKAGE_STRING=\"bfd ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=bfd
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
 )
 
 target_include_directories(bfd PRIVATE
@@ -282,7 +297,7 @@ target_include_directories(bfd PUBLIC
     ${REPO}/include
 )
 
-target_link_libraries(bfd PUBLIC libiberty zlib)
+target_link_libraries(bfd PUBLIC libiberty zlib zstd)
 
 # opcodes
 
@@ -306,7 +321,17 @@ target_include_directories(opcodes PRIVATE
     ${REPO}/include
 )
 
-target_compile_definitions(opcodes PRIVATE _CRTIMP= HAVE_CONFIG_H ARCH_i386)
+target_compile_definitions(opcodes PRIVATE
+    _CRTIMP=
+    HAVE_CONFIG_H
+    ARCH_i386
+    PACKAGE_NAME=opcodes
+    "PACKAGE_STRING=\"opcodes ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=opcodes
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
+)
+
 target_link_libraries(opcodes PUBLIC bfd libiberty)
 
 # libsframe
@@ -330,7 +355,16 @@ target_include_directories(sframe PRIVATE
     ${REPO}/include
 )
 
-target_compile_definitions(sframe PRIVATE _CRTIMP= HAVE_CONFIG_H)
+target_compile_definitions(sframe PRIVATE
+    _CRTIMP=
+    HAVE_CONFIG_H
+    PACKAGE_NAME=libsframe
+    "PACKAGE_STRING=\"libsframe ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=libsframe
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
+)
+
 target_link_libraries(bfd PUBLIC sframe)
 
 # binutils tools
@@ -392,8 +426,13 @@ function(add_binutils_exe name)
         _CRTIMP=
         HAVE_CONFIG_H
         "TARGET=\"x86_64-pc-moxnox\""
+        PACKAGE_NAME=binutils
+        "PACKAGE_STRING=\"binutils ${PROJECT_VERSION}\""
+        PACKAGE_TARNAME=binutils
+        "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+        "VERSION=\"${PROJECT_VERSION}\""
     )
-    target_link_libraries(${name} PRIVATE bfd libiberty)
+    target_link_libraries(${name} PRIVATE bfd libiberty zstd)
 
     install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
         ARCHIVE EXCLUDE_FROM_ALL
@@ -436,10 +475,17 @@ add_executable(objdump
     ${REPO}/binutils/od-pe.c
 )
 add_binutils_exe(objdump)
+
 target_compile_definitions(objdump PRIVATE
     HAVE_CONFIG_H
     "OBJDUMP_PRIVATE_VECTORS=&objdump_private_desc_pe,"
+    PACKAGE_NAME=binutils
+    "PACKAGE_STRING=\"binutils ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=binutils
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
 )
+
 target_link_libraries(objdump PRIVATE opcodes)
 
 add_executable(objcopy
@@ -463,14 +509,32 @@ add_executable(ar
     ${REPO}/binutils/not-ranlib.c
 )
 add_binutils_exe(ar)
-target_compile_definitions(ar PRIVATE HAVE_CONFIG_H bin_dummy_emulation=bin_vanilla_emulation)
+
+target_compile_definitions(ar PRIVATE
+    HAVE_CONFIG_H
+    bin_dummy_emulation=bin_vanilla_emulation
+    PACKAGE_NAME=binutils
+    "PACKAGE_STRING=\"binutils ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=binutils
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
+)
 
 add_executable(ranlib
     ${AR_SRCS}
     ${REPO}/binutils/is-ranlib.c
 )
 add_binutils_exe(ranlib)
-target_compile_definitions(ranlib PRIVATE HAVE_CONFIG_H bin_dummy_emulation=bin_vanilla_emulation)
+
+target_compile_definitions(ranlib PRIVATE
+    HAVE_CONFIG_H
+    bin_dummy_emulation=bin_vanilla_emulation
+    PACKAGE_NAME=binutils
+    "PACKAGE_STRING=\"binutils ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=binutils
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
+)
 
 add_executable(readelf
     ${REPO}/binutils/readelf.c
@@ -485,11 +549,18 @@ target_compile_options(readelf PRIVATE ${GENERAL_CFLAGS}
     -Wno-format
     -include ${CMAKE_CURRENT_SOURCE_DIR}/binutils-shim.h
 )
+
 target_compile_definitions(readelf PRIVATE
     _CRTIMP=
     HAVE_CONFIG_H
     "TARGET=\"x86_64-pc-moxnox\""
+    PACKAGE_NAME=binutils
+    "PACKAGE_STRING=\"binutils ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=binutils
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
 )
+
 target_include_directories(readelf PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${BFD_GEN_DIR}
@@ -497,7 +568,7 @@ target_include_directories(readelf PRIVATE
     ${REPO}/bfd
     ${REPO}/include
 )
-target_link_libraries(readelf PRIVATE libiberty zlib sframe)
+target_link_libraries(readelf PRIVATE libiberty zlib sframe zstd)
 
 install(TARGETS readelf DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     ARCHIVE EXCLUDE_FROM_ALL
@@ -555,6 +626,11 @@ target_compile_definitions(as PRIVATE
     _CRTIMP=
     HAVE_CONFIG_H
     "DEFAULT_ARCH=\"x86_64\""
+    PACKAGE_NAME=gas
+    "PACKAGE_STRING=\"gas ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=gas
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
 )
 target_include_directories(as PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -565,7 +641,7 @@ target_include_directories(as PRIVATE
     ${REPO}
     ${BFD_GEN_DIR}
 )
-target_link_libraries(as PRIVATE bfd opcodes libiberty zlib)
+target_link_libraries(as PRIVATE bfd opcodes libiberty zlib zstd)
 
 install(TARGETS as DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     ARCHIVE EXCLUDE_FROM_ALL
@@ -684,6 +760,11 @@ target_compile_definitions(ld PRIVATE
     "BINDIR=\"/bin\""
     "TOOLBINDIR=\"/usr/x86_64-pc-moxnox/bin\""
     "TARGET=\"x86_64-pc-moxnox\""
+    PACKAGE_NAME=ld
+    "PACKAGE_STRING=\"ld ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=ld
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
 )
 target_include_directories(ld PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -693,7 +774,7 @@ target_include_directories(ld PRIVATE
     ${REPO}/bfd
     ${REPO}/include
 )
-target_link_libraries(ld PRIVATE bfd opcodes libiberty zlib)
+target_link_libraries(ld PRIVATE bfd opcodes libiberty zlib zstd)
 
 install(TARGETS ld DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     ARCHIVE EXCLUDE_FROM_ALL
@@ -723,11 +804,18 @@ add_executable(dlltool
     ${BULIBS}
 )
 add_binutils_exe(dlltool)
+
 target_compile_definitions(dlltool PRIVATE
     HAVE_CONFIG_H
     DLLTOOL_MX86_64
     DLLTOOL_DEFAULT_MX86_64
+    PACKAGE_NAME=binutils
+    "PACKAGE_STRING=\"binutils ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=binutils
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
 )
+
 target_include_directories(dlltool PRIVATE
     ${DLLTOOL_GEN_DIR}
 )
@@ -755,7 +843,11 @@ add_executable(windres
     ${REPO}/binutils/resres.c
     ${BULIBS}
 )
+
 add_binutils_exe(windres)
+
+target_link_libraries(windres PRIVATE libiconv)
+
 target_include_directories(windres PRIVATE
     ${WINDRES_GEN_DIR}
 )
@@ -779,7 +871,11 @@ add_executable(windmc
     ${REPO}/binutils/winduni.c
     ${BULIBS}
 )
+
 add_binutils_exe(windmc)
+
+target_link_libraries(windmc PRIVATE libiconv)
+
 target_include_directories(windmc PRIVATE
     ${WINDMC_GEN_DIR}
 )
@@ -794,11 +890,18 @@ target_compile_options(dllwrap PRIVATE ${GENERAL_CFLAGS}
     -std=gnu11
     -include ${CMAKE_CURRENT_SOURCE_DIR}/binutils-shim.h
 )
+
 target_compile_definitions(dllwrap PRIVATE
     _CRTIMP=
     HAVE_CONFIG_H
-    "TARGET=\"x86_64-w64-mingw32\"" # FIXME - change to x86_64-pc-moxnox (will need to patch as well)
+    "TARGET=\"x86_64-pc-moxnox\""
+    PACKAGE_NAME=binutils
+    "PACKAGE_STRING=\"binutils ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=binutils
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
 )
+
 target_include_directories(dllwrap PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${BFD_GEN_DIR}
@@ -815,7 +918,16 @@ add_executable(cxxfilt
     ${BULIBS}
 )
 add_binutils_exe(cxxfilt)
-target_compile_definitions(cxxfilt PRIVATE HAVE_CONFIG_H TARGET_PREPENDS_UNDERSCORE=0)
+
+target_compile_definitions(cxxfilt PRIVATE
+    HAVE_CONFIG_H
+    TARGET_PREPENDS_UNDERSCORE=0
+    PACKAGE_NAME=binutils
+    "PACKAGE_STRING=\"binutils ${PROJECT_VERSION}\""
+    PACKAGE_TARNAME=binutils
+    "PACKAGE_VERSION=\"${PROJECT_VERSION}\""
+    "VERSION=\"${PROJECT_VERSION}\""
+)
 
 add_custom_target(binutils)
 add_dependencies(binutils

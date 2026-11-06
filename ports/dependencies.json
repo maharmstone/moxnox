@@ -2,7 +2,7 @@
     "autoconf": [],
     "automake": [],
     "bash": ["libiconv", "readline"],
-    "binutils": ["zlib"],
+    "binutils": ["libiconv", "zlib", "zstd"],
     "bison": ["gnulib", "libiconv"],
     "bzip2": [],
     "cairo": ["freetype", "libpng", "pixman", "zlib"],
