@@ -286,3 +286,4 @@ getnetbyaddr
 setlogmask
 crypt
 ctermid
+timer_create

@@ -80,6 +80,7 @@ add_library(mnposix SHARED
     src/locale.cpp
     src/hostid.cpp
     src/crypt.cpp
+    src/timer.cpp
 )
 
 target_compile_options(mnposix PRIVATE -fno-exceptions -fno-builtin ${USERSPACE_CFLAGS})
