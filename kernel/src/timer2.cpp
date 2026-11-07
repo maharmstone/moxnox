@@ -646,3 +646,20 @@ nt_status timer::query(TIMER_INFORMATION_CLASS info_class, span<uint8_t> buffer,
             return nt_status::INVALID_INFO_CLASS;
     }
 }
+
+extern "C"
+void trace_NtSetSystemTime(uintptr_t* args) {
+    auto& system_time = *(LARGE_INTEGER*)args[0];
+
+    print("NtSetSystemTime: system_time = {}\n", system_time.QuadPart);
+}
+
+extern "C"
+nt_status NtSetSystemTime(const LARGE_INTEGER* system_time,
+                          LARGE_INTEGER* /*previous_time*/) {
+    TRACE1("NtSetSystemTime", system_time);
+
+    // FIXME
+
+    return nt_status::NOT_IMPLEMENTED;
+}

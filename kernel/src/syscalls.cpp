@@ -2024,6 +2024,27 @@ nt_status user_NtQueryTimer(HANDLE handle, TIMER_INFORMATION_CLASS info_class,
 }
 
 extern "C"
+nt_status user_NtSetSystemTime(const LARGE_INTEGER* us_system_time,
+                               LARGE_INTEGER* us_previous_time) {
+    LARGE_INTEGER system_time, previous_time;
+
+    if (!us_system_time)
+        return nt_status::INVALID_PARAMETER;
+
+    if (!copy_from_process(&system_time, us_system_time, sizeof(LARGE_INTEGER)))
+        return nt_status::ACCESS_VIOLATION;
+
+    auto ret = NtSetSystemTime(&system_time, us_previous_time ? &previous_time : nullptr);
+
+    if (success(ret) && us_previous_time) {
+        if (!copy_to_process(us_previous_time, &previous_time, sizeof(LARGE_INTEGER)))
+            return nt_status::ACCESS_VIOLATION;
+    }
+
+    return ret;
+}
+
+extern "C"
 uint64_t maybe_yield_after_syscall(uint64_t syscall_ret) {
     // interrupts are disabled and sync_lock held
 

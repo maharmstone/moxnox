@@ -177,7 +177,7 @@ syscall_stub "NtSetSecurityObject"
 syscall_stub "NtSetSystemEnvironmentValue"
 syscall_stub "NtSetSystemInformation"
 syscall_stub "NtSetSystemPowerState"
-syscall_stub "NtSetSystemTime"
+syscall_func "NtSetSystemTime", 2
 syscall_func "NtSetTimer", 7
 syscall_stub "NtSetTimerResolution"
 syscall_stub "NtSetValueKey"

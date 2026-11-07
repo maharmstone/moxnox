@@ -1864,6 +1864,8 @@ NTSTATUS NtYieldExecution();
 NTSTATUS NtQueryTimer(HANDLE timer_handle, TIMER_INFORMATION_CLASS info_class,
                       void* buffer, uint32_t buffer_length,
                       uint32_t* return_length);
+NTSTATUS NtSetSystemTime(const LARGE_INTEGER* system_time,
+                         LARGE_INTEGER* previous_time);
 
 };
 
