@@ -19,10 +19,6 @@ function(curl_patch var old new)
 endfunction()
 
 curl_read(_curl_h repo/include/curl/curl.h)
-curl_patch(_curl_h [=[    defined(__sun__) || defined(__serenity__) || defined(__vxworks__)
-#include <sys/select.h>]=] [=[    defined(__sun__) || defined(__serenity__) || defined(__vxworks__) || \
-    defined(__moxnox__)
-#include <sys/select.h>]=])
 curl_patch(_curl_h [=[#elif defined(_WIN32) || \
      (CURL_HAS_DECLSPEC_ATTRIBUTE(dllexport) && \]=] [=[#elif defined(_WIN32) || defined(__moxnox__) || \
      (CURL_HAS_DECLSPEC_ATTRIBUTE(dllexport) && \]=])
