@@ -83,12 +83,12 @@
 #define HAVE_SETTABLE_ERRNO 1
 #define HAVE_UPPER_LOWER    1
 #define HAVE_TTYNAME        1
-#define HAVE_FCHMOD         0
-#define HAVE_FSYNC          0
+#define HAVE_FCHMOD         1
+#define HAVE_FSYNC          1
 #define HAVE_USLEEP         0
 #define HAVE_POLL           1
 #define HAVE_LOCALE         0
-#define HAVE_STRSIGNAL      0
+#define HAVE_STRSIGNAL      1
 #define HAVE_SYS_ERRLIST    0
 
 /* Terminal */
