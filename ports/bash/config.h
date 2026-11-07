@@ -1336,7 +1336,7 @@
 /* #undef HAVE_SNPRINTF_TRUNCATION_C99 */
 
 /* Define if you have the `stpcpy' function. */
-/* #undef HAVE_STPCPY */
+#define HAVE_STPCPY 1
 
 /* Define if you have the `strcspn' function. */
 #define HAVE_STRCSPN 1

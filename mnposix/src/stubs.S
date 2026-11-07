@@ -9,5 +9,6 @@ do_stub "posix_spawnattr_setschedparam"
 do_stub "pthread_cancel"
 do_stub "pthread_atfork"
 do_stub "strlcat"
+do_stub "stpcpy"
 
 stubs_end

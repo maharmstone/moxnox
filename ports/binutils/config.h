@@ -70,7 +70,7 @@
 
 /* Define to 1 if you have the declaration of `stpcpy', and to 0 if you don't.
    */
-#define HAVE_DECL_STPCPY 0
+#define HAVE_DECL_STPCPY 1
 
 /* Define to 1 if you have the declaration of `strnlen', and to 0 if you
    don't. */
@@ -1014,7 +1014,7 @@
 #define HAVE_STDIO_EXT_H 1
 
 /* Define to 1 if you have the `stpcpy' function. */
-/* #undef HAVE_STPCPY */
+#define HAVE_STPCPY 1
 
 /* Define to 1 if you have the `stpncpy' function. */
 /* #undef HAVE_STPNCPY */

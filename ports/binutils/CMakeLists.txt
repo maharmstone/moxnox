@@ -100,7 +100,6 @@ add_library(libiberty STATIC
     ${REPO}/libiberty/random.c
     ${REPO}/libiberty/rindex.c
     ${REPO}/libiberty/sigsetmask.c
-    ${REPO}/libiberty/stpcpy.c
     ${REPO}/libiberty/stpncpy.c
     ${REPO}/libiberty/strndup.c
     ${REPO}/libiberty/strverscmp.c

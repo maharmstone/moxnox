@@ -159,7 +159,6 @@ add_library(findutils_gnulib STATIC
     repo/gnulib/lib/snprintf.c
     repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stat.c
-    repo/gnulib/lib/stpcpy.c
     repo/gnulib/lib/strerror-override.c
     repo/gnulib/lib/strerror_r.c
     repo/gnulib/lib/stripslash.c

@@ -223,7 +223,6 @@ add_executable(bison
     repo/gnulib/lib/spawni.c
     repo/gnulib/lib/spawnp.c
     repo/gnulib/lib/sprintf.c
-    repo/gnulib/lib/stpcpy.c
     repo/gnulib/lib/stpncpy.c
     repo/gnulib/lib/strchrnul.c
     repo/gnulib/lib/strerror_r.c

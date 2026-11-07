@@ -885,7 +885,7 @@
 #define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the `stpcpy' function. */
-/* #undef HAVE_STPCPY */
+#define HAVE_STPCPY 1
 
 /* Define if you have 'strerror_r'. */
 #define HAVE_STRERROR_R 1

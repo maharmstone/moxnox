@@ -164,7 +164,6 @@ add_executable(m4
     repo/gnulib/lib/spawni.c
     repo/gnulib/lib/spawnp.c
     repo/gnulib/lib/stat-time.c
-    repo/gnulib/lib/stpcpy.c
     repo/gnulib/lib/strchrnul.c
     repo/gnulib/lib/striconv.c
     repo/gnulib/lib/string.c

@@ -104,7 +104,6 @@ add_executable(grep
     repo/gnulib/lib/save-cwd.c
     repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stat.c
-    repo/gnulib/lib/stpcpy.c
     repo/gnulib/lib/stripslash.c
     repo/gnulib/lib/strnlen1.c
     repo/gnulib/lib/strstr.c

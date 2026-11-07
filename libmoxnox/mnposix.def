@@ -299,3 +299,4 @@ posix_spawnattr_setschedparam
 pthread_cancel
 pthread_atfork
 strlcat
+stpcpy

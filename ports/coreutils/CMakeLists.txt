@@ -445,7 +445,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/stdc_leading_zeros.c
     repo/gnulib/lib/stdc_memreverse8u.c
     repo/gnulib/lib/stdc_trailing_zeros.c
-    repo/gnulib/lib/stpcpy.c
     repo/gnulib/lib/str_endswith.c
     repo/gnulib/lib/strchrnul.c
     repo/gnulib/lib/streq.c

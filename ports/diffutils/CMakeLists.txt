@@ -105,7 +105,6 @@ add_library(diffutils_gnulib STATIC
     repo/gnulib/lib/stdc_bit_width.c
     repo/gnulib/lib/stdc_leading_zeros.c
     repo/gnulib/lib/stdopen.c
-    repo/gnulib/lib/stpcpy.c
     repo/gnulib/lib/stripslash.c
     repo/gnulib/lib/strnlen1.c
     repo/gnulib/lib/system-quote.c

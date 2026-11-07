@@ -81,7 +81,6 @@ add_executable(patch
     repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stat.c
     repo/gnulib/lib/stdopen.c
-    repo/gnulib/lib/stpcpy.c
     repo/gnulib/lib/strerror-override.c
     repo/gnulib/lib/strerror.c
     repo/gnulib/lib/stripslash.c
