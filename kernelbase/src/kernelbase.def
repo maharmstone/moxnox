@@ -4,7 +4,6 @@ __C_specific_handler = ntdll.__C_specific_handler
 TlsAlloc
 TlsFree
 TlsSetValue
-RaiseException
 GetLastError
 TlsGetValue
 CreateThread

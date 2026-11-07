@@ -5,6 +5,5 @@ TlsGetValue
 TlsAlloc
 TlsFree
 TlsSetValue
-RaiseException
 CreateThread
 CreateProcessW
