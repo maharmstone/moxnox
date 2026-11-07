@@ -1,14 +1,5 @@
 --- a/m4/libtool.m4
 +++ b/m4/libtool.m4
-@@ -1975,7 +1975,7 @@
-     lt_cv_dlopen_self=yes
-     ;;
- 
--  mingw* | windows* | pw32* | cegcc*)
-+  mingw* | windows* | pw32* | cegcc* | moxnox*)
-     lt_cv_dlopen=LoadLibrary
-     lt_cv_dlopen_libs=
-     ;;
 @@ -2570,7 +2570,7 @@
    # libtool to hard-code these into programs
    ;;
