@@ -27,11 +27,10 @@ file(CONFIGURE OUTPUT "${GEN}/vim.h" CONTENT "${_src}")
 
 add_custom_command(
     OUTPUT ${GEN}/os_unix.c
-    COMMAND sh -c "cp '${CMAKE_CURRENT_SOURCE_DIR}/repo/src/os_unix.c' '${GEN}/os_unix.c' && patch -p0 -d '${GEN}' < '${CMAKE_CURRENT_SOURCE_DIR}/tcgetwinsize.patch' && patch -p0 -d '${GEN}' < '${CMAKE_CURRENT_SOURCE_DIR}/waitpid.patch'"
+    COMMAND sh -c "cp '${CMAKE_CURRENT_SOURCE_DIR}/repo/src/os_unix.c' '${GEN}/os_unix.c' && patch -p0 -d '${GEN}' < '${CMAKE_CURRENT_SOURCE_DIR}/tcgetwinsize.patch'"
     DEPENDS
         repo/src/os_unix.c
         ${CMAKE_CURRENT_SOURCE_DIR}/tcgetwinsize.patch
-        ${CMAKE_CURRENT_SOURCE_DIR}/waitpid.patch
     VERBATIM
 )
 
