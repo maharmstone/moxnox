@@ -61,7 +61,6 @@ target_link_libraries(freetype_module PUBLIC freetype)
 
 target_compile_definitions(freetype PRIVATE -DFT2_BUILD_LIBRARY -DFT_CONFIG_OPTION_DISABLE_STREAM_SUPPORT -DFT_CONFIG_OPTION_USE_PNG -DFT_CONFIG_OPTION_ERROR_STRINGS)
 target_compile_definitions(freetype PRIVATE -DFT_CONFIG_MODULES_H=\"${CMAKE_CURRENT_SOURCE_DIR}/ftmodule.h\")
-target_compile_definitions(freetype PRIVATE -DFT_CONFIG_STANDARD_LIBRARY_H=\"${CMAKE_CURRENT_SOURCE_DIR}/ftstdlib.h\")
 target_compile_options(freetype PRIVATE -mno-stack-arg-probe ${USERSPACE_CFLAGS} -fvisibility=default $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions -fno-rtti>)
 target_compile_options(freetype PRIVATE -Wno-unused-function -Wno-conversion -Wno-unused-variable -Wno-unused-but-set-variable -Wno-attributes)
 target_include_directories(freetype PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -75,9 +74,8 @@ install(DIRECTORY repo/include/freetype/ DESTINATION ${CMAKE_INSTALL_PREFIX}/inc
     PATTERN "internal" EXCLUDE
     PATTERN "ftmodule.h" EXCLUDE
     PATTERN "ftoption.h" EXCLUDE
-    PATTERN "ftstdlib.h" EXCLUDE
 )
-install(FILES ftmodule.h ftoption.h ftstdlib.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/freetype2/freetype/config)
+install(FILES ftmodule.h ftoption.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/freetype2/freetype/config)
 
 file(STRINGS repo/builds/unix/configure.raw FREETYPE_VERSION_INFO_LINE REGEX "^version_info=")
 string(REGEX REPLACE "^version_info='([0-9]+):([0-9]+):([0-9]+)'.*" "\\1.\\2.\\3" FREETYPE_PC_VERSION "${FREETYPE_VERSION_INFO_LINE}")
