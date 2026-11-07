@@ -19,10 +19,6 @@ add_custom_command(
     VERBATIM
 )
 
-python_patch(Python/pytime.c
-    -e [[s|#ifdef MS_WINDOWS\n// Convert PyTime_t to long.\n// Return 0 on success. Return -1 and clamp the value on overflow.|#if defined(MS_WINDOWS) \|\| defined(MOXNOX)\n// Convert PyTime_t to long.\n// Return 0 on success. Return -1 and clamp the value on overflow.|g]]
-)
-
 python_patch(Modules/faulthandler.c
     -e [[s|static const size_t faulthandler_nsignals = \\\n    Py_ARRAY_LENGTH(faulthandler_handlers)\;|static const size_t faulthandler_nsignals =\n    sizeof(faulthandler_handlers) / sizeof(faulthandler_handlers[0])\;|g]]
 )
@@ -270,7 +266,7 @@ set(PYTHON_CORE_SOURCES
     repo/Python/Python-ast.c
     repo/Python/pythonrun.c
     repo/Python/Python-tokenize.c
-    ${GEN}/Python/pytime.c
+    repo/Python/pytime.c
     repo/Python/qsbr.c
     repo/Python/specialize.c
     repo/Python/structmember.c
