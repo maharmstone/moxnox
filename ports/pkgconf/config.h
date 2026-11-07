@@ -23,7 +23,7 @@
 
 /* Define to 1 if you have the declaration of 'reallocarray', and to 0 if you
    don't. */
-#define HAVE_DECL_REALLOCARRAY 0
+#define HAVE_DECL_REALLOCARRAY 1
 
 /* Define to 1 if you have the declaration of 'strndup', and to 0 if you
    don't. */

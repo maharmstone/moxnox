@@ -173,7 +173,6 @@ add_executable(wget
     repo/gnulib/lib/quotearg.c
     repo/gnulib/lib/rawmemchr.c
     repo/gnulib/lib/readlink.c
-    repo/gnulib/lib/reallocarray.c
     repo/gnulib/lib/regex.c
     repo/gnulib/lib/rename.c
     repo/gnulib/lib/rmdir.c

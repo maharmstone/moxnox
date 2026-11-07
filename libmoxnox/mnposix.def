@@ -301,3 +301,4 @@ pthread_atfork
 strlcat
 stpcpy
 stpncpy
+reallocarray

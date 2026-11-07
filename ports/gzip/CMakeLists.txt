@@ -65,7 +65,6 @@ add_executable(gzip
     repo/gnulib/lib/printf.c
     repo/gnulib/lib/qsort.c
     repo/gnulib/lib/realloc.c
-    repo/gnulib/lib/reallocarray.c
     repo/gnulib/lib/savedir.c
     repo/gnulib/lib/stat-time.c
     repo/gnulib/lib/stat.c

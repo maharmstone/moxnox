@@ -812,7 +812,7 @@
 #define HAVE_READDIR 1
 
 /* Define to 1 if you have the `reallocarray' function. */
-/* #undef HAVE_REALLOCARRAY */
+#define HAVE_REALLOCARRAY 1
 
 /* Define to 1 if realloc (..., 0) returns nonnull. */
 /* #undef HAVE_REALLOC_0_NONNULL */

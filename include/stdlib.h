@@ -148,6 +148,7 @@ int mkostemp(char* tmpl, int flag);
 int grantpt(int fd);
 int posix_openpt(int oflag);
 int unlockpt(int fd);
+void* reallocarray(void* ptr, size_t nelem, size_t elsize);
 
 #ifdef __cplusplus
 }

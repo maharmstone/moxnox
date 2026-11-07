@@ -91,7 +91,6 @@ add_library(diffutils_gnulib STATIC
     repo/gnulib/lib/rawmemchr.c
     repo/gnulib/lib/readlinkat.c
     repo/gnulib/lib/realloc.c
-    repo/gnulib/lib/reallocarray.c
     repo/gnulib/lib/regex.c
     repo/gnulib/lib/save-cwd.c
     repo/gnulib/lib/setenv.c

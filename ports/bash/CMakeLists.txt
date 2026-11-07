@@ -282,7 +282,6 @@ add_executable(bash
     repo/lib/sh/pathcanon.c
     repo/lib/sh/pathphys.c
     repo/lib/sh/random.c
-    repo/lib/sh/reallocarray.c
     repo/lib/sh/setlinebuf.c
     repo/lib/sh/shmatch.c
     repo/lib/sh/shmbchar.c

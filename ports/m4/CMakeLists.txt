@@ -139,7 +139,6 @@ add_executable(m4
     repo/gnulib/lib/rawmemchr.c
     repo/gnulib/lib/readlink.c
     repo/gnulib/lib/realloc.c
-    repo/gnulib/lib/reallocarray.c
     repo/gnulib/lib/regex.c
     repo/gnulib/lib/rename.c
     repo/gnulib/lib/rmdir.c

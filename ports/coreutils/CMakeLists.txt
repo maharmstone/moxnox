@@ -394,7 +394,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/readtokens.c
     repo/gnulib/lib/readtokens0.c
     repo/gnulib/lib/realloc.c
-    repo/gnulib/lib/reallocarray.c
     repo/gnulib/lib/regex.c
     repo/gnulib/lib/renameat.c
     repo/gnulib/lib/rmdir.c

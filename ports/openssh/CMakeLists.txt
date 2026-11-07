@@ -110,7 +110,6 @@ add_library(openssh_core STATIC
     repo/openbsd-compat/openssl-compat.c
     repo/openbsd-compat/pwcache.c
     ${GEN}/openbsd-compat/readpassphrase.c
-    repo/openbsd-compat/reallocarray.c
     repo/openbsd-compat/recallocarray.c
     ${GEN}/openbsd-compat/setproctitle.c
     repo/openbsd-compat/strcasestr.c

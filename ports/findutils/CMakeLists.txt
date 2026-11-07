@@ -146,7 +146,6 @@ add_library(findutils_gnulib STATIC
     repo/gnulib/lib/progname.c
     repo/gnulib/lib/quotearg.c
     repo/gnulib/lib/readlinkat.c
-    repo/gnulib/lib/reallocarray.c
     repo/gnulib/lib/regex.c
     repo/gnulib/lib/safe-read.c
     repo/gnulib/lib/save-cwd.c

@@ -162,7 +162,6 @@ add_executable(tar
     repo/gnulib/lib/rawmemchr.c
     repo/gnulib/lib/readlinkat.c
     repo/gnulib/lib/readlink.c
-    repo/gnulib/lib/reallocarray.c
     repo/gnulib/lib/regex.c
     repo/gnulib/lib/renameat.c
     repo/gnulib/lib/renameatu.c

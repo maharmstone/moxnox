@@ -203,7 +203,6 @@ add_executable(bison
     repo/gnulib/lib/quotearg.c
     repo/gnulib/lib/rawmemchr.c
     repo/gnulib/lib/readlink.c
-    repo/gnulib/lib/reallocarray.c
     repo/gnulib/lib/rename.c
     repo/gnulib/lib/rmdir.c
     repo/gnulib/lib/sig-handler.c

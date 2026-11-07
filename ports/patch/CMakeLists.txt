@@ -71,7 +71,6 @@ add_executable(patch
     repo/gnulib/lib/readlink.c
     repo/gnulib/lib/readlinkat.c
     repo/gnulib/lib/realloc.c
-    repo/gnulib/lib/reallocarray.c
     repo/gnulib/lib/renameat.c
     repo/gnulib/lib/renameatu.c
     repo/gnulib/lib/save-cwd.c
