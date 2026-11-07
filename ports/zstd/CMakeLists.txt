@@ -69,7 +69,7 @@ target_compile_options(zstdcli PRIVATE ${USERSPACE_CFLAGS} -include ${CMAKE_CURR
 target_compile_options(zstdcli PRIVATE -Wno-sign-conversion)
 
 target_include_directories(zstdcli PRIVATE ${ZSTD_PROG})
-target_compile_definitions(zstdcli PRIVATE -DZSTD_NOBENCH -DZSTD_NODICT -DZSTD_NOTRACE -DZSTD_LEGACY_SUPPORT=0 -D_CRTIMP=)
+target_compile_definitions(zstdcli PRIVATE -DZSTD_NOBENCH -DZSTD_NODICT -DZSTD_NOTRACE -DZSTD_LEGACY_SUPPORT=0)
 
 target_link_libraries(zstdcli PRIVATE zstd)
 target_link_libraries(zstdcli PRIVATE moxnox) # FIXME
