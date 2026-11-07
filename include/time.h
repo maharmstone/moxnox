@@ -53,6 +53,8 @@ typedef int clockid_t;
 
 #define TIME_UTC 1
 
+#define TIMER_ABSTIME 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif

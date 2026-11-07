@@ -288,6 +288,7 @@ crypt
 ctermid
 timer_create
 timer_delete
+timer_settime
 
 ; stubs
 mlock
@@ -296,4 +297,3 @@ posix_spawnattr_setschedpolicy
 posix_spawnattr_setschedparam
 pthread_cancel
 pthread_atfork
-timer_settime
