@@ -137,6 +137,7 @@ char* crypt(const char* key, const char* salt);
 int seteuid(uid_t uid);
 int setegid(gid_t gid);
 int getopt(int argc, char* const argv[], const char* optstring);
+int pipe2(int fildes[2], int flag);
 
 #ifdef __cplusplus
 }

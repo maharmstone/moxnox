@@ -3169,7 +3169,7 @@
  *	This symbol, if defined, indicates that the pipe2 routine is
  *	available to create an inter-process channel.
  */
-/*#define HAS_PIPE2		/ **/
+#define HAS_PIPE2		/**/
 
 /* HAS_PRCTL:
  *	This symbol, if defined, indicates that the prctl routine is

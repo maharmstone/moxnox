@@ -2577,7 +2577,7 @@
 #define HAVE_PIPE 1
 
 /* Define to 1 if you have the `pipe2' function. */
-/* #undef HAVE_PIPE2 */
+#define HAVE_PIPE2 1
 
 /* Define to 1 if you have the 'posix_fadvise' function. */
 #define HAVE_POSIX_FADVISE 1

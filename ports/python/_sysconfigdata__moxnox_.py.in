@@ -378,7 +378,7 @@ build_time_vars = {
     'HAVE_PATHCONF': 1,
     'HAVE_PAUSE': 1,
     'HAVE_PIPE': 1,
-    'HAVE_PIPE2': 0,
+    'HAVE_PIPE2': 1,
     'HAVE_PLOCK': 0,
     'HAVE_POLL': 1,
     'HAVE_POLL_H': 1,

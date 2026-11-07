@@ -368,7 +368,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/physmem.c
     repo/gnulib/lib/pipe-safer.c
     repo/gnulib/lib/pipe2-safer.c
-    repo/gnulib/lib/pipe2.c
     repo/gnulib/lib/posix_memalign.c
     repo/gnulib/lib/posixtm.c
     repo/gnulib/lib/posixver.c

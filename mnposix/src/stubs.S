@@ -13,5 +13,6 @@ do_stub "stpcpy"
 do_stub "stpncpy"
 do_stub "reallocarray"
 do_stub "getdelim"
+do_stub "pipe2"
 
 stubs_end

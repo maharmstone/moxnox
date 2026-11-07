@@ -128,7 +128,6 @@ add_executable(m4
     repo/gnulib/lib/openat-proc.c
     repo/gnulib/lib/openat.c
     repo/gnulib/lib/pipe2-safer.c
-    repo/gnulib/lib/pipe2.c
     repo/gnulib/lib/printf-args.c
     repo/gnulib/lib/printf-frexp.c
     repo/gnulib/lib/printf-frexpl.c

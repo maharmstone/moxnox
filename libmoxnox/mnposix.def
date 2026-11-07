@@ -303,3 +303,4 @@ stpcpy
 stpncpy
 reallocarray
 getdelim
+pipe2

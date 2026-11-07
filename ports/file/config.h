@@ -151,7 +151,7 @@
 /* #undef HAVE_NEWLOCALE */
 
 /* Define to 1 if you have the 'pipe2' function. */
-/* #undef HAVE_PIPE2 */
+#define HAVE_PIPE2 1
 
 /* Define to 1 if you have the 'posix_spawnp' function. */
 #define HAVE_POSIX_SPAWNP 1
