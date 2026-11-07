@@ -3,11 +3,6 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-/*
- * Pull in the (GEN-patched) git-compat-util.h first so its include guard
- * suppresses the unpatched repo copy that every source quote-includes. This
- * transitively brings in the patched compat/posix.h too.
- */
 #include "git-compat-util.h"
 
 #include <pwd.h>
@@ -20,8 +15,6 @@
 #include <sys/select.h>
 
 #define ITIMER_REAL  0
-
-int getpagesize(void);
 
 /*
  * git's POSIX locate_in_PATH (run-command.c) searches for the bare command
