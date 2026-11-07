@@ -410,7 +410,6 @@ add_library(libmagic SHARED
     repo/src/dprintf.c
     repo/src/fmtcheck.c
     repo/src/strcasestr.c
-    repo/src/strlcat.c
     repo/src/strlcpy.c
     repo/src/buffer.c
     repo/src/magic.c

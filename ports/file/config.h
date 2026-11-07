@@ -184,7 +184,7 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the 'strlcat' function. */
-/* #undef HAVE_STRLCAT */
+#define HAVE_STRLCAT 1
 
 /* Define to 1 if you have the 'strlcpy' function. */
 #define HAVE_STRLCPY 1

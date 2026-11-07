@@ -906,7 +906,7 @@
 #define HAVE_STRFTIME 1
 
 /* Define if you have the strlcat function. */
-/* #undef HAVE_STRLCAT */
+#define HAVE_STRLCAT 1
 
 /* Define if you have the strnlen function. */
 #define HAVE_STRNLEN 1

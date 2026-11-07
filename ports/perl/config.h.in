@@ -3423,7 +3423,7 @@
  *	This symbol, if defined, indicates that the strlcat () routine is
  *	available to do string concatenation.
  */
-/*#define HAS_STRLCAT		/ **/
+#define HAS_STRLCAT		/**/
 
 /* HAS_STRLCPY:
  *	This symbol, if defined, indicates that the strlcpy () routine is
