@@ -2282,3 +2282,64 @@ index f6b86307798c..3088e9eaa230 100644
    // FIXME: Add TCP support for Windows.
    return make_error<StringError>("-" + OutOfProcessExecutorConnect.ArgStr +
                                       " not supported on non-unix platforms",
+diff --git a/libunwind/src/Unwind-seh.cpp b/libunwind/src/Unwind-seh.cpp
+index 0b1930b44d1c..cf377d79ed6b 100644
+--- a/libunwind/src/Unwind-seh.cpp
++++ b/libunwind/src/Unwind-seh.cpp
+@@ -28,6 +28,10 @@
+ #include "libunwind_ext.h"
+ #include "UnwindCursor.hpp"
+ 
++#ifdef __moxnox__
++#include "moxnox.h"
++#endif
++
+ using namespace libunwind;
+ 
+ #define STATUS_USER_DEFINED (1u << 29)
+@@ -391,6 +395,10 @@ unwind_phase2_forced(unw_context_t *uc,
+ /// Called by \c __cxa_throw().  Only returns if there is a fatal error.
+ _LIBUNWIND_EXPORT _Unwind_Reason_Code
+ _Unwind_RaiseException(_Unwind_Exception *exception_object) {
++#ifdef __moxnox__
++  EXCEPTION_RECORD rec;
++#endif
++
+   _LIBUNWIND_TRACE_API("_Unwind_RaiseException(ex_obj=%p)",
+                        (void *)exception_object);
+ 
+@@ -400,7 +408,18 @@ _Unwind_RaiseException(_Unwind_Exception *exception_object) {
+ 
+   // phase 1: the search phase
+   // We'll let the system do that for us.
++#ifdef __moxnox__
++  rec.ExceptionCode = STATUS_GCC_THROW;
++  rec.ExceptionFlags = 0;
++  rec.ExceptionRecord = NULL;
++  rec.ExceptionAddress = (void*)_Unwind_RaiseException;
++  rec.NumberParameters = 1;
++  rec.ExceptionInformation[0] = (ULONG_PTR)exception_object;
++
++  RtlRaiseException(&rec);
++#else
+   RaiseException(STATUS_GCC_THROW, 0, 1, (ULONG_PTR *)&exception_object);
++#endif
+ 
+   // If we get here, either something went horribly wrong or we reached the
+   // top of the stack. Either way, let libc++abi call std::terminate().
+diff --git a/libunwind/src/moxnox.h b/libunwind/src/moxnox.h
+new file mode 100644
+index 000000000000..9ec8b06ca24d
+--- /dev/null
++++ b/libunwind/src/moxnox.h
+@@ -0,0 +1,7 @@
++#pragma once
++
++extern "C" {
++
++void RtlRaiseException(EXCEPTION_RECORD* exception_record);
++
++}
+-- 
+2.55.0
+
