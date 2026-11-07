@@ -107,6 +107,7 @@ int getc_unlocked(FILE* f);
 int asprintf(char** ptr, const char* format, ...);
 int vasprintf(char** ptr, const char* format, va_list ap);
 FILE* open_memstream(char** bufp, size_t* sizep);
+ssize_t getdelim(char** lineptr, size_t* n, int delimiter, FILE* stream);
 
 int __mingw_vfprintf(FILE* stream, const char* format, va_list argptr);
 int __mingw_vfwprintf(FILE* stream, const wchar_t* format, va_list argptr);

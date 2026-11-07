@@ -12,5 +12,6 @@ do_stub "strlcat"
 do_stub "stpcpy"
 do_stub "stpncpy"
 do_stub "reallocarray"
+do_stub "getdelim"
 
 stubs_end

@@ -271,7 +271,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/futimens.c
     repo/gnulib/lib/get-permissions.c
     repo/gnulib/lib/getcwd.c
-    repo/gnulib/lib/getdelim.c
     repo/gnulib/lib/getdtablesize.c
     repo/gnulib/lib/getgroups.c
     repo/gnulib/lib/gethrxtime.c

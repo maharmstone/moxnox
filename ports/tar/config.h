@@ -1000,7 +1000,7 @@
 
 /* Define to 1 if you have the declaration of 'getdelim', and to 0 if you
    don't. */
-#define HAVE_DECL_GETDELIM 0
+#define HAVE_DECL_GETDELIM 1
 
 /* Define to 1 if you have the declaration of 'getdtablesize', and to 0 if you
    don't. */
@@ -1258,7 +1258,7 @@
 /* #undef HAVE_GETCWD_SHORTER */
 
 /* Define to 1 if you have the `getdelim' function. */
-/* #undef HAVE_GETDELIM */
+#define HAVE_GETDELIM 1
 
 /* Define to 1 if you have the 'getdtablesize' function. */
 /* #undef HAVE_GETDTABLESIZE */

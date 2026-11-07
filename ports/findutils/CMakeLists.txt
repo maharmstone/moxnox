@@ -98,7 +98,6 @@ add_library(findutils_gnulib STATIC
     repo/gnulib/lib/fstatat.c
     ${GEN}/gl/lib/fts.c
     repo/gnulib/lib/getcwd.c
-    repo/gnulib/lib/getdelim.c
     repo/gnulib/lib/getdtablesize.c
     repo/gnulib/lib/getopt.c
     repo/gnulib/lib/getopt1.c

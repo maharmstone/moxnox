@@ -44,7 +44,6 @@ add_executable(sed
     repo/gnulib/lib/exitfail.c
     repo/gnulib/lib/free.c
     repo/gnulib/lib/get-permissions.c
-    repo/gnulib/lib/getdelim.c
     repo/gnulib/lib/hard-locale.c
     repo/gnulib/lib/ialloc.c
     repo/gnulib/lib/issymlink.c

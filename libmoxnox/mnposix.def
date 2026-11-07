@@ -302,3 +302,4 @@ strlcat
 stpcpy
 stpncpy
 reallocarray
+getdelim
