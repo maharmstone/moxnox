@@ -297,3 +297,4 @@ posix_spawnattr_setschedpolicy
 posix_spawnattr_setschedparam
 pthread_cancel
 pthread_atfork
+timer_gettime
