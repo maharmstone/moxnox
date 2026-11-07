@@ -289,3 +289,4 @@ ctermid
 timer_create
 timer_delete
 timer_settime
+timer_gettime

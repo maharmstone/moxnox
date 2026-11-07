@@ -250,3 +250,32 @@ int timer_settime(timer_t timerid, int flags, const itimerspec* value,
 
     return 0;
 }
+
+extern "C"
+int timer_gettime(timer_t timerid, itimerspec* value) {
+    auto& t = *(posix_timer*)timerid;
+    TIMER_BASIC_INFORMATION tbi;
+    nt_status status;
+
+    status = NtQueryTimer(t.h.get(), TIMER_INFORMATION_CLASS::BasicInformation,
+                          &tbi, sizeof(tbi), nullptr);
+    if (!success(status)) {
+        *_errno() = nt_status_to_errno(status);
+        return -1;
+    }
+
+    if (!tbi.TimerState) {
+        auto r = (uint64_t)tbi.RemainingTime.QuadPart;
+
+        value->it_value.tv_sec = r / 10000000;
+        value->it_value.tv_nsec = (long)((r % 10000000) * 100);
+    } else {
+        value->it_value.tv_sec = 0;
+        value->it_value.tv_nsec = 0;
+    }
+
+    value->it_interval.tv_sec = t.period / 1000;
+    value->it_interval.tv_nsec = (long)((t.period % 1000) * 1000000);
+
+    return 0;
+}
