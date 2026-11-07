@@ -1,11 +1,16 @@
 #include <time.h>
 #include <signal.h>
 #include <string.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 import nt;
 import ucrtbase;
-import errno;
 import unique_handle;
+
+#undef errno
+import errno;
 
 struct posix_timer {
     posix_timer(HANDLE h, clockid_t clock) : h(h), clock(clock) { }
@@ -85,12 +90,45 @@ static void timer_apc(void* context, uint32_t /*low_value*/,
             break;
 
         case SIGEV_SIGNAL:
-            // FIXME - raise signal
+            // FIXME - si_value
+            kill(getpid(), t.ev.sigev_signo);
             break;
 
-        case SIGEV_THREAD:
-            // FIXME - create thread
+        case SIGEV_THREAD: {
+            pthread_t h;
+
+            struct {
+                void (*func)(union sigval);
+                union sigval param;
+            } *ctx;
+
+            ctx = (decltype(ctx))malloc(sizeof(*ctx));
+            if (!ctx)
+                return;
+
+            ctx->func = t.ev.sigev_notify_function;
+            ctx->param = t.ev.sigev_value;
+
+            auto thread_start = [](void* v) -> void* {
+                auto& c = *(decltype(ctx))v;
+
+                c.func(c.param);
+
+                free(&c);
+
+                return nullptr;
+            };
+
+            if (pthread_create(&h, t.ev.sigev_notify_attributes, thread_start,
+                               ctx)) {
+                free(ctx);
+                return;
+            }
+
+            pthread_detach(h);
+
             break;
+        }
     }
 }
 
