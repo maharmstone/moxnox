@@ -3,22 +3,18 @@ set(REPO ${CMAKE_CURRENT_SOURCE_DIR}/repo)
 file(MAKE_DIRECTORY ${GEN}/src/unix)
 
 add_custom_command(
-    OUTPUT ${GEN}/src/threadpool.c
-        ${GEN}/src/unix/core.c
+    OUTPUT ${GEN}/src/unix/core.c
         ${GEN}/src/unix/fs.c
         ${GEN}/src/unix/process.c
-        ${GEN}/src/unix/signal.c
         ${GEN}/src/unix/tcp.c
         ${GEN}/src/unix/thread.c
         ${GEN}/src/unix/tty.c
         ${GEN}/src/unix/udp.c
-    COMMAND sh -c "cp '${REPO}/src/threadpool.c' '${GEN}/src/' && cp '${REPO}/src/unix/core.c' '${REPO}/src/unix/fs.c' '${REPO}/src/unix/process.c' '${REPO}/src/unix/signal.c' '${REPO}/src/unix/tcp.c' '${REPO}/src/unix/thread.c' '${REPO}/src/unix/tty.c' '${REPO}/src/unix/udp.c' '${GEN}/src/unix/' && patch -p1 -d '${GEN}' < '${CMAKE_CURRENT_SOURCE_DIR}/moxnox.patch'"
+    COMMAND sh -c "cp '${REPO}/src/unix/core.c' '${REPO}/src/unix/fs.c' '${REPO}/src/unix/process.c' '${REPO}/src/unix/tcp.c' '${REPO}/src/unix/thread.c' '${REPO}/src/unix/tty.c' '${REPO}/src/unix/udp.c' '${GEN}/src/unix/' && patch -p1 -d '${GEN}' < '${CMAKE_CURRENT_SOURCE_DIR}/moxnox.patch'"
     DEPENDS
-        ${REPO}/src/threadpool.c
         ${REPO}/src/unix/core.c
         ${REPO}/src/unix/fs.c
         ${REPO}/src/unix/process.c
-        ${REPO}/src/unix/signal.c
         ${REPO}/src/unix/tcp.c
         ${REPO}/src/unix/thread.c
         ${REPO}/src/unix/tty.c
@@ -28,11 +24,9 @@ add_custom_command(
 )
 
 add_custom_target(libuv_patched DEPENDS
-    ${GEN}/src/threadpool.c
     ${GEN}/src/unix/core.c
     ${GEN}/src/unix/fs.c
     ${GEN}/src/unix/process.c
-    ${GEN}/src/unix/signal.c
     ${GEN}/src/unix/tcp.c
     ${GEN}/src/unix/thread.c
     ${GEN}/src/unix/tty.c
@@ -58,11 +52,9 @@ function(libuv_swap_source target name_regex patched)
 endfunction()
 
 foreach(target uv uv_a)
-    libuv_swap_source(${target} "src/threadpool\\.c" ${GEN}/src/threadpool.c)
     libuv_swap_source(${target} "src/unix/core\\.c" ${GEN}/src/unix/core.c)
     libuv_swap_source(${target} "src/unix/fs\\.c" ${GEN}/src/unix/fs.c)
     libuv_swap_source(${target} "src/unix/process\\.c" ${GEN}/src/unix/process.c)
-    libuv_swap_source(${target} "src/unix/signal\\.c" ${GEN}/src/unix/signal.c)
     libuv_swap_source(${target} "src/unix/tcp\\.c" ${GEN}/src/unix/tcp.c)
     libuv_swap_source(${target} "src/unix/thread\\.c" ${GEN}/src/unix/thread.c)
     libuv_swap_source(${target} "src/unix/tty\\.c" ${GEN}/src/unix/tty.c)
