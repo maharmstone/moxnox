@@ -10,5 +10,6 @@ do_stub "pthread_cancel"
 do_stub "pthread_atfork"
 do_stub "strlcat"
 do_stub "stpcpy"
+do_stub "stpncpy"
 
 stubs_end

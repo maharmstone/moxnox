@@ -1017,7 +1017,7 @@
 #define HAVE_STPCPY 1
 
 /* Define to 1 if you have the `stpncpy' function. */
-/* #undef HAVE_STPNCPY */
+#define HAVE_STPNCPY 1
 
 /* Define to 1 if you have the `strcasecmp' function. */
 #define HAVE_STRCASECMP 1

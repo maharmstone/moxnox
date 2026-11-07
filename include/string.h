@@ -50,6 +50,7 @@ char* strtok_r(char* s, const char* sep, char** state);
 size_t strlcpy(char* dst, const char* src, size_t dstsize);
 size_t strlcat(char* dst, const char* src, size_t dstsize);
 char* stpcpy(char* s1, const char* s2);
+char* stpncpy(char* s1, const char* s2, size_t n);
 
 #ifdef __cplusplus
 }

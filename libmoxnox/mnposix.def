@@ -300,3 +300,4 @@ pthread_cancel
 pthread_atfork
 strlcat
 stpcpy
+stpncpy
