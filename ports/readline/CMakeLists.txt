@@ -4,22 +4,6 @@ set(RL_GEN "${CMAKE_CURRENT_BINARY_DIR}/gen")
 file(MAKE_DIRECTORY ${RL_GEN})
 file(CREATE_LINK "${CMAKE_CURRENT_SOURCE_DIR}/repo" "${CMAKE_CURRENT_BINARY_DIR}/readline" SYMBOLIC)
 
-foreach(_file terminal.c histfile.c kill.c funmap.c)
-    add_custom_command(
-        OUTPUT ${RL_GEN}/${_file}
-        COMMAND sh -c "sed -e 's/defined (_WIN32)/(defined (_WIN32) \\&\\& !defined (MOXNOX))/g' -e 's/defined(_WIN32)/(defined(_WIN32) \\&\\& !defined(MOXNOX))/g' '${CMAKE_CURRENT_SOURCE_DIR}/repo/${_file}' > '${RL_GEN}/${_file}'"
-        DEPENDS repo/${_file}
-        VERBATIM
-    )
-endforeach()
-
-add_custom_command(
-    OUTPUT ${RL_GEN}/input.c
-    COMMAND sh -c "sed -e 's/defined (_WIN32)/(defined (_WIN32) \\&\\& !defined (MOXNOX))/g' -e 's/defined (__MINGW32__)/(defined (__MINGW32__) \\&\\& !defined (MOXNOX))/g' -e 's/defined (__MINGW32_MAJOR_VERSION)/(defined (__MINGW32_MAJOR_VERSION) \\&\\& !defined (MOXNOX))/g' '${CMAKE_CURRENT_SOURCE_DIR}/repo/input.c' > '${RL_GEN}/input.c'"
-    DEPENDS repo/input.c
-    VERBATIM
-)
-
 add_library(readline SHARED
     readline.def
     repo/bind.c
@@ -28,16 +12,16 @@ add_library(readline SHARED
     repo/compat.c
     repo/complete.c
     repo/display.c
-    ${RL_GEN}/funmap.c
+    repo/funmap.c
     repo/gettimeofday.c
     repo/histexpand.c
-    ${RL_GEN}/histfile.c
+    repo/histfile.c
     repo/history.c
     repo/histsearch.c
-    ${RL_GEN}/input.c
+    repo/input.c
     repo/isearch.c
     repo/keymaps.c
-    ${RL_GEN}/kill.c
+    repo/kill.c
     repo/macro.c
     repo/mbutil.c
     repo/misc.c
@@ -50,7 +34,7 @@ add_library(readline SHARED
     repo/search.c
     repo/shell.c
     repo/signals.c
-    ${RL_GEN}/terminal.c
+    repo/terminal.c
     repo/text.c
     repo/tilde.c
     repo/undo.c
