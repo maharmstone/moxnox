@@ -8,14 +8,6 @@ find_package(FLEX REQUIRED)
 set(LIBIBERTY_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/libiberty-gen)
 file(MAKE_DIRECTORY ${LIBIBERTY_GEN_DIR})
 
-# lrealpath.c: apply upstream bug fix (sequential #if fallbacks should be #elif)
-add_custom_command(
-    OUTPUT ${LIBIBERTY_GEN_DIR}/lrealpath.c
-    COMMAND sh -c "cp '${REPO}/libiberty/lrealpath.c' '${LIBIBERTY_GEN_DIR}/lrealpath.c' && patch '${LIBIBERTY_GEN_DIR}/lrealpath.c' < '${CMAKE_CURRENT_SOURCE_DIR}/lrealpath.patch'"
-    VERBATIM
-    DEPENDS ${REPO}/libiberty/lrealpath.c ${CMAKE_CURRENT_SOURCE_DIR}/lrealpath.patch
-)
-
 # libiberty
 
 add_library(libiberty STATIC
@@ -49,7 +41,7 @@ add_library(libiberty STATIC
     ${REPO}/libiberty/hex.c
     ${REPO}/libiberty/lbasename.c
     ${REPO}/libiberty/ldirname.c
-    ${LIBIBERTY_GEN_DIR}/lrealpath.c
+    ${REPO}/libiberty/lrealpath.c
     ${REPO}/libiberty/make-relative-prefix.c
     ${REPO}/libiberty/make-temp-file.c
     ${REPO}/libiberty/mempcpy.c
