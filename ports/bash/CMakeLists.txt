@@ -264,7 +264,6 @@ add_executable(bash
     repo/lib/sh/fmtumax.c
     repo/lib/sh/fnxform.c
     repo/lib/sh/fpurge.c
-    repo/lib/sh/getenv.c
     repo/lib/sh/gettimeofday.c
     repo/lib/sh/inet_aton.c
     repo/lib/sh/input_avail.c

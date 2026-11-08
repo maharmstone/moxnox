@@ -807,7 +807,7 @@
 #define HAVE_PSELECT 1
 
 /* Define if you have the putenv function.  */
-/* #undef HAVE_PUTENV */
+#define HAVE_PUTENV 1
 
 /* Define if you have the raise function. */
 #define HAVE_RAISE 1

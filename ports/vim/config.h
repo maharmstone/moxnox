@@ -185,7 +185,7 @@
 #define HAVE_NL_LANGINFO_CODESET 1
 #define HAVE_OPENDIR 1
 #define HAVE_POSIX_OPENPT 1
-/* #undef HAVE_PUTENV */
+#define HAVE_PUTENV 1
 #define HAVE_QSORT 1
 #define HAVE_READLINK 1
 #define HAVE_RENAME 1

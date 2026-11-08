@@ -412,3 +412,4 @@ imaxabs
 mbrtoc32
 c32rtomb
 _wcsdup
+_putenv

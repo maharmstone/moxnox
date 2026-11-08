@@ -28,7 +28,7 @@
 #define HAVE_ISASCII        1
 #define HAVE_MKSTEMP        1
 #define HAVE_NANOSLEEP      1
-#define HAVE_PUTENV         0
+#define HAVE_PUTENV         1
 #define HAVE_REMOVE         1
 #define HAVE_SETENV         1
 #define HAVE_SNPRINTF       1

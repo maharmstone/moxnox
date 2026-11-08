@@ -972,7 +972,7 @@
 /* #undef HAVE_PSTAT_GETSTATIC */
 
 /* Define to 1 if you have the `putenv' function. */
-/* #undef HAVE_PUTENV */
+#define HAVE_PUTENV 1
 
 /* Define to 1 if you have the `random' function. */
 #define HAVE_RANDOM 1
