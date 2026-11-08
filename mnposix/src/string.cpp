@@ -174,3 +174,16 @@ size_t strlcpy(char* dst, const char* src, size_t size) {
 
     return (size_t)(src - orig_src);
 }
+
+extern "C"
+char* stpcpy(char* dest, const char* src) {
+    while (*src != 0) {
+        *dest = *src;
+        src++;
+        dest++;
+    }
+
+    *dest = 0;
+
+    return dest;
+}

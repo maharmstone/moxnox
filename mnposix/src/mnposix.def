@@ -291,3 +291,4 @@ timer_delete
 timer_settime
 timer_gettime
 reallocarray
+stpcpy
