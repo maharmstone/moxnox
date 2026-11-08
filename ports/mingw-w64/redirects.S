@@ -66,6 +66,7 @@ underscore_func "hypotf"
 underscore_func "mktemp"
 underscore_func "popen"
 underscore_func "pclose"
+underscore_func "wcsdup"
 
 redirect_name "_fseeki64", "fseeko64"
 redirect_name "_ftelli64", "ftello64"

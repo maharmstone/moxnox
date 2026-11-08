@@ -1005,7 +1005,7 @@
 #define HAVE_WCSCOLL 1
 
 /* Define if you have the wcsdup function.  */
-/* #undef HAVE_WCSDUP */
+#define HAVE_WCSDUP 1
 
 /* Define if you have the wcsnrtombs function.  */
 #define HAVE_WCSNRTOMBS 1
