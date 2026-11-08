@@ -316,7 +316,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/malloc/scratch_buffer_grow_preserve.c
     repo/gnulib/lib/malloca.c
     repo/gnulib/lib/mbrlen.c
-    repo/gnulib/lib/mbrtoc32.c
     repo/gnulib/lib/mbrtowc.c
     repo/gnulib/lib/mbs_endswith.c
     repo/gnulib/lib/mbscasecmp.c

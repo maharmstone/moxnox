@@ -2097,7 +2097,7 @@
 #define HAVE_WORKING_FSTATAT_ZERO_FLAG 1
 
 /* Define if the mbrtoc32 function basically works. */
-/* #undef HAVE_WORKING_MBRTOC32 */
+#define HAVE_WORKING_MBRTOC32 1
 
 /* Define to 1 if O_NOATIME works. */
 #define HAVE_WORKING_O_NOATIME 1

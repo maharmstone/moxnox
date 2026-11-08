@@ -139,7 +139,6 @@ add_executable(tar
     repo/gnulib/lib/linkat.c
     repo/gnulib/lib/localeconv.c
     repo/gnulib/lib/mbchar.c
-    repo/gnulib/lib/mbrtoc32.c
     repo/gnulib/lib/mbrtowc.c
     repo/gnulib/lib/mbscasecmp.c
     repo/gnulib/lib/mbuiter.c

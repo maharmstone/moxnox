@@ -56,7 +56,6 @@ add_executable(sed
     repo/gnulib/lib/malloc/dynarray_resize.c
     repo/gnulib/lib/malloc/scratch_buffer_grow.c
     repo/gnulib/lib/malloc/scratch_buffer_grow_preserve.c
-    repo/gnulib/lib/mbrtoc32.c
     repo/gnulib/lib/mbrtowc.c
     repo/gnulib/lib/mbszero.c
     repo/gnulib/lib/memchr.c

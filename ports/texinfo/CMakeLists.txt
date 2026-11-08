@@ -80,7 +80,6 @@ add_library(texinfo_gnulib STATIC
     repo/gnulib/lib/hard-locale.c
     repo/gnulib/lib/ialloc.c
     repo/gnulib/lib/mbchar.c
-    repo/gnulib/lib/mbrtoc32.c
     repo/gnulib/lib/mbrtowc.c
     repo/gnulib/lib/mbscasecmp.c
     repo/gnulib/lib/mbslen.c

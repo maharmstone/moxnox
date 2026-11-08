@@ -67,7 +67,6 @@ add_library(diffutils_gnulib STATIC
     repo/gnulib/lib/malloc/dynarray_finalize.c
     repo/gnulib/lib/malloc/dynarray_resize.c
     repo/gnulib/lib/malloca.c
-    repo/gnulib/lib/mbrtoc32.c
     repo/gnulib/lib/mbrtowc.c
     repo/gnulib/lib/mbscasecmp.c
     repo/gnulib/lib/mbsrtoc32s-state.c

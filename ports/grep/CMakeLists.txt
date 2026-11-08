@@ -78,7 +78,6 @@ add_executable(grep
     repo/gnulib/lib/localcharset.c
     repo/gnulib/lib/localeinfo.c
     repo/gnulib/lib/lstat.c
-    repo/gnulib/lib/mbrtoc32.c
     repo/gnulib/lib/mbscasecmp.c
     repo/gnulib/lib/mbsrtoc32s-state.c
     repo/gnulib/lib/mbsrtoc32s.c

@@ -109,7 +109,6 @@ add_executable(m4
     repo/gnulib/lib/malloc/scratch_buffer_grow_preserve.c
     repo/gnulib/lib/malloca.c
     repo/gnulib/lib/mbchar.c
-    repo/gnulib/lib/mbrtoc32.c
     repo/gnulib/lib/mbrtowc.c
     repo/gnulib/lib/mbslen.c
     repo/gnulib/lib/mbsstr.c

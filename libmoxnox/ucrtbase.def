@@ -409,3 +409,4 @@ tanl == tan
 
 ; stubs
 imaxabs
+mbrtoc32

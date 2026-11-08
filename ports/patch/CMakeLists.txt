@@ -54,7 +54,6 @@ add_executable(patch
     repo/gnulib/lib/localcharset.c
     repo/gnulib/lib/lstat.c
     repo/gnulib/lib/malloca.c
-    repo/gnulib/lib/mbrtoc32.c
     repo/gnulib/lib/mbrtowc.c
     repo/gnulib/lib/mbszero.c
     repo/gnulib/lib/memchr.c
