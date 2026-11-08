@@ -17,5 +17,7 @@ do_stub "pipe2"
 do_stub "pselect"
 do_stub "fdatasync"
 do_stub "secure_getenv"
+do_stub "sig2str"
+do_stub "str2sig"
 
 stubs_end

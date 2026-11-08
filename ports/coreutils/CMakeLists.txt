@@ -417,7 +417,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/sha3.c
     repo/gnulib/lib/sha512-stream.c
     repo/gnulib/lib/sha512.c
-    repo/gnulib/lib/sig2str.c
     repo/gnulib/lib/sm3-stream.c
     repo/gnulib/lib/sm3.c
     repo/gnulib/lib/snprintf.c

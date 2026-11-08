@@ -2776,7 +2776,7 @@
 #define HAVE_SHUTDOWN 1
 
 /* Define to 1 if you have the `sig2str' function. */
-/* #undef HAVE_SIG2STR */
+#define HAVE_SIG2STR 1
 
 /* Define to 1 if you have the 'sigaction' function. */
 #define HAVE_SIGACTION 1
@@ -2876,7 +2876,7 @@
 #define HAVE_STPCPY 1
 
 /* Define to 1 if you have the `str2sig' function. */
-/* #undef HAVE_STR2SIG */
+#define HAVE_STR2SIG 1
 
 /* Define to 1 if you have the `strchrnul' function. */
 /* #undef HAVE_STRCHRNUL */

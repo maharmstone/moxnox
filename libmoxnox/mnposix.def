@@ -307,3 +307,5 @@ pipe2
 pselect
 fdatasync
 secure_getenv
+sig2str
+str2sig

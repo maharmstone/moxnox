@@ -118,6 +118,8 @@ int pthread_sigmask(int how, const sigset_t* set, sigset_t* oset);
 int pthread_kill(pthread_t thread, int sig);
 int sigwait(const sigset_t* set, int* sig);
 int sigpending(sigset_t* set);
+int sig2str(int signum, char* str);
+int str2sig(const char* str, int* pnum);
 
 #ifdef __cplusplus
 }
