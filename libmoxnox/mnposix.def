@@ -318,3 +318,5 @@ ffs
 ffsl
 insque
 remque
+random
+srandom

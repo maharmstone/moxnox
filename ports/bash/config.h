@@ -813,7 +813,7 @@
 #define HAVE_RAISE 1
 
 /* Define if you have the random function. */
-/* #undef HAVE_RANDOM */
+#define HAVE_RANDOM 1
 
 /* Define if you have the readlink function. */
 #define HAVE_READLINK 1

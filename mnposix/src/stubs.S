@@ -28,5 +28,7 @@ do_stub "ffs"
 do_stub "ffsl"
 do_stub "insque"
 do_stub "remque"
+do_stub "random"
+do_stub "srandom"
 
 stubs_end

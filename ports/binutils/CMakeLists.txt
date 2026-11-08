@@ -95,7 +95,6 @@ add_library(libiberty STATIC
     ${REPO}/libiberty/memmem.c
     ${REPO}/libiberty/memrchr.c
     ${REPO}/libiberty/mkstemps.c
-    ${REPO}/libiberty/random.c
     ${REPO}/libiberty/rindex.c
     ${REPO}/libiberty/sigsetmask.c
     ${REPO}/libiberty/strndup.c

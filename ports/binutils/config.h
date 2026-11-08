@@ -975,7 +975,7 @@
 /* #undef HAVE_PUTENV */
 
 /* Define to 1 if you have the `random' function. */
-/* #undef HAVE_RANDOM */
+#define HAVE_RANDOM 1
 
 /* Define to 1 if you have the `rename' function. */
 #define HAVE_RENAME 1
