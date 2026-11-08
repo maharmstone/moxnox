@@ -1417,7 +1417,7 @@
 #define HAVE_POPEN 1
 
 /* Define to 1 if you have the 'pselect' function. */
-/* #undef HAVE_PSELECT */
+#define HAVE_PSELECT 1
 
 /* Define to 1 if you have the 'pstat_getprocvm' function. */
 /* #undef HAVE_PSTAT_GETPROCVM */

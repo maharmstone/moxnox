@@ -804,7 +804,7 @@
 #define HAVE_PATHCONF 1
 
 /* Define if you have the pselect function.  */
-/* #undef HAVE_PSELECT */
+#define HAVE_PSELECT 1
 
 /* Define if you have the putenv function.  */
 /* #undef HAVE_PUTENV */

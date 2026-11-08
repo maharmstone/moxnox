@@ -2601,7 +2601,7 @@
 /* #undef HAVE_PRIV_H */
 
 /* Define to 1 if you have the 'pselect' function. */
-/* #undef HAVE_PSELECT */
+#define HAVE_PSELECT 1
 
 /* Define to 1 if you have the 'pstat_getdynamic' function. */
 /* #undef HAVE_PSTAT_GETDYNAMIC */

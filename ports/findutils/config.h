@@ -1767,7 +1767,7 @@
 /* #undef HAVE_PRIV_H */
 
 /* Define to 1 if you have the 'pselect' function. */
-/* #undef HAVE_PSELECT */
+#define HAVE_PSELECT 1
 
 /* Define if you have the <pthread.h> header and the POSIX threads API. */
 #define HAVE_PTHREAD_API 1

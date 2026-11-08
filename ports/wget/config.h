@@ -1656,7 +1656,7 @@
 #define HAVE_POSIX_SPAWN_FILE_ACTIONS_T 1
 
 /* Define to 1 if you have the 'pselect' function. */
-/* #undef HAVE_PSELECT */
+#define HAVE_PSELECT 1
 
 /* Define to 1 if you have the 'psl_latest' function. */
 /* #undef HAVE_PSL_LATEST */

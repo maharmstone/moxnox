@@ -377,7 +377,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/priv-set.c
     repo/gnulib/lib/progname.c
     repo/gnulib/lib/propername-lite.c
-    repo/gnulib/lib/pselect.c
     repo/gnulib/lib/pthread_sigmask.c
     repo/gnulib/lib/putenv.c
     repo/gnulib/lib/qcopy-acl.c

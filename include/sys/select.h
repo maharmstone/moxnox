@@ -10,6 +10,7 @@
 #endif
 
 #include <string.h>
+#include <signal.h>
 #include <sys/time.h>
 
 #ifdef __cplusplus
@@ -34,7 +35,10 @@ typedef struct {
 #define FD_ISSET(d, s) (!!((s)->fds_bits[(d) / (8*sizeof(unsigned long))] & (1UL << ((d) % (8*sizeof(unsigned long))))))
 #define FD_ZERO(s)     (memset((s), 0, sizeof(fd_set)))
 
-int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout);
+int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+           const struct timeval *timeout);
+int pselect(int nfds, fd_set* readfds, fd_set* writefds, fd_set* errorfds,
+            const struct timespec* timeout, const sigset_t* sigmask);
 
 #ifdef __cplusplus
 }
