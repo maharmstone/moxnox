@@ -628,7 +628,7 @@
 /* #undef HAVE_DOPRNT */
 
 /* Define if you have the dprintf function.  */
-/* #undef HAVE_DPRINTF */
+#define HAVE_DPRINTF 1
 
 /* Define if you have the dup2 function.  */
 #define HAVE_DUP2 1

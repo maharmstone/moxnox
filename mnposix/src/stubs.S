@@ -21,5 +21,6 @@ do_stub "sig2str"
 do_stub "str2sig"
 do_stub "strptime"
 do_stub "psignal"
+do_stub "dprintf"
 
 stubs_end

@@ -407,7 +407,6 @@ add_library(libmagic SHARED
     ${GEN}/src/file.h
     repo/src/asctime_r.c
     repo/src/ctime_r.c
-    repo/src/dprintf.c
     repo/src/fmtcheck.c
     repo/src/strcasestr.c
     repo/src/strlcpy.c

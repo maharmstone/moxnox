@@ -311,3 +311,4 @@ sig2str
 str2sig
 strptime
 psignal
+dprintf

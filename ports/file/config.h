@@ -43,7 +43,7 @@
 #define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the 'dprintf' function. */
-/* #undef HAVE_DPRINTF */
+#define HAVE_DPRINTF 1
 
 /* Define to 1 if you have the <err.h> header file. */
 /* #undef HAVE_ERR_H */

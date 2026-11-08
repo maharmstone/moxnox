@@ -258,7 +258,6 @@ add_executable(bash
     repo/lib/sh/clktck.c
     repo/lib/sh/clock.c
     repo/lib/sh/compat.c
-    repo/lib/sh/dprintf.c
     repo/lib/sh/eaccess.c
     repo/lib/sh/fmtullong.c
     repo/lib/sh/fmtulong.c
