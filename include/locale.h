@@ -46,6 +46,7 @@ extern "C" {
 
 char* setlocale(int category, const char* locale);
 struct lconv* localeconv(void);
+const char* getlocalename_l(int category, locale_t locobj);
 
 #ifdef __cplusplus
 }

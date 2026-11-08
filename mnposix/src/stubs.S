@@ -22,5 +22,6 @@ do_stub "str2sig"
 do_stub "strptime"
 do_stub "psignal"
 do_stub "dprintf"
+do_stub "getlocalename_l"
 
 stubs_end

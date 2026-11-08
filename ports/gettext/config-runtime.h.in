@@ -789,7 +789,7 @@
 /* #undef HAVE_GETEXECNAME */
 
 /* Define to 1 if you have the 'getlocalename_l' function. */
-/* #undef HAVE_GETLOCALENAME_L */
+#define HAVE_GETLOCALENAME_L 1
 
 /* Define to 1 if you have the <getopt.h> header file. */
 #define HAVE_GETOPT_H 1

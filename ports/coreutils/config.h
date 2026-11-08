@@ -2147,7 +2147,7 @@
 /* #undef HAVE_GETLOADAVG */
 
 /* Define to 1 if you have the 'getlocalename_l' function. */
-/* #undef HAVE_GETLOCALENAME_L */
+#define HAVE_GETLOCALENAME_L 1
 
 /* Define to 1 if you have the 'getlogin' function. */
 #define HAVE_GETLOGIN 1

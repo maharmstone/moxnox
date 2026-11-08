@@ -1294,7 +1294,7 @@
 #define HAVE_GETGID 1
 #define HAVE_GETEGID 1
 
-/* #undef HAVE_GETLOCALENAME_L */
+#define HAVE_GETLOCALENAME_L 1
 /* #undef HAVE_GOOD_USELOCALE */
 #define HAVE_ICONV 1
 
