@@ -1652,7 +1652,7 @@
 #define HAVE_STRNLEN 1
 
 /* Define to 1 if you have the 'strptime' function. */
-/* #undef HAVE_STRPTIME */
+#define HAVE_STRPTIME 1
 
 /* Define to 1 if you have the 'strtoimax' function. */
 #define HAVE_STRTOIMAX 1

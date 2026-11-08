@@ -309,3 +309,4 @@ fdatasync
 secure_getenv
 sig2str
 str2sig
+strptime

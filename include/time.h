@@ -88,6 +88,7 @@ int timer_delete(timer_t timerid);
 int timer_settime(timer_t timerid, int flags, const struct itimerspec* value,
                   struct itimerspec* ovalue);
 int timer_gettime(timer_t timerid, struct itimerspec* value);
+char* strptime(const char* buf, const char* format, struct tm* tm);
 
 #ifdef __cplusplus
 }

@@ -19,5 +19,6 @@ do_stub "fdatasync"
 do_stub "secure_getenv"
 do_stub "sig2str"
 do_stub "str2sig"
+do_stub "strptime"
 
 stubs_end

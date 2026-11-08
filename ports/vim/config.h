@@ -210,7 +210,7 @@
 #define HAVE_STRNCASECMP 1
 #define HAVE_STRNICMP 1
 #define HAVE_STRPBRK 1
-/* #undef HAVE_STRPTIME */
+#define HAVE_STRPTIME 1
 #define HAVE_STRTOL 1
 /* #undef HAVE_CANBERRA */
 /* #undef HAVE_SODIUM */
