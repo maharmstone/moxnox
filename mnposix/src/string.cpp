@@ -212,3 +212,36 @@ char* stpncpy(char* dest, const char* src, size_t dsize) {
 
     return ret;
 }
+
+extern "C"
+size_t strlcat(char* dst, const char* src, size_t dstsize) {
+    auto orig_dst = dst;
+    auto orig_src = src;
+    size_t len, n = dstsize;
+
+    while (n >= 1 && dst[0] != 0) {
+        dst++;
+        n--;
+    }
+
+    len = dst - orig_dst;
+    n = dstsize - len;
+
+    if (n == 0)
+        return len + strlen(src);
+
+    while (src[0] != 0) {
+        if (n > 1) {
+            dst[0] = src[0];
+
+            dst++;
+            n--;
+        }
+
+        src++;
+    }
+
+    *dst = 0;
+
+    return len + (src - orig_src);
+}

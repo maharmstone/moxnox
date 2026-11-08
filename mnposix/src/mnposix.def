@@ -293,3 +293,4 @@ timer_gettime
 reallocarray
 stpcpy
 stpncpy
+strlcat
