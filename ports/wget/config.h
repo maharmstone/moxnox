@@ -1735,7 +1735,7 @@
 /* #undef HAVE_SDKDDKVER_H */
 
 /* Define to 1 if you have the 'secure_getenv' function. */
-/* #undef HAVE_SECURE_GETENV */
+#define HAVE_SECURE_GETENV 1
 
 /* Define to 1 if you have the 'setdtablesize' function. */
 /* #undef HAVE_SETDTABLESIZE */

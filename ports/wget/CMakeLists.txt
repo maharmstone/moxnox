@@ -176,7 +176,6 @@ add_executable(wget
     repo/gnulib/lib/rename.c
     repo/gnulib/lib/rmdir.c
     repo/gnulib/lib/save-cwd.c
-    repo/gnulib/lib/secure_getenv.c
     repo/gnulib/lib/select.c
     repo/gnulib/lib/setlocale-lock.c
     repo/gnulib/lib/setlocale_null-unlocked.c

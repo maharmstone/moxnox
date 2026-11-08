@@ -141,7 +141,6 @@ add_executable(m4
     repo/gnulib/lib/rename.c
     repo/gnulib/lib/rmdir.c
     repo/gnulib/lib/save-cwd.c
-    repo/gnulib/lib/secure_getenv.c
     repo/gnulib/lib/setlocale.c
     repo/gnulib/lib/setlocale_null-unlocked.c
     repo/gnulib/lib/setlocale_null.c

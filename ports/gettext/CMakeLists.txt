@@ -601,7 +601,6 @@ add_library(gettext_lib STATIC
     repo/gnulib/lib/read-file.c
     repo/gnulib/lib/readlink.c
     repo/gnulib/lib/rmdir.c
-    repo/gnulib/lib/secure_getenv.c
     repo/gnulib/lib/gl_set.c
     repo/gnulib/lib/setenv.c
     repo/gnulib/lib/setlocale.c

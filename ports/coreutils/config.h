@@ -2722,7 +2722,7 @@
 #define HAVE_SEARCH_H 1
 
 /* Define to 1 if you have the 'secure_getenv' function. */
-/* #undef HAVE_SECURE_GETENV */
+#define HAVE_SECURE_GETENV 1
 
 /* Define to 1 if you have the <selinux/context.h> header file. */
 /* #undef HAVE_SELINUX_CONTEXT_H */

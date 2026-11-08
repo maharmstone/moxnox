@@ -401,7 +401,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/savewd.c
     repo/gnulib/lib/se-label.c
     repo/gnulib/lib/se-selinux.c
-    repo/gnulib/lib/secure_getenv.c
     repo/gnulib/lib/select.c
     repo/gnulib/lib/set-acl.c
     repo/gnulib/lib/set-permissions.c

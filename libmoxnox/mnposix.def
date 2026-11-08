@@ -306,3 +306,4 @@ getdelim
 pipe2
 pselect
 fdatasync
+secure_getenv

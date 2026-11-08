@@ -16,5 +16,6 @@ do_stub "getdelim"
 do_stub "pipe2"
 do_stub "pselect"
 do_stub "fdatasync"
+do_stub "secure_getenv"
 
 stubs_end
