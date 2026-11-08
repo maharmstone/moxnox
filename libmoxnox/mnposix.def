@@ -313,3 +313,4 @@ strptime
 psignal
 dprintf
 getlocalename_l
+alphasort

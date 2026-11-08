@@ -486,7 +486,6 @@ set(GETTEXT_TOOLS_INCLUDES
 
 add_library(gettext_lib STATIC
     repo/gnulib/lib/access.c
-    repo/gnulib/lib/alphasort.c
     repo/gnulib/lib/argmatch.c
     repo/gnulib/lib/asyncsafe-spin.c
     repo/gnulib-local/lib/backupfile.c
