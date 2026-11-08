@@ -292,3 +292,4 @@ timer_settime
 timer_gettime
 reallocarray
 stpcpy
+stpncpy

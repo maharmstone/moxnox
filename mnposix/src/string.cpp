@@ -187,3 +187,28 @@ char* stpcpy(char* dest, const char* src) {
 
     return dest;
 }
+
+extern "C"
+char* stpncpy(char* dest, const char* src, size_t dsize) {
+    char* ret = &dest[dsize];
+
+    while (dsize > 0) {
+        if (*src == 0) {
+            ret = dest;
+            break;
+        }
+
+        *dest = *src;
+        dest++;
+        src++;
+        dsize--;
+    }
+
+    while (dsize > 0) {
+        *dest = 0;
+        dest++;
+        dsize--;
+    }
+
+    return ret;
+}

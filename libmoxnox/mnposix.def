@@ -292,6 +292,7 @@ timer_settime
 timer_gettime
 reallocarray
 stpcpy
+stpncpy
 
 ; stubs
 mlock
@@ -301,7 +302,6 @@ posix_spawnattr_setschedparam
 pthread_cancel
 pthread_atfork
 strlcat
-stpncpy
 getdelim
 pipe2
 pselect
