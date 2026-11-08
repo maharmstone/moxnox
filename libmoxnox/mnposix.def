@@ -305,3 +305,4 @@ reallocarray
 getdelim
 pipe2
 pselect
+fdatasync

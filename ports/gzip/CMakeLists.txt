@@ -43,7 +43,6 @@ add_executable(gzip
     repo/gnulib/lib/fclose.c
     repo/gnulib/lib/fcntl.c
     repo/gnulib/lib/fd-safer.c
-    repo/gnulib/lib/fdatasync.c
     repo/gnulib/lib/fdopendir.c
     repo/gnulib/lib/fprintf.c
     repo/gnulib/lib/free.c

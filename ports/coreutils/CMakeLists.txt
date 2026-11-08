@@ -244,7 +244,6 @@ add_library(libcoreutils STATIC
     repo/gnulib/lib/fcntl.c
     repo/gnulib/lib/fd-safer-flag.c
     repo/gnulib/lib/fd-safer.c
-    repo/gnulib/lib/fdatasync.c
     repo/gnulib/lib/fdopendir.c
     repo/gnulib/lib/fdutimensat.c
     repo/gnulib/lib/file-has-acl.c

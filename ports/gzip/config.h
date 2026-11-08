@@ -535,7 +535,7 @@
 
 /* Define to 1 if you have the declaration of 'fdatasync', and to 0 if you
    don't. */
-#define HAVE_DECL_FDATASYNC 0
+#define HAVE_DECL_FDATASYNC 1
 
 /* Define to 1 if you have the declaration of 'fdopendir', and to 0 if you
    don't. */
@@ -637,7 +637,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `fdatasync' function. */
-/* #undef HAVE_FDATASYNC */
+#define HAVE_FDATASYNC 1
 
 /* Define to 1 if you have the 'fdopendir' function. */
 #define HAVE_FDOPENDIR 1

@@ -364,7 +364,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define if you have the 'fdatasync' function. */
-/* #undef HAVE_FDATASYNC */
+#define HAVE_FDATASYNC 1
 
 /* Define to 1 if you have the `fdopendir' function. */
 #define HAVE_FDOPENDIR 1

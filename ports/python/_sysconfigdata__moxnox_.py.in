@@ -193,7 +193,7 @@ build_time_vars = {
     'HAVE_FCHOWN': 1,
     'HAVE_FCHOWNAT': 1,
     'HAVE_FCNTL_H': 1,
-    'HAVE_FDATASYNC': 0,
+    'HAVE_FDATASYNC': 1,
     'HAVE_FDOPENDIR': 1,
     'HAVE_FDWALK': 0,
     'HAVE_FEXECVE': 0,
