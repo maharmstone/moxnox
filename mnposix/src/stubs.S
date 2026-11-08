@@ -26,5 +26,7 @@ do_stub "getlocalename_l"
 do_stub "alphasort"
 do_stub "ffs"
 do_stub "ffsl"
+do_stub "insque"
+do_stub "remque"
 
 stubs_end

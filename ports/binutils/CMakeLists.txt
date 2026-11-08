@@ -92,7 +92,6 @@ add_library(libiberty STATIC
     ${REPO}/libiberty/bzero.c
     ${REPO}/libiberty/getpagesize.c
     ${REPO}/libiberty/index.c
-    ${REPO}/libiberty/insque.c
     ${REPO}/libiberty/memmem.c
     ${REPO}/libiberty/memrchr.c
     ${REPO}/libiberty/mkstemps.c

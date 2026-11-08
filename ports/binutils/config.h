@@ -906,7 +906,7 @@
 /* #undef HAVE_INDEX */
 
 /* Define to 1 if you have the `insque' function. */
-/* #undef HAVE_INSQUE */
+#define HAVE_INSQUE 1
 
 /* Define to 1 if the system has the type `intptr_t'. */
 #define HAVE_INTPTR_T 1

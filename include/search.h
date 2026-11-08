@@ -22,6 +22,8 @@ posix_tnode* tsearch(const void* key, posix_tnode** rootp,
                      int (*compar)(const void*, const void*));
 void twalk(const posix_tnode* root,
            void (*action)(const posix_tnode*, VISIT, int));
+void insque(void* element, void* pred);
+void remque(void* element);
 
 #ifdef __cplusplus
 }

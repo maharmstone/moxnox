@@ -316,3 +316,5 @@ getlocalename_l
 alphasort
 ffs
 ffsl
+insque
+remque
