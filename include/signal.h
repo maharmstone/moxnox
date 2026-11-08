@@ -120,6 +120,7 @@ int sigwait(const sigset_t* set, int* sig);
 int sigpending(sigset_t* set);
 int sig2str(int signum, char* str);
 int str2sig(const char* str, int* pnum);
+void psignal(int signum, const char* message);
 
 #ifdef __cplusplus
 }

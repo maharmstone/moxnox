@@ -20,5 +20,6 @@ do_stub "secure_getenv"
 do_stub "sig2str"
 do_stub "str2sig"
 do_stub "strptime"
+do_stub "psignal"
 
 stubs_end
