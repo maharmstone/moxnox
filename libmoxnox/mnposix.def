@@ -290,6 +290,7 @@ timer_create
 timer_delete
 timer_settime
 timer_gettime
+reallocarray
 
 ; stubs
 mlock
@@ -301,7 +302,6 @@ pthread_atfork
 strlcat
 stpcpy
 stpncpy
-reallocarray
 getdelim
 pipe2
 pselect
