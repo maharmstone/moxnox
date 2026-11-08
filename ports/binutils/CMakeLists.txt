@@ -90,7 +90,6 @@ add_library(libiberty STATIC
     ${REPO}/libiberty/bcmp.c
     ${REPO}/libiberty/bcopy.c
     ${REPO}/libiberty/bzero.c
-    ${REPO}/libiberty/ffs.c
     ${REPO}/libiberty/getpagesize.c
     ${REPO}/libiberty/index.c
     ${REPO}/libiberty/insque.c

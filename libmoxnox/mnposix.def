@@ -314,3 +314,5 @@ psignal
 dprintf
 getlocalename_l
 alphasort
+ffs
+ffsl

@@ -875,7 +875,7 @@
 /* #undef HAVE_FEATURES_H */
 
 /* Define to 1 if you have the `ffsl' function. */
-/* #undef HAVE_FFSL */
+#define HAVE_FFSL 1
 
 /* Define to 1 if you have the `flockfile' function. */
 /* #undef HAVE_FLOCKFILE */

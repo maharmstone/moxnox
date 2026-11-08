@@ -152,7 +152,6 @@ add_executable(bison
     repo/gnulib/lib/fatal-signal.c
     repo/gnulib/lib/fcntl.c
     repo/gnulib/lib/fd-safer.c
-    repo/gnulib/lib/ffsl.c
     repo/gnulib/lib/file-set.c
     repo/gnulib/lib/findprog-in.c
     repo/gnulib/lib/fopen-safer.c

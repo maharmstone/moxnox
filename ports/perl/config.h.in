@@ -2508,8 +2508,8 @@
  *	to find the first bit set in its argument.  If it's not available,
  *	roll your own.
  */
-/*#define HAS_FFS		/ **/
-/*#define HAS_FFSL		/ **/
+#define HAS_FFS		/**/
+#define HAS_FFSL		/**/
 
 /* HAS_FINITE:
  *	This symbol, if defined, indicates that the finite routine is

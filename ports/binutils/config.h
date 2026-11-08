@@ -888,7 +888,7 @@
 /* #undef HAVE_DUP3 */
 
 /* Define to 1 if you have the `ffs' function. */
-/* #undef HAVE_FFS */
+#define HAVE_FFS 1
 
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1
