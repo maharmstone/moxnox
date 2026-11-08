@@ -33,7 +33,6 @@ add_executable(sed
     repo/gnulib/lib/btowc.c
     repo/gnulib/lib/c32isprint.c
     repo/gnulib/lib/c32isspace.c
-    repo/gnulib/lib/c32rtomb.c
     repo/gnulib/lib/c32tob.c
     repo/gnulib/lib/c32tolower.c
     repo/gnulib/lib/c32toupper.c

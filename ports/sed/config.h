@@ -1759,7 +1759,7 @@
 #define HAVE_WINT_T 1
 
 /* Define if the c32rtomb function basically works. */
-/* #undef HAVE_WORKING_C32RTOMB */
+#define HAVE_WORKING_C32RTOMB 1
 
 /* Define if the mbrtoc32 function basically works. */
 #define HAVE_WORKING_MBRTOC32 1

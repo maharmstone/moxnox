@@ -410,3 +410,4 @@ tanl == tan
 ; stubs
 imaxabs
 mbrtoc32
+c32rtomb

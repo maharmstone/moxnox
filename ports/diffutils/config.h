@@ -1878,7 +1878,7 @@
 /* #undef HAVE_WMEMPCPY */
 
 /* Define if the c32rtomb function basically works. */
-/* #undef HAVE_WORKING_C32RTOMB */
+#define HAVE_WORKING_C32RTOMB 1
 
 /* Define to 1 if 'fork' works. */
 #define HAVE_WORKING_FORK 1

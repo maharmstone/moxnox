@@ -1748,7 +1748,7 @@
 /* #undef HAVE_WMEMPCPY */
 
 /* Define if the c32rtomb function basically works. */
-/* #undef HAVE_WORKING_C32RTOMB */
+#define HAVE_WORKING_C32RTOMB 1
 
 /* Define to 1 if fstatat (..., 0) works. For example, it does not work in AIX
    7.1. */

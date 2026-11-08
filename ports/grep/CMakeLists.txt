@@ -45,7 +45,6 @@ add_executable(grep
     repo/gnulib/lib/c32isspace.c
     repo/gnulib/lib/c32isupper.c
     repo/gnulib/lib/c32isxdigit.c
-    repo/gnulib/lib/c32rtomb.c
     repo/gnulib/lib/c32tob.c
     repo/gnulib/lib/c32tolower.c
     repo/gnulib/lib/c32toupper.c
