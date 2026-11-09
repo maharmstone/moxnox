@@ -132,6 +132,14 @@ nt_status fifo_object::read_nonblock(span<const span<uint8_t>> v,
 
         if (status == nt_status::TIMEOUT) {
             read_bytes = 0;
+
+            {
+                lock_guard l(lock);
+
+                if (num_writers == 0)
+                    return nt_status::SUCCESS;
+            }
+
             return nt_status::CANT_WAIT;
         } else if (!success(status) || status == nt_status::USER_APC) {
             read_bytes = 0;
