@@ -1841,6 +1841,34 @@ static nt_status file_writev(file& f, span<const uint8_t> inbuf,
     else if (spans_size > 0)
         free(spans);
 
+    if (status == nt_status::PIPE_BROKEN) {
+        auto mask = ((sigset_t)1 << (SIGPIPE - 1));
+
+        {
+            sync_lock sl;
+            lock_guard lock(sl);
+
+            if (t.blocked_signals & mask)
+                t.pending_signals |= mask;
+            else {
+                auto p = new pending_apc;
+
+                if (p) { // if we OOM, just drop the signal
+                    p->routine = (PS_APC_ROUTINE)(t.proc->ntdll_addr + mn_posix_signal);
+                    p->arg1 = (uintptr_t)SIGPIPE;
+                    p->arg2 = 0;
+                    p->arg3 = 0;
+
+                    {
+                        lock_guard lock(t.apc_lock);
+
+                        insert_tail_list(t.pending_apcs, p->le);
+                    }
+                }
+            }
+        }
+    }
+
     if (!success(status) || status == nt_status::USER_APC)
         return status;
 
