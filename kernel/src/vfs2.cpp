@@ -620,49 +620,24 @@ static nt_status open_inode2(string_view& fn, dentry& root_dir,
         }
 
         if (last_bit && create_result == FILE_OPENED && (dispo == FILE_OVERWRITE || dispo == FILE_OVERWRITE_IF || dispo == FILE_SUPERSEDE)) {
-            FILE_DISPOSITION_INFORMATION fdi;
-            optional<reference_wrapper<inode>> inorw;
+            auto& ino = *drw->get().inode;
 
             // FIXME - SUPERSEDE subtly different (attributes?)
 
-            // FIXME - make sure this is always a POSIX-style delete
-            fdi.DeleteFile = true;
-
-            status = drw->get().inode->set_information(span((uint8_t*)&fdi, sizeof(fdi)),
-                                                       drw->get(),
-                                                       FILE_INFORMATION_CLASS::DispositionInformation);
-            if (!success(status)) {
-                print("inode::set_information returned {} for FileDispositionInformation\n", status);
+            if (create_options & FILE_DIRECTORY_FILE && ino.inode_type != inode_type::directory) {
                 drw->get().release();
                 dir.release();
-                return status;
+                return nt_status::NOT_A_DIRECTORY;
+            } else if (!(create_options & FILE_DIRECTORY_FILE) && ino.inode_type == inode_type::directory) {
+                drw->get().release();
+                dir.release();
+                return nt_status::FILE_IS_A_DIRECTORY;
             }
 
             if (dispo == FILE_SUPERSEDE)
                 create_result = FILE_SUPERSEDED;
             else
                 create_result = FILE_OVERWRITTEN;
-
-            drw->get().release();
-
-            status = dir.inode->create_child(name, create_options, inorw);
-            if (!success(status)) {
-                dir.release();
-                return status;
-            }
-
-            object_ref obj_ref2{inorw->get()};
-
-            assert(obj_ref2.get().type == object_type::inode);
-
-            auto& ino = static_cast<inode&>(obj_ref2.get());
-
-            if (!add_to_dentry_cache(dir, name, ino, drw)) {
-                dir.release();
-                return nt_status::INSUFFICIENT_RESOURCES;
-            }
-
-            drw->get().acquire();
         }
 
         auto& d = drw->get();
@@ -1341,6 +1316,20 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
             f->dentry->open_file_count++;
 
         f->release();
+
+        if ((create_result == FILE_OVERWRITTEN || create_result == FILE_SUPERSEDED) && ino.inode_type == inode_type::file) {
+            auto now = (uint64_t)kernel_time_page.system_time + kernel_time_page.system_time_offset;
+
+            {
+                lock_guard lock(ino.inode_lock);
+
+                ino.file_size = 0;
+                ino.mtime = now;
+                ino.ctime = now;
+            }
+
+            ino.cache.mark_dirty();
+        }
     } else {
         if (drw) // FIXME - shouldn't happen, as only inodes get dentries at the moment
             drw->get().release();
