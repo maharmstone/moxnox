@@ -180,6 +180,12 @@ concept has_get_sync_object = requires(T t) {
 
 export
 template<typename T>
+concept has_get_rw_sync_object = requires(T t) {
+    { t.get_rw_sync_object() } -> same_as<rw_sync_object&>;
+};
+
+export
+template<typename T>
 concept has_last_handle_closed = requires(T t) {
     { t.last_handle_closed() };
 };

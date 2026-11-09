@@ -97,9 +97,9 @@ public:
     bool readonly = false;
 };
 
-export class inode : public object {
+export class inode : public rw_sync_object {
 public:
-    inode(filesystem& fs) : object(object_type::inode), fs(fs) {
+    inode(filesystem& fs) : rw_sync_object(object_type::inode, true, true), fs(fs) {
         fs.acquire();
     }
 
@@ -137,6 +137,7 @@ public:
                                  span<uint8_t> outbuf, uint32_t& retlen,
                                  dentry* dentry) = 0;
     virtual void last_handle_closed();
+    rw_sync_object& get_rw_sync_object();
 
     virtual nt_status read_into_cache(uint64_t page_num, uint64_t num_pages,
                                       uint64_t& read_pages) = 0;
@@ -159,6 +160,7 @@ static_assert(is_nonblocking_writable_vec_object<inode>);
 static_assert(cacheable_flushable<inode>);
 static_assert(cache_supports_writeback<inode>);
 static_assert(has_last_handle_closed<inode>);
+static_assert(has_get_rw_sync_object<inode>);
 
 export enum class dentry_status {
     valid,

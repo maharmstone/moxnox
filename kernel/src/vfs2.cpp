@@ -1180,7 +1180,8 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
             fifo_object* fifo = nullptr;
 
             {
-                shared_lock lg(ino.inode_lock);
+                sync_lock sl;
+                lock_guard lg(sl);
 
                 if (ino.fifo) {
                     ino.fifo->acquire();
@@ -1207,7 +1208,8 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                 }
 
                 {
-                    lock_guard lg(ino.inode_lock);
+                    sync_lock sl;
+                    lock_guard lg(sl);
 
                     if (ino.fifo) {
                         ino.fifo->acquire();
@@ -1460,14 +1462,17 @@ nt_status inode::read(span<const span<uint8_t>> v, uint64_t offset,
     fifo_object* f = nullptr;
 
     {
-        shared_lock lock(inode_lock);
+        shared_lock lock1(inode_lock);
 
         switch (inode_type) {
             case inode_type::file:
                 size = file_size;
                 break;
 
-            case inode_type::fifo:
+            case inode_type::fifo: {
+                sync_lock sl;
+                lock_guard lock2(sl);
+
                 if (!fifo)
                     return nt_status::INTERNAL_ERROR;
 
@@ -1475,6 +1480,7 @@ nt_status inode::read(span<const span<uint8_t>> v, uint64_t offset,
                 f->acquire();
 
                 break;
+            }
 
             default:
                 return nt_status::INVALID_PARAMETER;
@@ -1514,11 +1520,16 @@ nt_status inode::read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes
         if (inode_type != inode_type::fifo)
             return nt_status::NOT_SUPPORTED;
 
-        if (!fifo)
-            return nt_status::INTERNAL_ERROR;
+        {
+            sync_lock sl;
+            lock_guard lock2(sl);
 
-        f = fifo;
-        f->acquire();
+            if (!fifo)
+                return nt_status::INTERNAL_ERROR;
+
+            f = fifo;
+            f->acquire();
+        }
     }
 
     auto ret = f->read_nonblock(v, read_bytes);
@@ -1542,7 +1553,7 @@ nt_status inode::write(span<const span<const uint8_t>> v, uint64_t offset,
     fifo_object* f = nullptr;
 
     {
-        lock_guard lock(inode_lock);
+        lock_guard lock1(inode_lock);
 
         switch (inode_type) {
             case inode_type::file: {
@@ -1557,7 +1568,10 @@ nt_status inode::write(span<const span<const uint8_t>> v, uint64_t offset,
                 break;
             }
 
-            case inode_type::fifo:
+            case inode_type::fifo: {
+                sync_lock sl;
+                lock_guard lock2(sl);
+
                 if (!fifo)
                     return nt_status::INTERNAL_ERROR;
 
@@ -1565,6 +1579,7 @@ nt_status inode::write(span<const span<const uint8_t>> v, uint64_t offset,
                 f->acquire();
 
                 break;
+            }
 
             default:
                 return nt_status::INVALID_PARAMETER;
@@ -1594,11 +1609,16 @@ nt_status inode::write_nonblock(span<const span<const uint8_t>> v,
         if (inode_type != inode_type::fifo)
             return nt_status::NOT_SUPPORTED;
 
-        if (!fifo)
-            return nt_status::INTERNAL_ERROR;
+        {
+            sync_lock sl;
+            lock_guard lock2(sl);
 
-        f = fifo;
-        f->acquire();
+            if (!fifo)
+                return nt_status::INTERNAL_ERROR;
+
+            f = fifo;
+            f->acquire();
+        }
     }
 
     auto ret = f->write_nonblock(v, written_bytes);
@@ -2786,8 +2806,9 @@ void file::last_handle_closed() {
         auto& i = static_cast<inode&>(ino);
         fifo_object* fifo = nullptr;
 
-        {
-            shared_lock lg(i.inode_lock);
+        if (i.inode_type == inode_type::fifo) {
+            sync_lock sl;
+            lock_guard lg(sl);
 
             if (i.fifo) {
                 i.fifo->acquire();
@@ -3664,7 +3685,9 @@ void inode::last_handle_closed() {
     fifo_object* f = nullptr;
 
     {
-        lock_guard lock(inode_lock);
+        sync_lock sl;
+        lock_guard lock1(inode_lock);
+        lock_guard lock2(sl);
 
         if (handle_count != 0) // avoid race
             return;
@@ -3674,4 +3697,12 @@ void inode::last_handle_closed() {
 
     if (f)
         f->release();
+}
+
+rw_sync_object& inode::get_rw_sync_object() {
+    // sync_lock held, this is okay
+    if (fifo)
+        return *fifo;
+
+    return *this;
 }

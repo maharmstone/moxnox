@@ -99,6 +99,8 @@ bool object_is_sync_object(object& obj) {
             ret = true;
         else if constexpr (has_get_sync_object<remove_reference_t<decltype(o)>>)
             ret = true;
+        else if constexpr (has_get_rw_sync_object<remove_reference_t<decltype(o)>>)
+            ret = true;
         else if constexpr (is_same_v<remove_reference_t<decltype(o)>, file>)
             ret = object_is_sync_object(o.ino);
     });
@@ -245,6 +247,8 @@ sync_object& object_get_sync_object(object& obj) {
     visit_obj(obj, [&](auto&& o) {
         if constexpr (has_get_sync_object<remove_reference_t<decltype(o)>>)
             so = &o.get_sync_object();
+        else if constexpr (has_get_rw_sync_object<remove_reference_t<decltype(o)>>)
+            so = &o.get_rw_sync_object();
         else if constexpr (is_sync_object<remove_reference_t<decltype(o)>>)
             so = &static_cast<sync_object&>(o);
         else if constexpr (is_same_v<remove_reference_t<decltype(o)>, file>)
@@ -258,7 +262,9 @@ rw_sync_object& object_get_rw_sync_object(object& obj) {
     rw_sync_object* so = nullptr;
 
     visit_obj(obj, [&](auto&& o) {
-        if constexpr (is_rw_sync_object<remove_reference_t<decltype(o)>>)
+        if constexpr (has_get_rw_sync_object<remove_reference_t<decltype(o)>>)
+            so = &o.get_rw_sync_object();
+        else if constexpr (is_rw_sync_object<remove_reference_t<decltype(o)>>)
             so = &static_cast<rw_sync_object&>(o);
         else if constexpr (is_same_v<remove_reference_t<decltype(o)>, file>)
             so = &object_get_rw_sync_object(o.ino);
