@@ -1234,8 +1234,10 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                     fifo->num_readers++;
                     fifo->have_readers.set_holding_sync_lock();
 
-                    if (fifo->buf_unread == fifo_object::BUF_PAGES << PAGE_SHIFT)
+                    if (fifo->buf_unread == fifo_object::BUF_PAGES << PAGE_SHIFT) {
                         fifo->not_full_event.signalled = false;
+                        fifo->write_signalled = false;
+                    }
                 }
 
                 if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)) {
@@ -1266,6 +1268,9 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                         if (fifo->num_readers == 0) {
                             fifo->have_readers.signalled = false;
                             fifo->not_full_event.set_holding_sync_lock();
+
+                            fifo->write_signalled = true;
+                            wake_up_waiters(fifo->waiters, WAIT_TYPE_WRITING);
                         }
                     }
 
@@ -2828,6 +2833,9 @@ void file::last_handle_closed() {
                     if (fifo->num_readers == 0) {
                         fifo->have_readers.signalled = false;
                         fifo->not_full_event.set_holding_sync_lock();
+
+                        fifo->write_signalled = true;
+                        wake_up_waiters(fifo->waiters, WAIT_TYPE_WRITING);
                     }
                 }
 

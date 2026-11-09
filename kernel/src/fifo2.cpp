@@ -98,6 +98,11 @@ nt_status fifo_object::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
 
             if (!not_full_event.signalled)
                 not_full_event.set_holding_sync_lock();
+
+            if (!write_signalled) {
+                write_signalled = true;
+                wake_up_waiters(waiters, WAIT_TYPE_WRITING);
+            }
         }
 
         break;
@@ -173,6 +178,11 @@ nt_status fifo_object::read_nonblock(span<const span<uint8_t>> v,
 
             if (!not_full_event.signalled)
                 not_full_event.set_holding_sync_lock();
+
+            if (!write_signalled) {
+                write_signalled = true;
+                wake_up_waiters(waiters, WAIT_TYPE_WRITING);
+            }
         }
 
         break;
@@ -242,8 +252,10 @@ nt_status fifo_object::write(span<const span<const uint8_t>> v,
                     wake_up_waiters(waiters, WAIT_TYPE_READING);
                 }
 
-                if (buf_unread == BUF_PAGES << PAGE_SHIFT)
+                if (buf_unread == BUF_PAGES << PAGE_SHIFT) {
                     not_full_event.signalled = false;
+                    write_signalled = false;
+                }
             }
         }
 
@@ -325,8 +337,10 @@ nt_status fifo_object::write_nonblock(span<const span<const uint8_t>> v,
                     wake_up_waiters(waiters, WAIT_TYPE_READING);
                 }
 
-                if (buf_unread == BUF_PAGES << PAGE_SHIFT)
+                if (buf_unread == BUF_PAGES << PAGE_SHIFT) {
                     not_full_event.signalled = false;
+                    write_signalled = false;
+                }
             }
         }
 
