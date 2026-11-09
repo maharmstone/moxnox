@@ -651,7 +651,7 @@ NTSTATUS NtCreateNamedPipeFile(HANDLE* file_handle, ACCESS_MASK desired_access,
 
     handle_t h;
 
-    auto f = new file(*pptr_server, 0);
+    auto f = new file(*pptr_server, 0, 0);
     if (!f) {
         print("new failed\n");
         return nt_status::INSUFFICIENT_RESOURCES;

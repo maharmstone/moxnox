@@ -211,7 +211,7 @@ export struct filesystem_recognizer {
 
 export class file : public object {
 public:
-    file(object& ino, uint32_t create_options);
+    file(object& ino, uint32_t create_options, uint32_t access_mask);
     ~file();
 
     void acquire() {
@@ -229,6 +229,7 @@ public:
     uint64_t query_dir_index = 0;
     dentry* dentry = nullptr;
     uint32_t create_options;
+    uint32_t access_mask;
     atomic<bool> nonblock = false;
 
     NTSTATUS read(span<const span<uint8_t>> v, uint64_t& read_bytes);

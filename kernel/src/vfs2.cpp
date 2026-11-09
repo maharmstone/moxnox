@@ -107,6 +107,8 @@ public:
     atomic<unsigned int> refcount = 1;
     object_ref p;
     bool init = false;
+    atomic<unsigned int> num_readers = 0;
+    atomic<unsigned int> num_writers = 0;
 };
 
 static object_ref vfsctl_obj;
@@ -1184,7 +1186,22 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
             return nt_status::NOT_A_DIRECTORY;
         }
 
-        auto f = new file(ino, create_options);
+        if (access_mask & GENERIC_READ) {
+            access_mask &= ~GENERIC_READ;
+            access_mask |= FILE_GENERIC_READ;
+        }
+
+        if (access_mask & GENERIC_WRITE) {
+            access_mask &= ~GENERIC_WRITE;
+            access_mask |= FILE_GENERIC_WRITE;
+        }
+
+        if (access_mask & GENERIC_EXECUTE) {
+            access_mask &= ~GENERIC_EXECUTE;
+            access_mask |= FILE_GENERIC_EXECUTE;
+        }
+
+        auto f = new file(ino, create_options, access_mask);
 
         if (!f) {
             if (drw)
@@ -1196,9 +1213,16 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
         if (drw)
             f->dentry = &drw->get();
 
-        if (ino.inode_type == inode_type::fifo) {
-            fifo_object* fifo = nullptr;
+        if (ino.fs.readonly) {
+            if (access_mask & (FILE_WRITE_DATA | FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA | FILE_APPEND_DATA | DELETE)) {
+                delete f;
+                return nt_status::MEDIA_WRITE_PROTECTED;
+            }
+        }
 
+        fifo_object* fifo = nullptr;
+
+        if (ino.inode_type == inode_type::fifo && access_mask & (FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA)) {
             {
                 shared_lock lg(ino.inode_lock);
 
@@ -1241,38 +1265,33 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                     old_fifo->release();
             }
 
+            if (access_mask & FILE_READ_DATA)
+                fifo->num_readers++;
+
+            if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA))
+                fifo->num_writers++;
+
             // FIXME - block until other side opened
-
-            fifo->release();
-        }
-
-        if (access_mask & GENERIC_READ) {
-            access_mask &= ~GENERIC_READ;
-            access_mask |= FILE_GENERIC_READ;
-        }
-
-        if (access_mask & GENERIC_WRITE) {
-            access_mask &= ~GENERIC_WRITE;
-            access_mask |= FILE_GENERIC_WRITE;
-        }
-
-        if (access_mask & GENERIC_EXECUTE) {
-            access_mask &= ~GENERIC_EXECUTE;
-            access_mask |= FILE_GENERIC_EXECUTE;
-        }
-
-        if (ino.fs.readonly) {
-            if (access_mask & (FILE_WRITE_DATA | FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA | FILE_APPEND_DATA | DELETE)) {
-                delete f;
-                return nt_status::MEDIA_WRITE_PROTECTED;
-            }
         }
 
         status = p->add_handle(*f, access_mask, shared_okay, h);
         if (!success(status)) {
+            if (fifo) {
+                if (access_mask & FILE_READ_DATA)
+                    fifo->num_readers--;
+
+                if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA))
+                    fifo->num_writers--;
+
+                fifo->release();
+            }
+
             delete f;
             return status;
         }
+
+        if (fifo)
+            fifo->release();
 
         if (f->dentry)
             f->dentry->open_file_count++;
@@ -1282,7 +1301,7 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
         if (drw) // FIXME - shouldn't happen, as only inodes get dentries at the moment
             drw->get().release();
 
-        auto f = new file(ino_ref.get(), 0);
+        auto f = new file(ino_ref.get(), 0, 0);
 
         if (!f)
             return nt_status::INSUFFICIENT_RESOURCES;
@@ -1529,7 +1548,7 @@ nt_status inode::write(span<const span<const uint8_t>> v, uint64_t offset,
     return nt_status::SUCCESS;
 }
 
-file::file(object& ino, uint32_t create_options) : object(object_type::file), ino(ino), create_options(create_options) {
+file::file(object& ino, uint32_t create_options, uint32_t access_mask) : object(object_type::file), ino(ino), create_options(create_options), access_mask(access_mask) {
     ino.acquire();
     ino.handle_count++;
 }
@@ -2699,6 +2718,30 @@ nt_status get_dentry_path(dentry& dr, char*& path, size_t& path_len) {
 }
 
 void file::last_handle_closed() {
+    if (access_mask & (FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA) && ino.type == object_type::inode) {
+        auto& i = static_cast<inode&>(ino);
+        fifo_object* fifo = nullptr;
+
+        {
+            shared_lock lg(i.inode_lock);
+
+            if (i.fifo) {
+                i.fifo->acquire();
+                fifo = i.fifo;
+            }
+        }
+
+        if (fifo) {
+            if (access_mask & FILE_READ_DATA)
+                fifo->num_readers--;
+
+            if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA))
+                fifo->num_writers--;
+
+            fifo->release();
+        }
+    }
+
     if (dentry)
         dentry->open_file_count--;
 }

@@ -269,7 +269,7 @@ static nt_status create_pty(span<const uint8_t> inbuf, span<uint8_t> outbuf,
 
     handle_t server_handle, client_handle;
 
-    auto server_file = new file(*pptr_server, 0);
+    auto server_file = new file(*pptr_server, 0, 0);
     if (!server_file) {
         print("new failed\n");
         return nt_status::INSUFFICIENT_RESOURCES;
@@ -288,7 +288,7 @@ static nt_status create_pty(span<const uint8_t> inbuf, span<uint8_t> outbuf,
         return status;
     }
 
-    auto client_file = new file(obj3.get(), 0);
+    auto client_file = new file(obj3.get(), 0, 0);
     if (!client_file) {
         print("new failed\n");
         t.proc->close_handle(server_handle);
@@ -1280,7 +1280,7 @@ nt_status pty_server::get_client(span<uint8_t> outbuf, uintptr_t& written) {
     if (!success(status))
         return status;
 
-    auto client_file = new file(obj1.get(), 0);
+    auto client_file = new file(obj1.get(), 0, 0);
     if (!client_file) {
         print("new failed\n");
         return nt_status::INSUFFICIENT_RESOURCES;

@@ -2987,7 +2987,7 @@ nt_status tcp_socket<FAMILY>::accept(HANDLE& sock, void* us_addr, int& addrlen) 
             c->on_accepted_list = true;
         }
 
-        auto f = new file(*c, 0);
+        auto f = new file(*c, 0, 0);
         if (!f) {
             print("new failed\n");
 

@@ -420,7 +420,7 @@ object_ref create_process(string_view fn, string_view curdir,
 
         auto& img_inode = static_cast<inode&>(img_inode_ref.get());
 
-        auto img_file = new file(img_inode, 0);
+        auto img_file = new file(img_inode, 0, 0);
         if (!img_file) {
             print("new failed\n");
 
@@ -459,7 +459,7 @@ object_ref create_process(string_view fn, string_view curdir,
 
         auto& curdir_inode = static_cast<inode&>(curdir_obj);
 
-        auto curdir_file = new file(curdir_inode, 0);
+        auto curdir_file = new file(curdir_inode, 0, 0);
         if (!curdir_file) {
             print("new failed\n");
 
@@ -1788,7 +1788,7 @@ void load_ntdll() {
     if (inode_ref.get().type != object_type::inode)
         bsod("open_inode returned something other than an inode");
 
-    auto ntdll_file = new file(inode_ref.get(), 0);
+    auto ntdll_file = new file(inode_ref.get(), 0, 0);
 
     if (!ntdll_file)
         bsod("load_ntdll: new failed");
