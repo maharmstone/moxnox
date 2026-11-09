@@ -264,3 +264,91 @@ nt_status fifo_object::write(span<const span<const uint8_t>> v,
 
     return nt_status::SUCCESS;
 }
+
+nt_status fifo_object::write_nonblock(span<const span<const uint8_t>> v,
+                                      uint64_t& written_bytes) {
+    size_t vec_size = get_vec_size(v);
+
+    if (vec_size == 0) {
+        written_bytes = 0;
+        return nt_status::SUCCESS;
+    }
+
+    span<const uint8_t> top = v.front();
+
+    written_bytes = 0;
+
+    do {
+        {
+            size_t to_copy;
+
+            sync_lock sl;
+            lock_guard l(sl);
+            lock_guard l2(lock);
+
+            if (num_readers == 0) {
+                if (written_bytes > 0)
+                    return nt_status::SUCCESS;
+
+                return nt_status::PIPE_BROKEN;
+            }
+
+            size_t buf_left = (BUF_PAGES << PAGE_SHIFT) - buf_unread;
+
+            to_copy = min(vec_size, buf_left);
+
+            if (to_copy > 0) {
+                if (buf_write_pos + to_copy > BUF_PAGES << PAGE_SHIFT) {
+                    auto first_bit = (BUF_PAGES << PAGE_SHIFT) - buf_write_pos;
+
+                    memcpy_vec(&buf[buf_write_pos], v, top, first_bit);
+
+                    buf_write_pos = 0;
+                    buf_unread += first_bit;
+                    to_copy -= first_bit;
+                    vec_size -= first_bit;
+                    written_bytes += first_bit;
+                }
+
+                memcpy_vec(&buf[buf_write_pos], v, top, to_copy);
+
+                buf_write_pos += to_copy;
+                buf_unread += to_copy;
+                vec_size -= to_copy;
+                written_bytes += to_copy;
+
+                // wake up waiting thread
+
+                if (!signalled) {
+                    signalled = true;
+
+                    wake_up_waiters(waiters, WAIT_TYPE_READING);
+                }
+
+                if (buf_unread == BUF_PAGES << PAGE_SHIFT)
+                    not_full_event.signalled = false;
+            }
+        }
+
+        if (vec_size == 0)
+            break;
+
+        // block while we wait for space to become available
+        auto status = wait_for_object(not_full_event, true, 0);
+
+        if (status == nt_status::TIMEOUT) {
+            if (written_bytes == 0)
+                return nt_status::CANT_WAIT;
+            else
+                break;
+        } else if (status == nt_status::USER_APC) {
+            if (written_bytes == 0)
+                return nt_status::USER_APC;
+            else
+                break;
+        } else if (!success(status))
+            return status;
+    } while (true);
+
+    return nt_status::SUCCESS;
+}

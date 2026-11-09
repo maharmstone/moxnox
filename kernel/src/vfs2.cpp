@@ -1584,6 +1584,30 @@ nt_status inode::write(span<const span<const uint8_t>> v, uint64_t offset,
     return nt_status::SUCCESS;
 }
 
+nt_status inode::write_nonblock(span<const span<const uint8_t>> v,
+                                uint64_t& written_bytes) {
+    fifo_object* f = nullptr;
+
+    {
+        shared_lock lock(inode_lock);
+
+        if (inode_type != inode_type::fifo)
+            return nt_status::NOT_SUPPORTED;
+
+        if (!fifo)
+            return nt_status::INTERNAL_ERROR;
+
+        f = fifo;
+        f->acquire();
+    }
+
+    auto ret = f->write_nonblock(v, written_bytes);
+
+    f->release();
+
+    return ret;
+}
+
 file::file(object& ino, uint32_t create_options, uint32_t access_mask) : object(object_type::file), ino(ino), create_options(create_options), access_mask(access_mask) {
     ino.acquire();
     ino.handle_count++;
