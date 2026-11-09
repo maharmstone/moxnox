@@ -39,6 +39,8 @@ import disable_interrupts;
 import kernel_time_page;
 import pipe;
 import process;
+import event;
+import scheduler;
 
 using namespace std;
 
@@ -108,8 +110,11 @@ public:
     atomic<unsigned int> refcount = 1;
     object_ref p;
     bool init = false;
-    atomic<unsigned int> num_readers = 0;
-    atomic<unsigned int> num_writers = 0;
+    spinlock lock;
+    unsigned int num_readers = 0;
+    unsigned int num_writers = 0;
+    event have_readers{false};
+    event have_writers{false};
 };
 
 static object_ref vfsctl_obj;
@@ -1275,13 +1280,56 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                     old_fifo->release();
             }
 
-            if (access_mask & FILE_READ_DATA)
-                fifo->num_readers++;
+            {
+                sync_lock sl;
+                lock_guard lock1(sl);
+                lock_guard lock2(fifo->lock);
 
-            if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA))
-                fifo->num_writers++;
+                if (access_mask & FILE_READ_DATA) {
+                    fifo->num_readers++;
+                    fifo->have_readers.set_holding_sync_lock();
+                }
 
-            // FIXME - block until other side opened
+                if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)) {
+                    fifo->num_writers++;
+                    fifo->have_writers.set_holding_sync_lock();
+                }
+            }
+
+            if (access_mask & FILE_READ_DATA && !(access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)))
+                status = wait_for_object(fifo->have_writers, true);
+            else if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA) && !(access_mask & FILE_READ_DATA))
+                status = wait_for_object(fifo->have_readers, true);
+            else
+                status = nt_status::SUCCESS;
+
+            if (!success(status) || status == nt_status::USER_APC) {
+                {
+                    sync_lock sl;
+                    lock_guard lock1(sl);
+                    lock_guard lock2(fifo->lock);
+
+                    if (access_mask & FILE_READ_DATA) {
+                        fifo->num_readers--;
+
+                        if (fifo->num_readers == 0)
+                            fifo->have_readers.signalled = false;
+                    }
+
+                    if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)) {
+                        fifo->num_writers--;
+
+                        if (fifo->num_writers == 0)
+                            fifo->have_writers.signalled = false;
+                    }
+                }
+
+                delete f;
+                fifo->release();
+                free(ho);
+
+                return status;
+            }
 
             fifo->release();
         }
@@ -2728,11 +2776,25 @@ void file::last_handle_closed() {
         }
 
         if (fifo) {
-            if (access_mask & FILE_READ_DATA)
-                fifo->num_readers--;
+            {
+                sync_lock sl;
+                lock_guard lock1(sl);
+                lock_guard lock2(fifo->lock);
 
-            if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA))
-                fifo->num_writers--;
+                if (access_mask & FILE_READ_DATA) {
+                    fifo->num_readers--;
+
+                    if (fifo->num_readers == 0)
+                        fifo->have_readers.signalled = false;
+                }
+
+                if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)) {
+                    fifo->num_writers--;
+
+                    if (fifo->num_writers == 0)
+                        fifo->have_writers.signalled = false;
+                }
+            }
 
             fifo->release();
         }
