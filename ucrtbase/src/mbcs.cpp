@@ -318,3 +318,106 @@ int mblen(const char* s, size_t n) {
 
     return (int)ret;
 }
+
+extern "C"
+size_t mbrtoc32(char32_t* pc32, const char* s, size_t n, mbstate_t* ps) {
+    static mbstate_t static_state;
+
+    auto& st = *reinterpret_cast<mbstate*>(ps ? ps : &static_state);
+
+    if (!s) {
+        if (st.left > 0) {
+            st.left = 0;
+            st.codepoint = 0;
+            st.total = 0;
+            *__errno() = EILSEQ;
+            return (size_t)-1;
+        }
+
+        return 0;
+    }
+
+    if (n == 0)
+        return (size_t)-2;
+
+    size_t read = 0;
+    char32_t cp;
+    uint8_t left, total;
+
+    if (st.left > 0) {
+        cp = st.codepoint;
+        left = st.left;
+        total = st.total;
+    } else {
+        auto c = (uint8_t)s[read];
+        read++;
+
+        if (c < 0x80) {
+            if (pc32)
+                *pc32 = c;
+
+            return c == 0 ? 0 : 1;
+        }
+
+        if (c < 0xc2) {
+            *__errno() = EILSEQ;
+            return (size_t)-1;
+        } else if (c < 0xe0) {
+            cp = c & 0x1f;
+            left = 1;
+            total = 1;
+        } else if (c < 0xf0) {
+            cp = c & 0x0f;
+            left = 2;
+            total = 2;
+        } else if (c < 0xf4) {
+            cp = c & 0x07;
+            left = 3;
+            total = 3;
+        } else {
+            *__errno() = EILSEQ;
+            return (size_t)-1;
+        }
+    }
+
+    while (left > 0) {
+        if (read >= n) {
+            st.codepoint = (uint16_t)cp;
+            st.left = left;
+            st.total = total;
+
+            return (size_t)-2;
+        }
+
+        auto c = (uint8_t)s[read];
+        read++;
+
+        if (c < 0x80 || c > 0xbf) {
+            st.left = 0;
+            st.codepoint = 0;
+            st.total = 0;
+            *__errno() = EILSEQ;
+            return (size_t)-1;
+        }
+
+        cp = (char32_t)((cp << 6) | (c & 0x3f));
+        left--;
+    }
+
+    if ((total == 2 && cp < 0x800) || (total == 3 && cp < 0x10000) || (cp >= 0xd800 && cp <= 0xdfff) || cp > 0x10ffff) {
+        st.left = 0;
+        st.codepoint = 0;
+        st.total = 0;
+        *__errno() = EILSEQ;
+        return (size_t)-1;
+    }
+
+    st.left = 0;
+    st.codepoint = 0;
+    st.total = 0;
+
+    if (pc32)
+        *pc32 = cp;
+
+    return read;
+}

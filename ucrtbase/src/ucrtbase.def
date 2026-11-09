@@ -406,3 +406,4 @@ logbl = logb
 lrintl = lrint
 scalblnl = scalbln
 scalbnl = scalbn
+mbrtoc32

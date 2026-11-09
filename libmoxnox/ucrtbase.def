@@ -406,10 +406,10 @@ sinl == sin
 sqrtl == sqrt
 tanhl == tanh
 tanl == tan
+mbrtoc32
 
 ; stubs
 imaxabs
-mbrtoc32
 c32rtomb
 _wcsdup
 _putenv
