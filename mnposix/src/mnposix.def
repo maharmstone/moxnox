@@ -294,3 +294,4 @@ reallocarray
 stpcpy
 stpncpy
 strlcat
+pselect

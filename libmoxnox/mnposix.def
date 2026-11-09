@@ -294,6 +294,7 @@ reallocarray
 stpcpy
 stpncpy
 strlcat
+pselect
 
 ; stubs
 mlock
@@ -304,7 +305,6 @@ pthread_cancel
 pthread_atfork
 getdelim
 pipe2
-pselect
 fdatasync
 secure_getenv
 sig2str

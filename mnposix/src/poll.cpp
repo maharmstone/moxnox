@@ -146,8 +146,8 @@ int poll(pollfd* fds, nfds_t nfds, int timeout) {
 }
 
 extern "C"
-int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
-           const timeval* timeout) {
+int pselect(int nfds, fd_set* readfds, fd_set* writefds, fd_set* errorfds,
+            const timespec* timeout, const sigset_t* sigmask) {
     pollfd* pfds = nullptr;
     int npfds = 0;
 
@@ -167,7 +167,7 @@ int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
             if (writefds && FD_ISSET((size_t)i, writefds))
                 events |= POLLOUT;
 
-            if (exceptfds && FD_ISSET((size_t)i, exceptfds))
+            if (errorfds && FD_ISSET((size_t)i, errorfds))
                 events |= POLLPRI;
 
             if (events != 0) {
@@ -179,20 +179,7 @@ int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
         }
     }
 
-    int poll_timeout;
-
-    if (!timeout)
-        poll_timeout = -1;
-    else {
-        uint64_t ms = ((uint64_t)timeout->tv_sec * 1000) + (uint64_t)(timeout->tv_usec / 1000);
-
-        if (ms > INT_MAX)
-            ms = INT_MAX;
-
-        poll_timeout = (int)ms;
-    }
-
-    auto r = poll(pfds, (nfds_t)npfds, poll_timeout);
+    auto r = ppoll(pfds, (nfds_t)npfds, timeout, sigmask);
 
     if (r >= 0) {
         if (readfds)
@@ -201,8 +188,8 @@ int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
         if (writefds)
             FD_ZERO(writefds);
 
-        if (exceptfds)
-            FD_ZERO(exceptfds);
+        if (errorfds)
+            FD_ZERO(errorfds);
     }
 
     if (r > 0) {
@@ -226,8 +213,8 @@ int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
                 r++;
             }
 
-            if (exceptfds && (pfds[i].events & POLLPRI) && (rev & POLLPRI)) {
-                FD_SET((size_t)fd, exceptfds);
+            if (errorfds && (pfds[i].events & POLLPRI) && (rev & POLLPRI)) {
+                FD_SET((size_t)fd, errorfds);
                 r++;
             }
         }
@@ -237,4 +224,18 @@ int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
         free(pfds);
 
     return r;
+}
+
+extern "C"
+int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+           const timeval* timeout) {
+    timespec ts;
+
+    if (timeout) {
+        ts.tv_sec = timeout->tv_sec;
+        ts.tv_nsec = timeout->tv_usec * 1000;
+    }
+
+    return pselect(nfds, readfds, writefds, exceptfds, timeout ? &ts : nullptr,
+                   nullptr);
 }
