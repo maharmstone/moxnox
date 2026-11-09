@@ -17,8 +17,6 @@ import mem;
 
 using namespace std;
 
-static const size_t BUF_PAGES = 1;
-
 fifo_object::fifo_object() : rw_sync_object(object_type::fifo, false, true) {
     not_full_event.signalled = true;
 
@@ -125,6 +123,13 @@ nt_status fifo_object::write(span<const span<const uint8_t>> v,
             sync_lock sl;
             lock_guard l(sl);
             lock_guard l2(lock);
+
+            if (num_readers == 0) {
+                if (written_bytes > 0)
+                    return nt_status::SUCCESS;
+
+                return nt_status::PIPE_BROKEN;
+            }
 
             size_t buf_left = (BUF_PAGES << PAGE_SHIFT) - buf_unread;
 

@@ -29,6 +29,8 @@ public:
             delete this;
     }
 
+    static const size_t BUF_PAGES = 1;
+
     nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes);
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes);
