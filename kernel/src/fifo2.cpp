@@ -2,36 +2,181 @@
 module;
 
 #include <span>
+#include <mutex>
+#include <algorithm>
 #include <stdint.h>
 
 module fifo;
 
 import nt;
 import print;
-import pipe;
+import vec;
+import scheduler;
+import config;
+import mem;
 
 using namespace std;
 
-fifo_object::fifo_object() {
-    auto pp = new pipe(1);
-    if (!pp) {
-        print("new failed\n");
+static const size_t BUF_PAGES = 1;
+
+fifo_object::fifo_object() : rw_sync_object(object_type::fifo, false, true) {
+    not_full_event.signalled = true;
+
+    auto va = vmalloc(BUF_PAGES << PAGE_SHIFT);
+    if (!va) {
+        print("vmalloc failed\n");
         return;
     }
 
-    p = object_ref{*pp};
+    buf = (uint8_t*)va;
+
     init = true;
 }
 
-nt_status fifo_object::read(span<const span<uint8_t>> vec, uint64_t& read_bytes) {
-    auto& p2 = static_cast<pipe&>(p.get());
-
-    return p2.read(vec, read_bytes);
+fifo_object::~fifo_object() {
+    if (buf)
+        vfree(buf, BUF_PAGES << PAGE_SHIFT);
 }
 
-nt_status fifo_object::write(span<const span<const uint8_t>> vec,
-                             uint64_t& written_bytes) {
-    auto& p2 = static_cast<pipe&>(p.get());
+nt_status fifo_object::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
+    size_t copied = 0;
+    size_t vec_size = get_vec_size(v);
 
-    return p2.write(vec, written_bytes);
+    if (vec_size == 0) {
+        read_bytes = 0;
+        return nt_status::SUCCESS;
+    }
+
+    span<uint8_t> top = v.front();
+
+    acquire();
+    object_ref obj{*this}; // so refcount gets decreased on exit
+
+    while (true) {
+        auto status = wait_for_object(*this, true);
+
+        if (!success(status) || status == nt_status::USER_APC) {
+            read_bytes = 0;
+            return status;
+        }
+
+        {
+            sync_lock sl;
+            lock_guard l(sl);
+            lock_guard l2(lock);
+
+            if (buf_unread == 0)
+                continue;
+
+            size_t buf_read_pos = buf_write_pos + (BUF_PAGES << PAGE_SHIFT) - buf_unread;
+
+            while (buf_read_pos >= BUF_PAGES << PAGE_SHIFT) {
+                buf_read_pos -= BUF_PAGES << PAGE_SHIFT;
+            }
+
+            size_t to_copy = min(vec_size, buf_unread);
+
+            if (buf_read_pos + to_copy > BUF_PAGES << PAGE_SHIFT) {
+                auto first_bit = (BUF_PAGES << PAGE_SHIFT) - buf_read_pos;
+
+                memcpy_vec(v, top, &buf[buf_read_pos], first_bit);
+
+                buf_read_pos = 0;
+                buf_unread -= first_bit;
+                to_copy -= first_bit;
+                copied = first_bit;
+            }
+
+            memcpy_vec(v, top, &buf[buf_read_pos], to_copy);
+            buf_unread -= to_copy;
+            copied += to_copy;
+
+            if (buf_unread == 0)
+                signalled = false;
+
+            if (!not_full_event.signalled)
+                not_full_event.set_holding_sync_lock();
+        }
+
+        break;
+    }
+
+    read_bytes = copied;
+    return nt_status::SUCCESS;
+}
+
+nt_status fifo_object::write(span<const span<const uint8_t>> v,
+                             uint64_t& written_bytes) {
+    size_t vec_size = get_vec_size(v);
+
+    if (vec_size == 0) {
+        written_bytes = 0;
+        return nt_status::SUCCESS;
+    }
+
+    span<const uint8_t> top = v.front();
+
+    written_bytes = 0;
+
+    do {
+        {
+            size_t to_copy;
+
+            sync_lock sl;
+            lock_guard l(sl);
+            lock_guard l2(lock);
+
+            size_t buf_left = (BUF_PAGES << PAGE_SHIFT) - buf_unread;
+
+            to_copy = min(vec_size, buf_left);
+
+            if (to_copy > 0) {
+                if (buf_write_pos + to_copy > BUF_PAGES << PAGE_SHIFT) {
+                    auto first_bit = (BUF_PAGES << PAGE_SHIFT) - buf_write_pos;
+
+                    memcpy_vec(&buf[buf_write_pos], v, top, first_bit);
+
+                    buf_write_pos = 0;
+                    buf_unread += first_bit;
+                    to_copy -= first_bit;
+                    vec_size -= first_bit;
+                    written_bytes += first_bit;
+                }
+
+                memcpy_vec(&buf[buf_write_pos], v, top, to_copy);
+
+                buf_write_pos += to_copy;
+                buf_unread += to_copy;
+                vec_size -= to_copy;
+                written_bytes += to_copy;
+
+                // wake up waiting thread
+
+                if (!signalled) {
+                    signalled = true;
+
+                    wake_up_waiters(waiters, WAIT_TYPE_READING);
+                }
+
+                if (buf_unread == BUF_PAGES << PAGE_SHIFT)
+                    not_full_event.signalled = false;
+            }
+        }
+
+        if (vec_size == 0)
+            break;
+
+        // block while we wait for space to become available
+        auto status = wait_for_object(not_full_event, true);
+
+        if (status == nt_status::USER_APC) {
+            if (written_bytes == 0)
+                return nt_status::USER_APC;
+            else
+                break;
+        } else if (!success(status))
+            return status;
+    } while (true);
+
+    return nt_status::SUCCESS;
 }

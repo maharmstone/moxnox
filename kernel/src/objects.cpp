@@ -24,7 +24,8 @@ export enum class object_type {
     process,
     section,
     file,
-    socket
+    socket,
+    fifo
 };
 
 template<>

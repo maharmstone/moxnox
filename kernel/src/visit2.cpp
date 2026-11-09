@@ -24,6 +24,7 @@ import section;
 import objects;
 import vfs;
 import net;
+import fifo;
 
 using namespace std;
 
@@ -73,6 +74,10 @@ static void visit_obj(object& obj, const T& func) {
 
         case object_type::socket:
             func(static_cast<socket&>(obj));
+        break;
+
+        case object_type::fifo:
+            func(static_cast<fifo_object&>(obj));
         break;
 
         default:
