@@ -407,3 +407,4 @@ lrintl = lrint
 scalblnl = scalbln
 scalbnl = scalbn
 mbrtoc32
+c32rtomb

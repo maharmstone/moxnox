@@ -407,9 +407,9 @@ sqrtl == sqrt
 tanhl == tanh
 tanl == tan
 mbrtoc32
+c32rtomb
 
 ; stubs
 imaxabs
-c32rtomb
 _wcsdup
 _putenv

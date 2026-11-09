@@ -421,3 +421,40 @@ size_t mbrtoc32(char32_t* pc32, const char* s, size_t n, mbstate_t* ps) {
 
     return read;
 }
+
+extern "C"
+size_t c32rtomb(char* s, char32_t c32, mbstate_t* /*ps*/) {
+    if (!s)
+        return 1;
+
+    if (c32 < 0x80) {
+        *s = (char)c32;
+        return 1;
+    } else if (c32 < 0x800) {
+        s[0] = (char)(0xc0 | (c32 >> 6));
+        s[1] = (char)(0x80 | (c32 & 0x3f));
+
+        return 2;
+    } else if (c32 < 0x10000) {
+        if (c32 >= 0xd800 && c32 <= 0xdfff) {
+            *__errno() = EILSEQ;
+            return (size_t)-1;
+        }
+
+        s[0] = (char)(0xe0 | (c32 >> 12));
+        s[1] = (char)(0x80 | ((c32 >> 6) & 0x3f));
+        s[2] = (char)(0x80 | (c32 & 0x3f));
+
+        return 3;
+    } else if (c32 < 0x110000) {
+        s[0] = (char)(0xf0 | (c32 >> 18));
+        s[1] = (char)(0x80 | ((c32 >> 12) & 0x3f));
+        s[2] = (char)(0x80 | ((c32 >> 6) & 0x3f));
+        s[3] = (char)(0x80 | (c32 & 0x3f));
+
+        return 4;
+    } else {
+        *__errno() = EILSEQ;
+        return (size_t)-1;
+    }
+}
