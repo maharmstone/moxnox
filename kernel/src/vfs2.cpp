@@ -927,6 +927,7 @@ static void print_create_options(uint32_t create_options) {
         { FILE_OPEN_REPARSE_POINT, "FILE_OPEN_REPARSE_POINT" },
         { FILE_OPEN_NO_RECALL, "FILE_OPEN_NO_RECALL" },
         { FILE_OPEN_FOR_FREE_SPACE_QUERY, "FILE_OPEN_FOR_FREE_SPACE_QUERY" },
+        { MOXNOX_FILE_OPEN_NONBLOCK, "MOXNOX_FILE_OPEN_NONBLOCK" },
     };
 
     bool first = true;
@@ -1249,11 +1250,17 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                 }
             }
 
-            if (access_mask & FILE_READ_DATA && !(access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)))
+            if (access_mask & FILE_READ_DATA && !(access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)) && !(create_options & MOXNOX_FILE_OPEN_NONBLOCK))
                 status = wait_for_object(fifo->have_writers, true);
-            else if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA) && !(access_mask & FILE_READ_DATA))
-                status = wait_for_object(fifo->have_readers, true);
-            else
+            else if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA) && !(access_mask & FILE_READ_DATA)) {
+                if (create_options & MOXNOX_FILE_OPEN_NONBLOCK) {
+                    status = wait_for_object(fifo->have_readers, true, 0);
+
+                    if (status == nt_status::TIMEOUT)
+                        status = nt_status::PIPE_DISCONNECTED;
+                } else
+                    status = wait_for_object(fifo->have_readers, true);
+            } else
                 status = nt_status::SUCCESS;
 
             if (!success(status) || status == nt_status::USER_APC) {

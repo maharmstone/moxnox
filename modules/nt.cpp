@@ -1069,6 +1069,7 @@ inline constexpr uint32_t FILE_RESERVE_OPFILTER = 0x00100000;
 inline constexpr uint32_t FILE_OPEN_REPARSE_POINT = 0x00200000;
 inline constexpr uint32_t FILE_OPEN_NO_RECALL = 0x00400000;
 inline constexpr uint32_t FILE_OPEN_FOR_FREE_SPACE_QUERY = 0x00800000;
+inline constexpr uint32_t MOXNOX_FILE_OPEN_NONBLOCK = 0x80000000;
 
 inline constexpr ACCESS_MASK SECTION_QUERY = 0x00000001;
 inline constexpr ACCESS_MASK SECTION_MAP_WRITE = 0x00000002;

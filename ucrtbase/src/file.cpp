@@ -1437,6 +1437,9 @@ static int open2(const char* path, int flags, int pmode) {
     if (flags & O_NOFOLLOW)
         create_options |= FILE_OPEN_REPARSE_POINT;
 
+    if (flags & O_NONBLOCK)
+        create_options |= MOXNOX_FILE_OPEN_NONBLOCK;
+
     if (!(pmode & _S_IWRITE))
         file_attributes = FILE_ATTRIBUTE_READONLY;
     else
@@ -1466,7 +1469,12 @@ static int open2(const char* path, int flags, int pmode) {
                           create_options, nullptr, 0);
     if (!success(status)) {
         free(u16pathname);
-        *__errno() = nt_status_to_errno(status);
+
+        if (status == nt_status::PIPE_DISCONNECTED)
+            *__errno() = ENXIO;
+        else
+            *__errno() = nt_status_to_errno(status);
+
         return -1;
     }
 
@@ -1516,10 +1524,8 @@ static int open2(const char* path, int flags, int pmode) {
     if (flags & O_NONBLOCK) {
         bool nonblock = true;
 
-        // FIXME - behaviour is different for FIFOs (means open itself should not block)
-
         auto status = NtSetInformationFile(h, &iosb, &nonblock, sizeof(nonblock),
-                                        FILE_INFORMATION_CLASS::MoxnoxPosixNonBlock);
+                                           FILE_INFORMATION_CLASS::MoxnoxPosixNonBlock);
         if (!success(status)) {
             *__errno() = nt_status_to_errno(status);
             NtClose(h);
