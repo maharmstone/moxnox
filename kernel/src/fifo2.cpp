@@ -107,6 +107,81 @@ nt_status fifo_object::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
     return nt_status::SUCCESS;
 }
 
+nt_status fifo_object::read_nonblock(span<const span<uint8_t>> v,
+                                     uint64_t& read_bytes) {
+    size_t copied = 0;
+    size_t vec_size = get_vec_size(v);
+
+    if (vec_size == 0) {
+        read_bytes = 0;
+        return nt_status::SUCCESS;
+    }
+
+    span<uint8_t> top = v.front();
+
+    acquire();
+    object_ref obj{*this}; // so refcount gets decreased on exit
+
+    while (true) {
+        auto status = wait_for_object(*this, true, 0);
+
+        if (status == nt_status::TIMEOUT) {
+            read_bytes = 0;
+            return nt_status::CANT_WAIT;
+        } else if (!success(status) || status == nt_status::USER_APC) {
+            read_bytes = 0;
+            return status;
+        }
+
+        {
+            sync_lock sl;
+            lock_guard l(sl);
+            lock_guard l2(lock);
+
+            if (buf_unread == 0) {
+                if (num_writers == 0)
+                    return nt_status::PIPE_DISCONNECTED;
+
+                continue;
+            }
+
+            size_t buf_read_pos = buf_write_pos + (BUF_PAGES << PAGE_SHIFT) - buf_unread;
+
+            while (buf_read_pos >= BUF_PAGES << PAGE_SHIFT) {
+                buf_read_pos -= BUF_PAGES << PAGE_SHIFT;
+            }
+
+            size_t to_copy = min(vec_size, buf_unread);
+
+            if (buf_read_pos + to_copy > BUF_PAGES << PAGE_SHIFT) {
+                auto first_bit = (BUF_PAGES << PAGE_SHIFT) - buf_read_pos;
+
+                memcpy_vec(v, top, &buf[buf_read_pos], first_bit);
+
+                buf_read_pos = 0;
+                buf_unread -= first_bit;
+                to_copy -= first_bit;
+                copied = first_bit;
+            }
+
+            memcpy_vec(v, top, &buf[buf_read_pos], to_copy);
+            buf_unread -= to_copy;
+            copied += to_copy;
+
+            if (buf_unread == 0 && num_writers > 0)
+                signalled = false;
+
+            if (!not_full_event.signalled)
+                not_full_event.set_holding_sync_lock();
+        }
+
+        break;
+    }
+
+    read_bytes = copied;
+    return nt_status::SUCCESS;
+}
+
 nt_status fifo_object::write(span<const span<const uint8_t>> v,
                              uint64_t& written_bytes) {
     size_t vec_size = get_vec_size(v);

@@ -1505,6 +1505,29 @@ nt_status inode::read(span<const span<uint8_t>> v, uint64_t offset,
     return nt_status::SUCCESS;
 }
 
+nt_status inode::read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) {
+    fifo_object* f = nullptr;
+
+    {
+        shared_lock lock(inode_lock);
+
+        if (inode_type != inode_type::fifo)
+            return nt_status::NOT_SUPPORTED;
+
+        if (!fifo)
+            return nt_status::INTERNAL_ERROR;
+
+        f = fifo;
+        f->acquire();
+    }
+
+    auto ret = f->read_nonblock(v, read_bytes);
+
+    f->release();
+
+    return ret;
+}
+
 nt_status inode::write(span<const span<const uint8_t>> v, uint64_t offset,
                        uint64_t& written_bytes) {
     // FIXME - don't allow if FS readonly

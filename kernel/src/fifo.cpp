@@ -32,6 +32,7 @@ public:
     static const size_t BUF_PAGES = 1;
 
     nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes);
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes);
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes);
 
@@ -50,3 +51,4 @@ public:
 static_assert(is_rw_sync_object<fifo_object>);
 static_assert(is_readable_object_without_offset<fifo_object>);
 static_assert(is_writable_object_without_offset<fifo_object>);
+static_assert(is_nonblocking_readable_vec_object<fifo_object>);
