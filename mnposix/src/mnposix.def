@@ -296,3 +296,6 @@ stpncpy
 strlcat
 pselect
 getdelim
+ffs
+ffsl
+ffsll

@@ -296,6 +296,9 @@ stpncpy
 strlcat
 pselect
 getdelim
+ffs
+ffsl
+ffsll
 
 ; stubs
 mlock
@@ -314,8 +317,6 @@ psignal
 dprintf
 getlocalename_l
 alphasort
-ffs
-ffsl
 insque
 remque
 random

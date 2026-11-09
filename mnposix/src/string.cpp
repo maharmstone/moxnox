@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <algorithm>
+#include <bit>
 
 import ucrtbase;
 
@@ -244,4 +245,26 @@ size_t strlcat(char* dst, const char* src, size_t dstsize) {
     *dst = 0;
 
     return len + (src - orig_src);
+}
+
+static int do_ffs(unsigned_integral auto i) {
+    if (i == 0)
+        return 0;
+    else
+        return countr_zero(i) + 1;
+}
+
+extern "C"
+int ffs(int i) {
+    return do_ffs((unsigned int)i);
+}
+
+extern "C"
+int ffsl(long i) {
+    return do_ffs((unsigned long)i);
+}
+
+extern "C"
+int ffsll(long long i) {
+    return do_ffs((unsigned long long)i);
 }
