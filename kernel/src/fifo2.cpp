@@ -63,8 +63,12 @@ nt_status fifo_object::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
             lock_guard l(sl);
             lock_guard l2(lock);
 
-            if (buf_unread == 0)
+            if (buf_unread == 0) {
+                if (num_writers == 0)
+                    return nt_status::PIPE_DISCONNECTED;
+
                 continue;
+            }
 
             size_t buf_read_pos = buf_write_pos + (BUF_PAGES << PAGE_SHIFT) - buf_unread;
 
@@ -89,7 +93,7 @@ nt_status fifo_object::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
             buf_unread -= to_copy;
             copied += to_copy;
 
-            if (buf_unread == 0)
+            if (buf_unread == 0 && num_writers > 0)
                 signalled = false;
 
             if (!not_full_event.signalled)

@@ -1239,6 +1239,9 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                 if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)) {
                     fifo->num_writers++;
                     fifo->have_writers.set_holding_sync_lock();
+
+                    if (fifo->signalled && fifo->buf_unread == 0)
+                        fifo->signalled = false;
                 }
             }
 
@@ -1267,8 +1270,14 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                     if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)) {
                         fifo->num_writers--;
 
-                        if (fifo->num_writers == 0)
+                        if (fifo->num_writers == 0) {
                             fifo->have_writers.signalled = false;
+
+                            if (!fifo->signalled) {
+                                fifo->signalled = true;
+                                wake_up_waiters(fifo->waiters, WAIT_TYPE_READING);
+                            }
+                        }
                     }
                 }
 
@@ -2757,8 +2766,14 @@ void file::last_handle_closed() {
                 if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)) {
                     fifo->num_writers--;
 
-                    if (fifo->num_writers == 0)
+                    if (fifo->num_writers == 0) {
                         fifo->have_writers.signalled = false;
+
+                        if (!fifo->signalled) {
+                            fifo->signalled = true;
+                            wake_up_waiters(fifo->waiters, WAIT_TYPE_READING);
+                        }
+                    }
                 }
             }
 
