@@ -11,6 +11,7 @@ module;
 #include <memory>
 #include <stddef.h>
 #include <stdint.h>
+#include <signal.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include "assert.h"
@@ -41,6 +42,7 @@ import pipe;
 import process;
 import event;
 import scheduler;
+import interrupts;
 
 using namespace std;
 
@@ -1433,6 +1435,35 @@ nt_status vec_NtWriteFile(HANDLE file_handle, HANDLE, PIO_APC_ROUTINE, void*,
         status = object_write_with_offset(obj, v, *offset, written);
     else
         status = object_write_without_offset(obj, v, written);
+
+    if (status == nt_status::PIPE_BROKEN) {
+        auto mask = ((sigset_t)1 << (SIGPIPE - 1));
+        auto& t = *get_current_thread();
+
+        {
+            sync_lock sl;
+            lock_guard lock(sl);
+
+            if (t.blocked_signals & mask)
+                t.pending_signals |= mask;
+            else {
+                auto p = new pending_apc;
+
+                if (p) { // if we OOM, just drop the signal
+                    p->routine = (PS_APC_ROUTINE)(t.proc->ntdll_addr + mn_posix_signal);
+                    p->arg1 = (uintptr_t)SIGPIPE;
+                    p->arg2 = 0;
+                    p->arg3 = 0;
+
+                    {
+                        lock_guard lock(t.apc_lock);
+
+                        insert_tail_list(t.pending_apcs, p->le);
+                    }
+                }
+            }
+        }
+    }
 
     if (!success(status) || status == nt_status::USER_APC) {
         io_status_block->Status = status;
