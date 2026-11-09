@@ -2050,7 +2050,9 @@ ssize_t readv(int fd, const iovec* iov, int iovcnt) {
             continue;
         }
 
-        if (!success(status)) {
+        if (status == nt_status::END_OF_FILE || status == nt_status::PIPE_DISCONNECTED)
+            return 0;
+        else if (!success(status)) {
             *_errno() = nt_status_to_errno(status);
             return -1;
         }
