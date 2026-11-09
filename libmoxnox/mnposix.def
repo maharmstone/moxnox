@@ -295,6 +295,7 @@ stpcpy
 stpncpy
 strlcat
 pselect
+getdelim
 
 ; stubs
 mlock
@@ -303,7 +304,6 @@ posix_spawnattr_setschedpolicy
 posix_spawnattr_setschedparam
 pthread_cancel
 pthread_atfork
-getdelim
 pipe2
 fdatasync
 secure_getenv

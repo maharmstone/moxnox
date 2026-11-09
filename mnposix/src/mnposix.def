@@ -295,3 +295,4 @@ stpcpy
 stpncpy
 strlcat
 pselect
+getdelim

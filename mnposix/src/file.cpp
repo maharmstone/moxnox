@@ -29,7 +29,7 @@ import errno;
 using namespace std;
 
 extern "C"
-ssize_t getline(char** lineptr, size_t* pn, FILE* stream) {
+ssize_t getdelim(char** lineptr, size_t* pn, int delimiter, FILE* stream) {
     if (!lineptr || !pn) {
         *_errno() = EINVAL;
         return -1;
@@ -78,7 +78,7 @@ ssize_t getline(char** lineptr, size_t* pn, FILE* stream) {
 
         read++;
 
-        if ((char)c == '\n')
+        if (c == (unsigned char)delimiter)
             break;
     }
 
@@ -89,6 +89,11 @@ ssize_t getline(char** lineptr, size_t* pn, FILE* stream) {
         return -1;
 
     return (ssize_t)read;
+}
+
+extern "C"
+ssize_t getline(char** lineptr, size_t* pn, FILE* stream) {
+    return getdelim(lineptr, pn, '\n', stream);
 }
 
 extern "C"
