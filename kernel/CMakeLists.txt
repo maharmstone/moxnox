@@ -129,6 +129,7 @@ set(SRC_FILES src/kernel.cpp
     src/trace2.cpp
     src/afunix.cpp
     src/dhcp.cpp
+    src/pipe2.cpp
 )
 
 set(AMD64_SRC_FILES ${SRC_FILES}
