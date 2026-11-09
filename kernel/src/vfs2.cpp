@@ -38,6 +38,7 @@ import trace;
 import disable_interrupts;
 import kernel_time_page;
 import pipe;
+import process;
 
 using namespace std;
 
@@ -1220,9 +1221,16 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
             }
         }
 
-        fifo_object* fifo = nullptr;
+        auto ho = (handle_obj*)malloc(sizeof(handle_obj));
+        if (!ho) {
+            print("malloc failed\n");
+            delete f;
+            return nt_status::INSUFFICIENT_RESOURCES;
+        }
 
         if (ino.inode_type == inode_type::fifo && access_mask & (FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA)) {
+            fifo_object* fifo = nullptr;
+
             {
                 shared_lock lg(ino.inode_lock);
 
@@ -1239,12 +1247,14 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                 if (!fifo) {
                     print("new failed\n");
                     delete f;
+                    free(ho);
                     return nt_status::INSUFFICIENT_RESOURCES;
                 }
 
                 if (!fifo->init) {
                     delete f;
                     delete fifo;
+                    free(ho);
                     return nt_status::INSUFFICIENT_RESOURCES;
                 }
 
@@ -1272,26 +1282,12 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
                 fifo->num_writers++;
 
             // FIXME - block until other side opened
-        }
 
-        status = p->add_handle(*f, access_mask, shared_okay, h);
-        if (!success(status)) {
-            if (fifo) {
-                if (access_mask & FILE_READ_DATA)
-                    fifo->num_readers--;
-
-                if (access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA))
-                    fifo->num_writers--;
-
-                fifo->release();
-            }
-
-            delete f;
-            return status;
-        }
-
-        if (fifo)
             fifo->release();
+        }
+
+        f->handle_count++;
+        p->add_handle_no_alloc(*f, access_mask, h, ho);
 
         if (f->dentry)
             f->dentry->open_file_count++;

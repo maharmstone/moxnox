@@ -60,12 +60,6 @@ import apic;
 
 using namespace std;
 
-struct handle_obj {
-    rbtree_node<handle_t> tree;
-    object* obj;
-    uint32_t access_mask;
-};
-
 static rwsem ipi_lock;
 
 static const uint64_t MAX_USERSPACE_ADDRESS = 0xffffffffffff;
@@ -2340,19 +2334,8 @@ NTSTATUS NtSuspendProcess(HANDLE proc_handle) {
     return nt_status::SUCCESS;
 }
 
-nt_status process::add_handle(object& obj, uint32_t access_mask,
-                              bool allow_shared, handle_t& h) {
-    // FIXME - reusing handles?
-
-    if (obj.handle_count.fetch_add(1) > 0 && !allow_shared) {
-        obj.handle_count--;
-        return nt_status::SHARING_VIOLATION;
-    }
-
-    auto ho = (handle_obj*)malloc(sizeof(handle_obj));
-    if (!ho)
-        return nt_status::INSUFFICIENT_RESOURCES;
-
+void process::add_handle_no_alloc(object& obj, uint32_t access_mask,
+                                  handle_t& h, handle_obj* ho) {
     obj.acquire();
 
     {
@@ -2366,6 +2349,22 @@ nt_status process::add_handle(object& obj, uint32_t access_mask,
 
         insert_into_rbtree(handles, ho->tree);
     }
+}
+
+nt_status process::add_handle(object& obj, uint32_t access_mask,
+                              bool allow_shared, handle_t& h) {
+    // FIXME - reusing handles?
+
+    if (obj.handle_count.fetch_add(1) > 0 && !allow_shared) {
+        obj.handle_count--;
+        return nt_status::SHARING_VIOLATION;
+    }
+
+    auto ho = (handle_obj*)malloc(sizeof(handle_obj));
+    if (!ho)
+        return nt_status::INSUFFICIENT_RESOURCES;
+
+    add_handle_no_alloc(obj, access_mask, h, ho);
 
     return nt_status::SUCCESS;
 }

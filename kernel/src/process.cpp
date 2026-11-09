@@ -85,6 +85,12 @@ export struct sig_waiter {
     void* t;
 };
 
+export struct handle_obj {
+    rbtree_node<handle_t> tree;
+    object* obj;
+    uint32_t access_mask;
+};
+
 export class process : public sync_object {
 public:
     process(process_group& pg);
@@ -111,6 +117,8 @@ public:
     void resume();
     nt_status add_handle(object& obj, uint32_t access_mask, bool allow_shared,
                         handle_t& h);
+    void add_handle_no_alloc(object& obj, uint32_t access_mask, handle_t& h,
+                             handle_obj* ho);
     NTSTATUS allocate_vm(void** base_address, uintptr_t zero_bits, size_t* region_size,
                          uint32_t allocation_type, enum mapping_type protect);
     NTSTATUS free_vm(void** base_address, size_t* region_size, uint32_t free_type);
