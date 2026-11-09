@@ -70,6 +70,7 @@ set(GLOBAL_MODULES src/cmdline.cpp
     src/vec.cpp
     src/urandom.cpp
     src/chacha20.cpp
+    src/fifo.cpp
 )
 
 set(AMD64_MODULES ${GLOBAL_MODULES}
@@ -131,6 +132,7 @@ set(SRC_FILES src/kernel.cpp
     src/dhcp.cpp
     src/pipe2.cpp
     src/event2.cpp
+    src/fifo2.cpp
 )
 
 set(AMD64_SRC_FILES ${SRC_FILES}

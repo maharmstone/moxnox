@@ -20,6 +20,7 @@ import rwsem;
 import page_cache;
 import format;
 import mem;
+import fifo;
 
 using namespace std;
 
@@ -95,8 +96,6 @@ public:
     list_entry writeback_list = { &writeback_list, &writeback_list };
     bool readonly = false;
 };
-
-class fifo_object;
 
 export class inode : public object {
 public:

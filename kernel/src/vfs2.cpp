@@ -85,38 +85,6 @@ struct mount_point {
     atomic<unsigned int> refcount = 1;
 };
 
-class fifo_object {
-public:
-    fifo_object() {
-        auto pp = new pipe(1);
-        if (!pp) {
-            print("new failed\n");
-            return;
-        }
-
-        p = object_ref{*pp};
-        init = true;
-    }
-
-    void acquire() {
-        refcount++;
-    }
-
-    void release() {
-        if (refcount.fetch_sub(1) == 1)
-            delete this;
-    }
-
-    atomic<unsigned int> refcount = 1;
-    object_ref p;
-    bool init = false;
-    spinlock lock;
-    unsigned int num_readers = 0;
-    unsigned int num_writers = 0;
-    event have_readers{false};
-    event have_writers{false};
-};
-
 static object_ref vfsctl_obj;
 
 static rwsem mount_points_lock;
@@ -1500,8 +1468,7 @@ nt_status inode::read(span<const span<uint8_t>> v, uint64_t offset,
     }
 
     if (f) {
-        auto& p = static_cast<pipe&>(f->p.get());
-        auto ret = p.read(v, read_bytes);
+        auto ret = f->read(v, read_bytes);
 
         f->release();
 
@@ -1568,8 +1535,7 @@ nt_status inode::write(span<const span<const uint8_t>> v, uint64_t offset,
     }
 
     if (f) {
-        auto& p = static_cast<pipe&>(f->p.get());
-        auto ret = p.write(v, written_bytes);
+        auto ret = f->write(v, written_bytes);
 
         f->release();
 
