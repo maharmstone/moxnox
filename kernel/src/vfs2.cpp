@@ -2286,10 +2286,14 @@ nt_status file::set_eof(span<const uint8_t> buffer) {
     if (feofi.EndOfFile.QuadPart < 0)
         return nt_status::INVALID_PARAMETER;
 
+    auto now = (uint64_t)kernel_time_page.system_time + kernel_time_page.system_time_offset;
+
     {
         lock_guard lock(i.inode_lock);
 
         i.file_size = (uint64_t)feofi.EndOfFile.QuadPart;
+        i.mtime = now;
+        i.ctime = now;
     }
 
     i.cache.mark_dirty();
