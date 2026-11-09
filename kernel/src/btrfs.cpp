@@ -7366,20 +7366,26 @@ NTSTATUS btrfs_inode::query_information(span<uint8_t> buffer,
 }
 
 void btrfs_inode::last_handle_closed() {
+    bool unlinked = false;
+
     {
         shared_lock lg(inode_lock);
 
-        if (ii.nlink != 0)
-            return;
+        if (ii.nlink == 0)
+            unlinked = true;
     }
 
-    // FIXME - we can put this in a worker rather than doing it straightaway
+    if (unlinked) {
+        // FIXME - we can put this in a worker rather than doing it straightaway
 
-    {
-        lock_guard lg(fs.trans_lock);
+        {
+            lock_guard lg(fs.trans_lock);
 
-        remove_orphan(false); // FIXME - what if it fails?
+            remove_orphan(false); // FIXME - what if it fails?
+        }
     }
+
+    inode::last_handle_closed();
 }
 
 nt_status btrfs_inode::remove_orphan(bool no_orphan_item) {

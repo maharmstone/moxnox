@@ -96,6 +96,8 @@ public:
     bool readonly = false;
 };
 
+class fifo_object;
+
 export class inode : public object {
 public:
     inode(filesystem& fs) : object(object_type::inode), fs(fs) {
@@ -132,7 +134,7 @@ public:
     virtual nt_status fs_control(uint32_t code, span<const uint8_t> inbuf,
                                  span<uint8_t> outbuf, uint32_t& retlen,
                                  dentry* dentry) = 0;
-    virtual void last_handle_closed() = 0;
+    virtual void last_handle_closed();
 
     virtual nt_status read_into_cache(uint64_t page_num, uint64_t num_pages,
                                       uint64_t& read_pages) = 0;
@@ -145,12 +147,14 @@ public:
     enum inode_type inode_type;
     page_cache<inode> cache{*this};
     list_entry writeback_le;
+    fifo_object* fifo = nullptr;
 };
 
 static_assert(is_readable_object_with_offset<inode>);
 static_assert(is_writable_object_with_offset<inode>);
 static_assert(cacheable_flushable<inode>);
 static_assert(cache_supports_writeback<inode>);
+static_assert(has_last_handle_closed<inode>);
 
 export enum class dentry_status {
     valid,

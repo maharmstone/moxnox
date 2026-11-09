@@ -37,6 +37,7 @@ import rangelock;
 import trace;
 import disable_interrupts;
 import kernel_time_page;
+import pipe;
 
 using namespace std;
 
@@ -79,6 +80,33 @@ struct mount_point {
     volume* vol = nullptr;
     dentry& d;
     atomic<unsigned int> refcount = 1;
+};
+
+class fifo_object {
+public:
+    fifo_object() {
+        auto pp = new pipe(1);
+        if (!pp) {
+            print("new failed\n");
+            return;
+        }
+
+        p = object_ref{*pp};
+        init = true;
+    }
+
+    void acquire() {
+        refcount++;
+    }
+
+    void release() {
+        if (refcount.fetch_sub(1) == 1)
+            delete this;
+    }
+
+    atomic<unsigned int> refcount = 1;
+    object_ref p;
+    bool init = false;
 };
 
 static object_ref vfsctl_obj;
@@ -1142,7 +1170,7 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
     handle_t h;
 
     if (ino_ref.get().type == object_type::inode) {
-        const auto& ino = static_cast<inode&>(ino_ref.get());
+        auto& ino = static_cast<inode&>(ino_ref.get());
 
         if (create_options & FILE_NON_DIRECTORY_FILE && ino.inode_type == inode_type::directory) {
             if (drw)
@@ -1156,7 +1184,7 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
             return nt_status::NOT_A_DIRECTORY;
         }
 
-        auto f = new file(ino_ref.get(), create_options);
+        auto f = new file(ino, create_options);
 
         if (!f) {
             if (drw)
@@ -1167,6 +1195,56 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
 
         if (drw)
             f->dentry = &drw->get();
+
+        if (ino.inode_type == inode_type::fifo) {
+            fifo_object* fifo = nullptr;
+
+            {
+                shared_lock lg(ino.inode_lock);
+
+                if (ino.fifo) {
+                    ino.fifo->acquire();
+                    fifo = ino.fifo;
+                }
+            }
+
+            if (!fifo) {
+                fifo_object* old_fifo = nullptr;
+
+                fifo = new fifo_object;
+                if (!fifo) {
+                    print("new failed\n");
+                    delete f;
+                    return nt_status::INSUFFICIENT_RESOURCES;
+                }
+
+                if (!fifo->init) {
+                    delete f;
+                    delete fifo;
+                    return nt_status::INSUFFICIENT_RESOURCES;
+                }
+
+                {
+                    lock_guard lg(ino.inode_lock);
+
+                    if (ino.fifo) {
+                        ino.fifo->acquire();
+                        old_fifo = fifo;
+                        fifo = ino.fifo;
+                    } else {
+                        ino.fifo = fifo;
+                        fifo->acquire();
+                    }
+                }
+
+                if (old_fifo)
+                    old_fifo->release();
+            }
+
+            // FIXME - block until other side opened
+
+            fifo->release();
+        }
 
         if (access_mask & GENERIC_READ) {
             access_mask &= ~GENERIC_READ;
@@ -1345,13 +1423,37 @@ nt_status inode::read(span<const span<uint8_t>> v, uint64_t offset,
                       uint64_t& read_bytes) {
     uint64_t size;
     size_t vec_size = get_vec_size(v);
+    fifo_object* f = nullptr;
 
     {
         shared_lock lock(inode_lock);
-        size = file_size;
 
-        if (inode_type != inode_type::file)
-            return nt_status::INVALID_PARAMETER;
+        switch (inode_type) {
+            case inode_type::file:
+                size = file_size;
+                break;
+
+            case inode_type::fifo:
+                if (!fifo)
+                    return nt_status::INTERNAL_ERROR;
+
+                f = fifo;
+                f->acquire();
+
+                break;
+
+            default:
+                return nt_status::INVALID_PARAMETER;
+        }
+    }
+
+    if (f) {
+        auto& p = static_cast<pipe&>(f->p.get());
+        auto ret = p.read(v, read_bytes);
+
+        f->release();
+
+        return ret;
     }
 
     if (offset >= size)
@@ -1381,19 +1483,45 @@ nt_status inode::write(span<const span<const uint8_t>> v, uint64_t offset,
         return nt_status::SUCCESS;
     }
 
-    auto now = (uint64_t)kernel_time_page.system_time + kernel_time_page.system_time_offset;
+    fifo_object* f = nullptr;
 
     {
         lock_guard lock(inode_lock);
 
-        if (inode_type != inode_type::file)
-            return nt_status::INVALID_PARAMETER;
+        switch (inode_type) {
+            case inode_type::file: {
+                auto now = (uint64_t)kernel_time_page.system_time + kernel_time_page.system_time_offset;
 
-        if (file_size < offset + vec_size)
-            file_size = offset + vec_size;
+                if (file_size < offset + vec_size)
+                    file_size = offset + vec_size;
 
-        mtime = now;
-        ctime = now;
+                mtime = now;
+                ctime = now;
+
+                break;
+            }
+
+            case inode_type::fifo:
+                if (!fifo)
+                    return nt_status::INTERNAL_ERROR;
+
+                f = fifo;
+                f->acquire();
+
+                break;
+
+            default:
+                return nt_status::INVALID_PARAMETER;
+        }
+    }
+
+    if (f) {
+        auto& p = static_cast<pipe&>(f->p.get());
+        auto ret = p.write(v, written_bytes);
+
+        f->release();
+
+        return ret;
     }
 
     written_bytes = cache.write_vec(v, offset);
@@ -3401,4 +3529,20 @@ NTSTATUS NtQueryVolumeInformationFile(HANDLE file_handle, IO_STATUS_BLOCK* iosb,
         iosb->Information = retlen;
 
     return ret;
+}
+
+void inode::last_handle_closed() {
+    fifo_object* f = nullptr;
+
+    {
+        lock_guard lock(inode_lock);
+
+        if (handle_count != 0) // avoid race
+            return;
+
+        swap(f, fifo);
+    }
+
+    if (f)
+        f->release();
 }
