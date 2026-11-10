@@ -300,3 +300,4 @@ ffs
 ffsl
 ffsll
 pthread_atfork
+pipe2

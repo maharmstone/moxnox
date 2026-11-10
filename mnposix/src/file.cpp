@@ -355,7 +355,7 @@ int truncate(const char* path, off_t length) {
 }
 
 extern "C"
-int pipe(int* pfds) {
+int pipe2(int* pfds, int flag) {
     OBJECT_ATTRIBUTES oa;
     UNICODE_STRING us;
     IO_STATUS_BLOCK iosb;
@@ -365,6 +365,11 @@ int pipe(int* pfds) {
     int server_fd, client_fd;
 
     static atomic<unsigned int> counter = 1;
+
+    if (flag & ~(O_NONBLOCK | O_CLOEXEC)) {
+        *_errno() = EINVAL;
+        return -1;
+    }
 
     memset(&oa, 0, sizeof(oa));
     oa.Length = sizeof(OBJECT_ATTRIBUTES);
@@ -399,14 +404,36 @@ int pipe(int* pfds) {
         return -1;
     }
 
-    client_fd = _open_osfhandle(client_handle, 0);
+    if (flag & O_NONBLOCK) {
+        bool nonblock = true;
+
+        status = NtSetInformationFile(client_handle, &iosb, &nonblock, sizeof(nonblock),
+                                      FILE_INFORMATION_CLASS::MoxnoxPosixNonBlock);
+        if (!success(status)) {
+            *_errno() = nt_status_to_errno(status);
+            NtClose(client_handle);
+            NtClose(server_handle);
+            return -1;
+        }
+
+        status = NtSetInformationFile(server_handle, &iosb, &nonblock, sizeof(nonblock),
+                                      FILE_INFORMATION_CLASS::MoxnoxPosixNonBlock);
+        if (!success(status)) {
+            *_errno() = nt_status_to_errno(status);
+            NtClose(client_handle);
+            NtClose(server_handle);
+            return -1;
+        }
+    }
+
+    client_fd = _open_osfhandle(client_handle, flag & O_CLOEXEC);
     if (client_fd == -1) {
         NtClose(client_handle);
         NtClose(server_handle);
         return -1;
     }
 
-    server_fd = _open_osfhandle(server_handle, 0);
+    server_fd = _open_osfhandle(server_handle, flag & O_CLOEXEC);
     if (server_fd == -1) {
         close(client_fd);
         NtClose(server_handle);
@@ -417,6 +444,11 @@ int pipe(int* pfds) {
     pfds[1] = server_fd;
 
     return 0;
+}
+
+extern "C"
+int pipe(int* pfds) {
+    return pipe2(pfds, 0);
 }
 
 extern "C"
