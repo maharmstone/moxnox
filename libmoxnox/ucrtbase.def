@@ -407,8 +407,9 @@ tanhl == tanh
 tanl == tan
 mbrtoc32
 c32rtomb
+_putenv
+putenv == _putenv
 
 ; stubs
 imaxabs
 _wcsdup
-_putenv

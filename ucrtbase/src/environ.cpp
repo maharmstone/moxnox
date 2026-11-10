@@ -77,3 +77,113 @@ errno_t _getenv_s(size_t* len, char* value, rsize_t valuesz, const char* name) {
 
     return 0;
 }
+
+static size_t count_env_vars() {
+    size_t ret = 0;
+    auto env = *___p__environ();
+
+    while (*env) {
+        ret++;
+        env++;
+    }
+
+    return ret;
+}
+
+extern "C"
+int _putenv(char* string) {
+    auto sv = string_view(string);
+
+    auto env = *___p__environ();
+    if (!env) {
+        *__errno() = EINVAL;
+        return -1;
+    }
+
+    // FIXME - about copy of environment variables in PEB?
+
+    if (auto eq = sv.find('='); eq != string_view::npos) {
+        auto name = string_view(sv.data(), eq);
+
+        while (*env) {
+            auto sv2 = string_view(*env);
+
+            auto eq2 = sv2.find('=');
+
+            if (eq2 == string_view::npos) {
+                env++;
+                continue;
+            }
+
+            // replace
+            if (string_view(sv2.data(), eq2) == name) {
+                *env = string;
+                return 0;
+            }
+
+            env++;
+        }
+
+        // add new
+
+        auto count = count_env_vars();
+        auto new_env = (char**)malloc((count + 2) * sizeof(char*));
+
+        if (!new_env) {
+            *__errno() = ENOMEM;
+            return -1;
+        }
+
+        env = *___p__environ();
+
+        memcpy(new_env, env, count * sizeof(char*));
+        new_env[count] = string;
+        new_env[count + 1] = nullptr;
+
+        *___p__environ() = new_env;
+        free(env);
+
+        return 0;
+    } else {
+        size_t index = 0;
+        while (*env) {
+            auto sv2 = string_view(*env);
+
+            auto eq2 = sv2.find('=');
+            string_view name;
+
+            if (eq2 == string_view::npos)
+                name = sv2;
+            else
+                name = string_view(sv2.data(), eq2);
+
+            // remove
+            if (name == sv) {
+                auto count = count_env_vars();
+                auto new_env = (char**)malloc(count * sizeof(char*));
+
+                if (!new_env) {
+                    *__errno() = ENOMEM;
+                    return -1;
+                }
+
+                env = *___p__environ();
+                memcpy(new_env, env, index * sizeof(char*));
+                memcpy(&new_env[index], &env[index + 1], (count - index) * sizeof(char*));
+
+                *___p__environ() = new_env;
+                free(env);
+
+                return 0;
+            }
+
+            env++;
+            index++;
+        }
+
+        // not found
+
+        *__errno() = EINVAL;
+        return -1;
+    }
+}

@@ -55,7 +55,8 @@ static int update_ucrt_env(string_view name, string_view value) {
         }
 
         swap(env[num_entries], ent);
-        free(ent);
+
+        // not freeing ent because of putenv
 
         return 0;
     }
@@ -261,7 +262,8 @@ static int update_ucrt_env_remove(string_view name) {
         if (i != num_entries - 1)
             swap(env[num_entries - 1], env[i]);
 
-        free(env[num_entries - 1]);
+        // not freeing because of putenv
+
         env[num_entries - 1] = nullptr;
         num_entries--;
     }
