@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include <dlfcn.h>
+#include <stdlib.h>
 #include <memory>
 #include <string_view>
 #include <span>
@@ -12,6 +13,7 @@ import ntdll;
 import unique_handle;
 import unicode;
 import format;
+import list;
 
 #undef errno
 import errno;
@@ -25,6 +27,16 @@ static thread_local char dl_error_string[255];
 static thread_local bool dl_error_pending;
 
 static thread_local char prog_name[100];
+
+struct atfork_func {
+    list_entry le;
+    void (*func)();
+};
+
+static RTL_SRWLOCK atfork_lock;
+static list_entry prepare_atfork = { &prepare_atfork, &prepare_atfork };
+static list_entry parent_atfork = { &parent_atfork, &parent_atfork };
+static list_entry child_atfork = { &child_atfork, &child_atfork };
 
 extern "C"
 pid_t getsid(pid_t pid) {
@@ -302,16 +314,53 @@ pid_t fork() {
     uintptr_t pid = 0;
     void* ptr = &pid;
 
+    RtlAcquireSRWLockShared(&atfork_lock);
+
+    for (auto le = prepare_atfork.prev; le != &prepare_atfork; le = le->prev) {
+        auto& s = containing_record<atfork_func>(le);
+
+        s.func();
+    }
+
+    RtlReleaseSRWLockShared(&atfork_lock);
+
     status = NtSetInformationProcess(NtCurrentProcess(),
                                      PROCESS_INFORMATION_CLASS::MoxnoxFork,
                                      &ptr, sizeof(ptr));
     if (!success(status)) {
+        RtlAcquireSRWLockShared(&atfork_lock);
+
+        for (auto le = parent_atfork.next; le != &parent_atfork; le = le->next) {
+            auto& s = containing_record<atfork_func>(le);
+
+            s.func();
+        }
+
+        RtlReleaseSRWLockShared(&atfork_lock);
+
         *_errno() = nt_status_to_errno(status);
         return -1;
     }
 
-    if (pid == 0)
+    if (pid == 0) {
         mn_clear_alarm_on_fork();
+
+        for (auto le = child_atfork.next; le != &child_atfork; le = le->next) {
+            auto& s = containing_record<atfork_func>(le);
+
+            s.func();
+        }
+    } else {
+        RtlAcquireSRWLockShared(&atfork_lock);
+
+        for (auto le = parent_atfork.next; le != &parent_atfork; le = le->next) {
+            auto& s = containing_record<atfork_func>(le);
+
+            s.func();
+        }
+
+        RtlReleaseSRWLockShared(&atfork_lock);
+    }
 
     return (pid_t)pid;
 }
@@ -348,4 +397,65 @@ const char* getprogname() {
         prog_name[len] = 0;
 
     return prog_name;
+}
+
+extern "C"
+int pthread_atfork(void (*prepare)(), void (*parent)(),
+                   void (*child)()) {
+    atfork_func* sprepare;
+    atfork_func* sparent;
+    atfork_func* schild;
+
+    if (!prepare && !parent && !child)
+        return 0;
+
+    if (prepare) {
+        sprepare = (atfork_func*)malloc(sizeof(atfork_func));
+        if (!sprepare)
+            return ENOMEM;
+
+        sprepare->func = prepare;
+    }
+
+    if (parent) {
+        sparent = (atfork_func*)malloc(sizeof(atfork_func));
+        if (!sparent) {
+            if (prepare)
+                free(sprepare);
+
+            return ENOMEM;
+        }
+
+        sparent->func = parent;
+    }
+
+    if (child) {
+        schild = (atfork_func*)malloc(sizeof(atfork_func));
+        if (!schild) {
+            if (prepare)
+                free(sprepare);
+
+            if (parent)
+                free(sparent);
+
+            return ENOMEM;
+        }
+
+        schild->func = child;
+    }
+
+    RtlAcquireSRWLockExclusive(&atfork_lock);
+
+    if (prepare)
+        insert_tail_list(prepare_atfork, sprepare->le);
+
+    if (parent)
+        insert_tail_list(parent_atfork, sparent->le);
+
+    if (child)
+        insert_tail_list(child_atfork, schild->le);
+
+    RtlReleaseSRWLockExclusive(&atfork_lock);
+
+    return 0;
 }

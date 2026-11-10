@@ -299,6 +299,7 @@ getdelim
 ffs
 ffsl
 ffsll
+pthread_atfork
 
 ; stubs
 mlock
@@ -306,7 +307,6 @@ munlock
 posix_spawnattr_setschedpolicy
 posix_spawnattr_setschedparam
 pthread_cancel
-pthread_atfork
 pipe2
 fdatasync
 secure_getenv
