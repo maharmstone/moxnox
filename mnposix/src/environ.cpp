@@ -381,3 +381,10 @@ int unsetenv(const char* name) {
 
     return update_ucrt_env_remove(namesv);
 }
+
+extern "C"
+char* secure_getenv(const char* name) {
+    // FIXME - if uid and euid or gid and egid differ, should be returning NULL
+
+    return getenv(name);
+}
