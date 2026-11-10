@@ -858,6 +858,13 @@ int fsync(int /*fd*/) {
 }
 
 extern "C"
+int fdatasync(int /*fd*/) {
+    // FIXME - do this properly
+
+    return 0;
+}
+
+extern "C"
 int linkat(int olddirfd, const char* oldpath, int newdirfd, const char* newpath,
            int flags) {
     auto peb = NtCurrentTeb()->ProcessEnvironmentBlock;

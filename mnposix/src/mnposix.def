@@ -301,3 +301,4 @@ ffsl
 ffsll
 pthread_atfork
 pipe2
+fdatasync

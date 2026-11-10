@@ -301,6 +301,7 @@ ffsl
 ffsll
 pthread_atfork
 pipe2
+fdatasync
 
 ; stubs
 mlock
@@ -308,7 +309,6 @@ munlock
 posix_spawnattr_setschedpolicy
 posix_spawnattr_setschedparam
 pthread_cancel
-fdatasync
 secure_getenv
 sig2str
 str2sig
