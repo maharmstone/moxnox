@@ -409,7 +409,8 @@ mbrtoc32
 c32rtomb
 _putenv
 putenv == _putenv
+_wcsdup
+wcsdup == _wcsdup
 
 ; stubs
 imaxabs
-_wcsdup

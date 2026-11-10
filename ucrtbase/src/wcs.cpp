@@ -460,3 +460,16 @@ wchar_t* wcscat(wchar_t* dest, const wchar_t* src) {
 
     return orig_dest;
 }
+
+extern "C"
+wchar_t* _wcsdup(const wchar_t* string) {
+    auto sv = wstring_view(string);
+
+    auto ret = (wchar_t*)malloc((sv.size() + 1) * sizeof(wchar_t));
+    if (!ret)
+        return nullptr;
+
+    memcpy(ret, string, (sv.size() + 1) * sizeof(wchar_t));
+
+    return ret;
+}
