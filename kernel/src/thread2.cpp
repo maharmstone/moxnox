@@ -1316,6 +1316,7 @@ static nt_status do_poll(span<const uint8_t> buffer) {
     }
 
     unsigned int index, raw_index = mwb->index;
+    wait_type_t wait_type = mwb->wait_type;
 
     free(mwb);
 
@@ -1360,7 +1361,13 @@ static nt_status do_poll(span<const uint8_t> buffer) {
         return status;
     }
 
-    entries[index].revents = POLLIN;
+    entries[index].revents = 0;
+
+    if (wait_type & WAIT_TYPE_READING && entries[index].events & POLLIN)
+        entries[index].revents |= POLLIN;
+
+    if (wait_type & WAIT_TYPE_WRITING && entries[index].events & POLLOUT)
+        entries[index].revents |= POLLOUT;
 
     for (size_t i = 0; i < p.nfds; i++) {
         if (objs[i])

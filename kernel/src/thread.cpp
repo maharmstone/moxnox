@@ -249,6 +249,7 @@ export struct multiple_wait_block {
     ::thread* t;
     atomic<unsigned int> left;
     unsigned int index;
+    wait_type_t wait_type;
     unsigned int num_entries;
     waiter_object_multiple entries[0];
 };

@@ -480,8 +480,10 @@ unsigned int wake_up_waiters(list_entry& waiters, wait_type_t wait_type) {
                     for (unsigned int i = 0; i < block.num_entries; i++) {
                         if (!block.entries[i].done)
                             remove_entry_list(block.entries[i].wait_le);
-                        else if (&block.entries[i] == &wom)
+                        else if (&block.entries[i] == &wom) {
                             t.multwait->index = i;
+                            t.multwait->wait_type = wait_type;
+                        }
                     }
 
                     t.multwait = nullptr;
