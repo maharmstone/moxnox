@@ -2757,8 +2757,15 @@ FILE* __popen(const char* command, const char* type) {
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
     bool write_mode;
-    int pipefds[2];
     unique_ptr<char16_t[]> cmdline;
+    OBJECT_ATTRIBUTES oa;
+    UNICODE_STRING us;
+    IO_STATUS_BLOCK iosb;
+    HANDLE server_handle, client_handle;
+    nt_status status;
+    char16_t pipename[50];
+
+    static atomic<unsigned int> counter = 1;
 
     static const u16string_view DASH_C = u" -c ";
 
@@ -2817,8 +2824,38 @@ FILE* __popen(const char* command, const char* type) {
 
     // create pipe
 
-    if (__pipe(pipefds, 0, 0))
+    memset(&oa, 0, sizeof(oa));
+    oa.Length = sizeof(OBJECT_ATTRIBUTES);
+    oa.ObjectName = &us;
+
+    {
+        char s[50];
+        span sp(s, sizeof(s));
+
+        sp = format(sp, "/dev/pipe_{}_popen{}", _getpid(), counter.fetch_add(1));
+
+        auto name = string_view(s, (size_t)(sp.data() - s));
+
+        utf8_to_utf16(pipename, name);
+
+        us.Length = us.MaximumLength = (uint16_t)(utf8_to_utf16_len(name) * sizeof(char16_t));
+        us.Buffer = pipename;
+    }
+
+    status = NtCreateNamedPipeFile(&server_handle, FILE_WRITE_DATA, &oa, &iosb,
+                                    0, FILE_CREATE, 0, 0, 0, 0, 1, 0, 0,
+                                    nullptr);
+    if (!success(status)) {
+        *__errno() = nt_status_to_errno(status);
         return nullptr;
+    }
+
+    status = NtOpenFile(&client_handle, FILE_READ_DATA, &oa, &iosb, 0, 0);
+    if (!success(status)) {
+        *__errno() = nt_status_to_errno(status);
+        NtClose(server_handle);
+        return nullptr;
+    }
 
     // launch process
 
@@ -2829,36 +2866,46 @@ FILE* __popen(const char* command, const char* type) {
     si.dwFlags = STARTF_USESTDHANDLES;
 
     if (write_mode) {
-        si.hStdInput = (HANDLE)__get_osfhandle(pipefds[0]);
+        si.hStdInput = client_handle;
         si.hStdOutput = peb.ProcessParameters->StandardOutput;
     } else {
         si.hStdInput = peb.ProcessParameters->StandardInput;
-        si.hStdOutput = (HANDLE)__get_osfhandle(pipefds[1]);
+        si.hStdOutput = server_handle;
     }
 
     si.hStdError = peb.ProcessParameters->StandardError;
 
     if (!CreateProcessW(u16shell, cmdline.get(), nullptr, nullptr, false, 0,
                         nullptr, nullptr, &si, &pi)) {
-        __close(pipefds[0]);
-        __close(pipefds[1]);
+        NtClose(client_handle);
+        NtClose(server_handle);
 
         *__errno() = EINVAL;
         return nullptr;
     }
 
     if (write_mode)
-        __close(pipefds[0]);
+        NtClose(client_handle);
     else
-        __close(pipefds[1]);
+        NtClose(server_handle);
 
     NtClose(pi.hThread);
 
     // create FILE
 
-    auto fd = write_mode ? pipefds[1] : pipefds[0];
+    auto fd = __open_osfhandle(write_mode ? server_handle : client_handle, 0);
+    if (fd == -1) {
+        if (write_mode)
+            NtClose(server_handle);
+        else
+            NtClose(client_handle);
 
-    auto f = new _FILE((HANDLE)__get_osfhandle(fd), fd, !write_mode, write_mode);
+        NtClose(pi.hProcess);
+        return nullptr;
+    }
+
+    auto f = new _FILE(write_mode ? server_handle : client_handle, fd,
+                       !write_mode, write_mode);
     if (!f) {
         __close(fd);
         NtClose(pi.hProcess);
