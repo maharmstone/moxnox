@@ -64,16 +64,25 @@ int ppoll(pollfd* fds, nfds_t nfds, const timespec* timeout,
         for (size_t i = 0; i < nfds; i++) {
             auto e = *_errno();
 
-            auto h = (HANDLE)_get_osfhandle((int)fds[i].fd);
-
-            if ((intptr_t)h == -1) {
+            if (fds[i].fd < 0) {
                 entries[i].h = 0;
-                *_errno() = e;
-            } else
-                entries[i].h = h;
+                entries[i].revents = 0;
+            } else {
+                auto h = (HANDLE)_get_osfhandle((int)fds[i].fd);
+
+                if ((intptr_t)h == -1) {
+                    entries[i].h = 0;
+                    entries[i].revents = POLLNVAL;
+                    p.timeout = 0;
+
+                    *_errno() = e;
+                } else {
+                    entries[i].h = h;
+                    entries[i].revents = 0;
+                }
+            }
 
             entries[i].events = (uint16_t)fds[i].events;
-            entries[i].revents = 0;
         }
     }
 
