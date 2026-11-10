@@ -190,6 +190,14 @@ int pselect(int nfds, fd_set* readfds, fd_set* writefds, fd_set* errorfds,
 
     auto r = ppoll(pfds, (nfds_t)npfds, timeout, sigmask);
 
+    for (int i = 0; i < npfds; i++) {
+        if (pfds[i].revents & POLLNVAL) {
+            free(pfds);
+            *_errno() = EBADF;
+            return -1;
+        }
+    }
+
     if (r >= 0) {
         if (readfds)
             FD_ZERO(readfds);
