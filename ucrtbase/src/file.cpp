@@ -2758,6 +2758,7 @@ FILE* __popen(const char* command, const char* type) {
     PROCESS_INFORMATION pi;
     bool write_mode;
     int pipefds[2];
+    unique_ptr<char16_t[]> cmdline;
 
     static const u16string_view DASH_C = u" -c ";
 
@@ -2802,23 +2803,22 @@ FILE* __popen(const char* command, const char* type) {
     auto u16cmdlen = utf8_to_utf16_len(cmd);
 
     auto cmdlinelen = u16shelllen + DASH_C.size() + u16cmdlen + 1;
-    auto cmdline = (char16_t*)malloc(cmdlinelen * sizeof(char16_t));
+
+    cmdline.reset(new char16_t[cmdlinelen]);
     if (!cmdline) {
         *__errno() = ENOMEM;
         return nullptr;
     }
 
-    memcpy(cmdline, u16shell, u16shelllen * sizeof(char16_t));
-    memcpy(cmdline + u16shelllen, DASH_C.data(), DASH_C.size() * sizeof(char16_t));
-    utf8_to_utf16(span(cmdline + u16shelllen + DASH_C.size(), u16cmdlen), cmd);
+    memcpy(cmdline.get(), u16shell, u16shelllen * sizeof(char16_t));
+    memcpy(cmdline.get() + u16shelllen, DASH_C.data(), DASH_C.size() * sizeof(char16_t));
+    utf8_to_utf16(span(cmdline.get() + u16shelllen + DASH_C.size(), u16cmdlen), cmd);
     cmdline[u16shelllen + DASH_C.size() + u16cmdlen] = 0;
 
     // create pipe
 
-    if (__pipe(pipefds, 0, 0)) {
-        free(cmdline);
+    if (__pipe(pipefds, 0, 0))
         return nullptr;
-    }
 
     // launch process
 
@@ -2838,9 +2838,8 @@ FILE* __popen(const char* command, const char* type) {
 
     si.hStdError = peb.ProcessParameters->StandardError;
 
-    if (!CreateProcessW(u16shell, cmdline, nullptr, nullptr, false, 0, nullptr,
-                        nullptr, &si, &pi)) {
-        free(cmdline);
+    if (!CreateProcessW(u16shell, cmdline.get(), nullptr, nullptr, false, 0,
+                        nullptr, nullptr, &si, &pi)) {
         __close(pipefds[0]);
         __close(pipefds[1]);
 
@@ -2852,8 +2851,6 @@ FILE* __popen(const char* command, const char* type) {
         __close(pipefds[0]);
     else
         __close(pipefds[1]);
-
-    free(cmdline);
 
     NtClose(pi.hThread);
 
