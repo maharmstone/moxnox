@@ -228,7 +228,6 @@ scalbnf
 scalbln
 scalblnf
 tmpfile
-_pipe
 _popen
 _pclose
 setbuf

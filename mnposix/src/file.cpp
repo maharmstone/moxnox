@@ -14,12 +14,14 @@
 #include <span>
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 import nt;
 import ntdll;
 import unicode;
 import unique_handle;
 import print;
+import format;
 import ucrtbase;
 import moxnox_ioctls;
 
@@ -354,7 +356,67 @@ int truncate(const char* path, off_t length) {
 
 extern "C"
 int pipe(int* pfds) {
-    return _pipe(pfds, 0, 0);
+    OBJECT_ATTRIBUTES oa;
+    UNICODE_STRING us;
+    IO_STATUS_BLOCK iosb;
+    HANDLE server_handle, client_handle;
+    nt_status status;
+    char16_t pipename[50];
+    int server_fd, client_fd;
+
+    static atomic<unsigned int> counter = 1;
+
+    memset(&oa, 0, sizeof(oa));
+    oa.Length = sizeof(OBJECT_ATTRIBUTES);
+    oa.ObjectName = &us;
+
+    {
+        char s[50];
+        span sp(s, sizeof(s));
+
+        sp = format(sp, "/dev/pipe_{}_{}", getpid(), counter.fetch_add(1));
+
+        auto name = string_view(s, (size_t)(sp.data() - s));
+
+        utf8_to_utf16(pipename, name);
+
+        us.Length = us.MaximumLength = (uint16_t)(utf8_to_utf16_len(name) * sizeof(char16_t));
+        us.Buffer = pipename;
+    }
+
+    status = NtCreateNamedPipeFile(&server_handle, FILE_WRITE_DATA, &oa, &iosb,
+                                   0, FILE_CREATE, 0, 0, 0, 0, 1, 0, 0,
+                                   nullptr);
+    if (!success(status)) {
+        *_errno() = nt_status_to_errno(status);
+        return -1;
+    }
+
+    status = NtOpenFile(&client_handle, FILE_READ_DATA, &oa, &iosb, 0, 0);
+    if (!success(status)) {
+        *_errno() = nt_status_to_errno(status);
+        NtClose(server_handle);
+        return -1;
+    }
+
+    client_fd = _open_osfhandle(client_handle, 0);
+    if (client_fd == -1) {
+        NtClose(client_handle);
+        NtClose(server_handle);
+        return -1;
+    }
+
+    server_fd = _open_osfhandle(server_handle, 0);
+    if (server_fd == -1) {
+        close(client_fd);
+        NtClose(server_handle);
+        return -1;
+    }
+
+    pfds[0] = client_fd;
+    pfds[1] = server_fd;
+
+    return 0;
 }
 
 extern "C"
