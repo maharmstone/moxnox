@@ -112,17 +112,9 @@ target_include_directories(texinfo_gnulib PUBLIC ${GEN} ${GEN}/gnu ${REPO}/gnuli
 target_compile_options(texinfo_gnulib PRIVATE ${TEXINFO_CFLAGS})
 target_link_libraries(texinfo_gnulib PUBLIC libiconv moxnox)
 
-add_custom_command(
-    OUTPUT ${GEN}/info/man.c
-    COMMAND ${CMAKE_COMMAND} -E copy ${REPO}/info/man.c ${GEN}/info
-    COMMAND ${HOST_PATCH} -p1 -d ${GEN} < ${CMAKE_CURRENT_SOURCE_DIR}/moxnox.patch
-    DEPENDS ${REPO}/info/man.c ${CMAKE_CURRENT_SOURCE_DIR}/moxnox.patch
-    VERBATIM
-)
-
 add_executable(texinfo_info
     ${GEN}/info/doc.c
-    ${GEN}/info/man.c
+    repo/info/man.c
     repo/info/configfiles.c
     repo/info/dir.c
     repo/info/display.c
