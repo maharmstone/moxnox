@@ -90,13 +90,13 @@ int ppoll(pollfd* fds, nfds_t nfds, const timespec* timeout,
     p.fds = entries;
 
     while (true) {
-        auto sig_count = mn_handled_nonrestartable_signal_count();
+        auto sig_count = mn_handled_signal_count();
 
         status = NtSetInformationThread(NtCurrentThread(),
                                         THREAD_INFORMATION_CLASS::MoxnoxPoll,
                                         &p, sizeof(p));
 
-        if (status == nt_status::USER_APC && mn_handled_nonrestartable_signal_count() == sig_count)
+        if (status == nt_status::USER_APC && mn_handled_signal_count() == sig_count)
             continue;
 
         break;
