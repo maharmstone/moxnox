@@ -1031,9 +1031,15 @@ static nt_status do_poll(span<const uint8_t> buffer) {
         return nt_status::INSUFFICIENT_RESOURCES;
     }
 
-    size_t valid = 0;
+    size_t valid = 0, total_non_zero = 0;
 
     for (size_t i = 0; i < p.nfds; i++) {
+        if (entries[i].h == 0) {
+            objs[valid] = nullptr;
+            valid++;
+            continue;
+        }
+
         // FIXME - check handles have SYNCHRONIZE access
 
         auto objrw = deref_handle(entries[i].h);
@@ -1055,11 +1061,13 @@ static nt_status do_poll(span<const uint8_t> buffer) {
         objrw.get().acquire();
         objs[valid] = &objrw.get();
         valid++;
+        total_non_zero++;
     }
 
     if (valid != p.nfds) {
         for (size_t i = 0; i < valid; i++) {
-            object_release(*objs[i]);
+            if (objs[i])
+                object_release(*objs[i]);
         }
 
         free(objs);
@@ -1081,6 +1089,20 @@ static nt_status do_poll(span<const uint8_t> buffer) {
 
     // FIXME - POLLERR and POLLHUP
 
+    if (total_non_zero == 0) {
+        optional<uint64_t> timeout;
+
+        if (p.timeout != numeric_limits<uint64_t>::max())
+            timeout = p.timeout;
+
+        auto ret = wait_no_object(true, timeout);
+
+        free(objs);
+        free(entries);
+
+        return ret;
+    }
+
     disable_interrupts();
     acquire_sync_lock();
 
@@ -1089,7 +1111,8 @@ static nt_status do_poll(span<const uint8_t> buffer) {
         enable_interrupts();
 
         for (size_t i = 0; i < p.nfds; i++) {
-            object_release(*objs[i]);
+            if (objs[i])
+                object_release(*objs[i]);
         }
 
         free(objs);
@@ -1111,7 +1134,8 @@ static nt_status do_poll(span<const uint8_t> buffer) {
             enable_interrupts();
 
             for (size_t i = 0; i < p.nfds; i++) {
-                object_release(*objs[i]);
+                if (objs[i])
+                    object_release(*objs[i]);
             }
 
             free(objs);
@@ -1126,6 +1150,9 @@ static nt_status do_poll(span<const uint8_t> buffer) {
     for (size_t i = 0; i < p.nfds; i++) {
         bool signalled, write_signalled;
         uint16_t revents = 0;
+
+        if (!objs[i])
+            continue;
 
         auto& obj = *objs[i];
 
@@ -1157,7 +1184,8 @@ static nt_status do_poll(span<const uint8_t> buffer) {
             entries[i].revents = revents;
 
             for (size_t j = 0; j < p.nfds; j++) {
-                object_release(*objs[j]);
+                if (objs[j])
+                    object_release(*objs[j]);
             }
 
             free(objs);
@@ -1183,7 +1211,8 @@ static nt_status do_poll(span<const uint8_t> buffer) {
         enable_interrupts();
 
         for (size_t i = 0; i < p.nfds; i++) {
-            object_release(*objs[i]);
+            if (objs[i])
+                object_release(*objs[i]);
         }
 
         free(objs);
@@ -1194,14 +1223,15 @@ static nt_status do_poll(span<const uint8_t> buffer) {
 
     // do actual waiting
 
-    size_t mwb_size = offsetof(multiple_wait_block, entries) + (p.nfds * sizeof(waiter_object_multiple));
+    size_t mwb_size = offsetof(multiple_wait_block, entries) + (total_non_zero * sizeof(waiter_object_multiple));
     auto mwb = (multiple_wait_block*)malloc(mwb_size);
     if (!mwb) {
         release_sync_lock();
         enable_interrupts();
 
         for (size_t i = 0; i < p.nfds; i++) {
-            object_release(*objs[i]);
+            if (objs[i])
+                object_release(*objs[i]);
         }
 
         free(objs);
@@ -1211,11 +1241,15 @@ static nt_status do_poll(span<const uint8_t> buffer) {
 
     mwb->t = &t;
     mwb->left = 1;
-    mwb->num_entries = (unsigned int)p.nfds;
+    mwb->num_entries = (unsigned int)total_non_zero;
 
+    size_t j = 0;
     for (size_t i = 0; i < p.nfds; i++) {
+        if (!objs[i])
+            continue;
+
         auto& so = object_get_sync_object(*objs[i]);
-        auto ent = new (&mwb->entries[i]) waiter_object_multiple;
+        auto ent = new (&mwb->entries[j]) waiter_object_multiple;
 
         if (entries[i].events & (POLLIN | POLLOUT)) {
             ent->wait_type = 0;
@@ -1231,6 +1265,7 @@ static nt_status do_poll(span<const uint8_t> buffer) {
             ent->wait_le.next = ent->wait_le.prev = &ent->wait_le;
 
         ent->block = mwb;
+        j++;
     }
 
     t.multwait = mwb;
@@ -1269,7 +1304,8 @@ static nt_status do_poll(span<const uint8_t> buffer) {
             free(mwb);
 
             for (size_t i = 0; i < p.nfds; i++) {
-                object_release(*objs[i]);
+                if (objs[i])
+                    object_release(*objs[i]);
             }
 
             free(objs);
@@ -1279,8 +1315,25 @@ static nt_status do_poll(span<const uint8_t> buffer) {
         }
     }
 
-    auto index = mwb->index;
+    unsigned int index, raw_index = mwb->index;
+
     free(mwb);
+
+    if (total_non_zero == p.nfds)
+        index = raw_index;
+    else {
+        unsigned int j = 0;
+        for (unsigned int i = 0; i < p.nfds; i++) {
+            if (objs[i]) {
+                if (j == raw_index) {
+                    index = i;
+                    break;
+                }
+
+                j++;
+            }
+        }
+    }
 
     status = nt_status::SUCCESS;
 
@@ -1297,7 +1350,8 @@ static nt_status do_poll(span<const uint8_t> buffer) {
 
     if (status != nt_status::SUCCESS) {
         for (size_t i = 0; i < p.nfds; i++) {
-            object_release(*objs[i]);
+            if (objs[i])
+                object_release(*objs[i]);
         }
 
         free(objs);
@@ -1309,7 +1363,8 @@ static nt_status do_poll(span<const uint8_t> buffer) {
     entries[index].revents = POLLIN;
 
     for (size_t i = 0; i < p.nfds; i++) {
-        object_release(*objs[i]);
+        if (objs[i])
+            object_release(*objs[i]);
     }
 
     free(objs);
