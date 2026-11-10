@@ -1,27 +1,3 @@
---- a/src/main.c	2026-07-28 01:22:37.955187075 +0100
-+++ b/src/main.c	2026-07-28 01:22:37.959187065 +0100
-@@ -2767,10 +2767,21 @@
-           /* If we didn't set the restarts variable yet, add it.  */
-           if (restarts)
-             {
-+#ifdef __moxnox__
-+              /* putenv() is deliberately unsupported on moxnox: it
-+                 splices the caller's buffer into the environment, and
-+                 here that buffer is on the stack.  setenv() copies,
-+                 which is the correct behaviour anyway.  */
-+              char b[40];
-+              sprintf (b, "%s%u",
-+                       OUTPUT_IS_TRACED () ? "-" : "", restarts);
-+              setenv ("MAKE_RESTARTS", b, 1);
-+#else
-               char *b = alloca (40);
-               sprintf (b, "MAKE_RESTARTS=%s%u",
-                        OUTPUT_IS_TRACED () ? "-" : "", restarts);
-               putenv (b);
-+#endif
-             }
- 
-           fflush (stdout);
 --- a/src/commands.c	2026-07-28 01:22:37.955187075 +0100
 +++ b/src/commands.c	2026-07-28 01:22:37.961226021 +0100
 @@ -531,7 +531,6 @@
