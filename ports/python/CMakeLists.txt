@@ -65,11 +65,6 @@ if(PYTHON_FREEZE_JOBS EQUAL 0)
     set(PYTHON_FREEZE_JOBS 1)
 endif()
 
-# FIXME - make's jobserver needs working FIFOs, which Moxnox doesn't have yet
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Moxnox")
-    set(PYTHON_FREEZE_JOBS 1)
-endif()
-
 execute_process(COMMAND cc -dumpmachine
     OUTPUT_VARIABLE PYTHON_BUILD_TRIPLE OUTPUT_STRIP_TRAILING_WHITESPACE)
 
