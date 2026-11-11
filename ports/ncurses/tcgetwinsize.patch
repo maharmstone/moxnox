@@ -75,7 +75,7 @@
  #endif
  
  #define set_flags(target, mask)    target |= mask
-@@ -680,13 +682,19 @@
+@@ -680,13 +682,21 @@
  set_window_size(int fd, NCURSES_INT2 *high, NCURSES_INT2 *wide)
  {
      STRUCT_WINSIZE win;
@@ -89,7 +89,9 @@
  	if (*high > 0 && *wide > 0) {
  	    WINSIZE_ROWS(win) = (unsigned short) *high;
  	    WINSIZE_COLS(win) = (unsigned short) *wide;
-+#if !HAVE_TCGETWINSIZE
++#if HAVE_TCGETWINSIZE
++	    (void) tcsetwinsize(fd, &win);
++#else
  	    (void) ioctl(fd, IOCTL_SET_WINSIZE, &win);
 +#endif
  	}
