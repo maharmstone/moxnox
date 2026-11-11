@@ -409,3 +409,7 @@ mbrtoc32
 c32rtomb
 _putenv
 _wcsdup
+abs
+labs
+llabs
+imaxabs = llabs

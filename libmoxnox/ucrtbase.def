@@ -411,6 +411,7 @@ _putenv
 putenv == _putenv
 _wcsdup
 wcsdup == _wcsdup
-
-; stubs
+abs
+labs
+llabs
 imaxabs

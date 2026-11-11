@@ -181,7 +181,6 @@ target_compile_options(mingwex2 PRIVATE -Wno-shorten-64-to-32 -Wno-missing-decla
 target_link_libraries(mingwex2 PRIVATE nt_nobuiltin ntdll_mod_nobuiltin)
 
 set(SRC_FILES src/ucrtbase.cpp
-    src/stubs.S
     src/ucrtbase.def
     src/errno.cpp
     src/data.cpp

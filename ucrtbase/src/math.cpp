@@ -46,3 +46,18 @@ lldiv_t lldiv(long long numer, long long denom) {
 
     return ret;
 }
+
+extern "C"
+int abs(int j) {
+    return j < 0 ? -j : j;
+}
+
+extern "C"
+long labs(long j) {
+    return j < 0 ? -j : j;
+}
+
+extern "C"
+long long llabs(long long j) {
+    return j < 0 ? -j : j;
+}
