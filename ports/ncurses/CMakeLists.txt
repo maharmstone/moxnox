@@ -118,7 +118,7 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT ${GEN}/ncurses_dll.h
-    COMMAND sh -c "sed 's/@NCURSES_WRAP_PREFIX@/_nc_/;s/defined(BUILDING_NCURSES)/defined(BUILDING_NCURSES) || defined(BUILDING_TINFO)/' '${CMAKE_CURRENT_SOURCE_DIR}/repo/include/ncurses_dll.h.in' | sed '/^#define NCURSES_EXPORT_VAR/a #if defined(BUILDING_TINFO)\\n# define TINFO_EXPORT_VAR(type) NCURSES_EXPORT_GENERAL_EXPORT type\\n#elif defined(_WIN32) || defined(_WIN64)\\n# define TINFO_EXPORT_VAR(type) NCURSES_EXPORT_GENERAL_IMPORT type\\n#else\\n# define TINFO_EXPORT_VAR(type) type\\n#endif' > '${GEN}/ncurses_dll.h'"
+    COMMAND sh -c "sed 's/@NCURSES_WRAP_PREFIX@/_nc_/;s/defined(BUILDING_NCURSES)/defined(BUILDING_NCURSES) || defined(BUILDING_TINFO)/' '${CMAKE_CURRENT_SOURCE_DIR}/repo/include/ncurses_dll.h.in' | sed '/^#define NCURSES_EXPORT_VAR/a #if defined(BUILDING_TINFO)\\n# define TINFO_EXPORT_VAR(type) NCURSES_EXPORT_GENERAL_EXPORT type\\n#else\\n# define TINFO_EXPORT_VAR(type) type\\n#endif' > '${GEN}/ncurses_dll.h'"
     DEPENDS repo/include/ncurses_dll.h.in
     VERBATIM
 )
@@ -225,7 +225,7 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT ${GEN}/curses.priv.h
-    COMMAND sh -c "sed 's/#if (defined(_WIN32) || defined(_WIN64))/#if (defined(_WIN32) || defined(_WIN64)) \\&\\& !defined(MOXNOX)/' '${CMAKE_CURRENT_SOURCE_DIR}/repo/ncurses/curses.priv.h' | sed '/\\(_nc_globals\\|_nc_prescreen\\|_nc_screen_chain\\| SP;\\)/s/NCURSES_EXPORT_VAR/TINFO_EXPORT_VAR/' | sed '/#include <tchar.h>/{n;s|#include <io.h>|#define NO_OLDNAMES\\n#include <io.h>\\n#undef NO_OLDNAMES|}' > '${GEN}/curses.priv.h'"
+    COMMAND sh -c "sed '/\\(_nc_globals\\|_nc_prescreen\\|_nc_screen_chain\\| SP;\\)/s/NCURSES_EXPORT_VAR/TINFO_EXPORT_VAR/' '${CMAKE_CURRENT_SOURCE_DIR}/repo/ncurses/curses.priv.h' > '${GEN}/curses.priv.h'"
     DEPENDS repo/ncurses/curses.priv.h
     VERBATIM
 )
@@ -247,13 +247,6 @@ add_custom_command(
         repo/include/Caps
         repo/include/Caps-ncurses
         ${GEN}/hashsize.h
-    VERBATIM
-)
-
-add_custom_command(
-    OUTPUT ${GEN}/write_entry.c
-    COMMAND sh -c "sed '/\\t    rc = mkdir(path/{N;N;N;N;s/\\t    rc = mkdir(path\\n#ifndef _NC_WINDOWS_NATIVE\\n\\t\\t       ,0777\\n#endif\\n\\t\\t)/\\t    rc = mkdir(path, 0777)/}' '${CMAKE_CURRENT_SOURCE_DIR}/repo/ncurses/tinfo/write_entry.c' > '${GEN}/write_entry.c'"
-    DEPENDS repo/ncurses/tinfo/write_entry.c
     VERBATIM
 )
 
@@ -313,7 +306,7 @@ add_library(tinfo SHARED
     repo/ncurses/tinfo/read_termcap.c
     repo/ncurses/tinfo/strings.c
     repo/ncurses/tinfo/trim_sgr0.c
-    ${GEN}/write_entry.c
+    repo/ncurses/tinfo/write_entry.c
     repo/ncurses/base/define_key.c
     repo/ncurses/base/key_defined.c
     repo/ncurses/base/keybound.c
