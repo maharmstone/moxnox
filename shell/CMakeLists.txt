@@ -513,7 +513,7 @@ install(TARGETS tls-test DESTINATION ${CMAKE_INSTALL_PREFIX}/bin COMPONENT core)
 add_executable(tls2-test src/tls2-test.cpp)
 
 target_compile_options(tls2-test PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
-target_link_libraries(tls2-test moxnox print)
+target_link_libraries(tls2-test moxnox print pe unique_handle)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_options(tls2-test PUBLIC -mcrtdll=ucrtbase)
