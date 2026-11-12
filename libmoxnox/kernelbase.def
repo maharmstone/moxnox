@@ -1,9 +1,5 @@
 LIBRARY "kernelbase.dll"
 EXPORTS
 GetLastError
-TlsGetValue
-TlsAlloc
-TlsFree
-TlsSetValue
 CreateThread
 CreateProcessW

@@ -102,18 +102,12 @@ struct PROCESS_INFORMATION {
 using HANDLER_ROUTINE = bool (*)(uint32_t ctrl_type);
 using THREAD_START_ROUTINE = uint32_t (*)(void* ctx);
 
-inline constexpr uint32_t TLS_OUT_OF_INDEXES = 0xffffffff;
-
 inline constexpr uint32_t GET_MODULE_HANDLE_EX_FLAG_PIN = 0x00000001;
 inline constexpr uint32_t GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT = 0x00000002;
 inline constexpr uint32_t GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = 0x00000004;
 
 extern "C" {
 
-uint32_t TlsAlloc();
-void* TlsGetValue(uint32_t tls_index);
-bool TlsSetValue(uint32_t tls_index, void* tls_value);
-bool TlsFree(uint32_t tls_index);
 uint32_t GetLastError();
 HANDLE CreateThread(SECURITY_ATTRIBUTES* sa, size_t stack,
                     THREAD_START_ROUTINE start, void* param, uint32_t flags,
