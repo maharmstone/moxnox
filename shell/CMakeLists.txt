@@ -539,7 +539,7 @@ install(TARGETS condvar-test DESTINATION ${CMAKE_INSTALL_PREFIX}/bin COMPONENT c
 add_executable(apc-test src/apc-test.cpp)
 
 target_compile_options(apc-test PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
-target_link_libraries(apc-test moxnox print unique_handle)
+target_link_libraries(apc-test moxnox print unique_handle pe)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_options(apc-test PUBLIC -mcrtdll=ucrtbase)
