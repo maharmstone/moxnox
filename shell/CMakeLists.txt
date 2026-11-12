@@ -420,7 +420,7 @@ install(TARGETS tcp-server-test DESTINATION ${CMAKE_INSTALL_PREFIX}/bin COMPONEN
 add_executable(httpd-test src/httpd-test.cpp)
 
 target_compile_options(httpd-test PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
-target_link_libraries(httpd-test moxnox print errno)
+target_link_libraries(httpd-test moxnox print errno pe)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_options(httpd-test PUBLIC -mcrtdll=ucrtbase)
