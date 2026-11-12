@@ -99,7 +99,6 @@ struct PROCESS_INFORMATION {
      uint32_t dwThreadId;
 };
 
-using HANDLER_ROUTINE = bool (*)(uint32_t ctrl_type);
 using THREAD_START_ROUTINE = uint32_t (*)(void* ctx);
 
 inline constexpr uint32_t GET_MODULE_HANDLE_EX_FLAG_PIN = 0x00000001;
@@ -119,8 +118,6 @@ bool CreateProcessW(const char16_t* application_name, char16_t* command_line,
                     const void* environment, const char16_t* current_directory,
                     const STARTUPINFOW* startup_info,
                     PROCESS_INFORMATION* process_information);
-void RaiseException(uint32_t code, uint32_t flags, uint32_t count,
-                    const uintptr_t* args);
 
 }
 
