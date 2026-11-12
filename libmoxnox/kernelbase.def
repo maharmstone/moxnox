@@ -1,5 +1,4 @@
 LIBRARY "kernelbase.dll"
 EXPORTS
 GetLastError
-CreateThread
 CreateProcessW

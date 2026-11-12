@@ -341,13 +341,13 @@ static unsigned int power_button_thread(void*) {
     return 0;
 }
 
-static void thread_start(THREAD_START_ROUTINE func, void* param) {
+static void thread_start(uint32_t (*func)(void*), void* param) {
     auto ret = func(param);
 
     RtlExitUserThread((nt_status)ret);
 }
 
-static nt_status create_thread(THREAD_START_ROUTINE start, void* param,
+static nt_status create_thread(uint32_t (*start)(void*), void* param,
                                unique_handle& handle) {
     nt_status status;
     HANDLE h;
