@@ -1514,6 +1514,32 @@ index 77b2eb53af0e..7e8a35b429b8 100644
  
  extern "C" EXCEPTION_DISPOSITION _GCC_specific_handler(PEXCEPTION_RECORD,
                                                         void *, PCONTEXT,
+diff --git a/libunwind/include/__libunwind_config.h b/libunwind/include/__libunwind_config.h
+index 980d11ef5d4f..24444ac3e3eb 100644
+--- a/libunwind/include/__libunwind_config.h
++++ b/libunwind/include/__libunwind_config.h
+@@ -46,7 +46,7 @@
+ #  define _LIBUNWIND_HIGHEST_DWARF_REGISTER _LIBUNWIND_HIGHEST_DWARF_REGISTER_X86
+ # elif defined(__x86_64__)
+ #  define _LIBUNWIND_TARGET_X86_64 1
+-#  if defined(_WIN64)
++#  if defined(_WIN64) || defined(__moxnox__)
+ #    define _LIBUNWIND_CONTEXT_SIZE 54
+ #    ifdef __SEH__
+ #      define _LIBUNWIND_CURSOR_SIZE 204
+diff --git a/libunwind/include/libunwind.h b/libunwind/include/libunwind.h
+index 56ca7110274a..d52045ad6fdb 100644
+--- a/libunwind/include/libunwind.h
++++ b/libunwind/include/libunwind.h
+@@ -146,7 +146,7 @@
+ 
+ #endif
+ 
+-#if defined(_WIN32) && defined(__SEH__)
++#if (defined(_WIN32) || defined(__moxnox__)) && defined(__SEH__)
+   #define LIBUNWIND_CURSOR_ALIGNMENT_ATTR __attribute__((__aligned__(16)))
+ #else
+   #define LIBUNWIND_CURSOR_ALIGNMENT_ATTR
 diff --git a/libunwind/include/unwind.h b/libunwind/include/unwind.h
 index b1775d3a3dec..73385283bdab 100644
 --- a/libunwind/include/unwind.h
@@ -1526,28 +1552,258 @@ index b1775d3a3dec..73385283bdab 100644
  #elif !defined(__MINGW32__) && VER_PRODUCTBUILD < 8000
  typedef struct _DISPATCHER_CONTEXT DISPATCHER_CONTEXT;
  #endif
-diff --git a/libunwind/src/CMakeLists.txt b/libunwind/src/CMakeLists.txt
-index 6e947039fb0d..540ac632f879 100644
---- a/libunwind/src/CMakeLists.txt
-+++ b/libunwind/src/CMakeLists.txt
-@@ -132,7 +132,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL MSVC)
- else()
-   target_compile_options(unwind_shared_objects PRIVATE -fno-rtti)
- endif()
--target_compile_options(unwind_shared_objects PUBLIC "${LIBUNWIND_ADDITIONAL_COMPILE_FLAGS}")
-+target_compile_options(unwind_shared_objects PRIVATE "${LIBUNWIND_ADDITIONAL_COMPILE_FLAGS}")
- target_link_libraries(unwind_shared_objects
-   PUBLIC "${LIBUNWIND_ADDITIONAL_LIBRARIES}"
-   PRIVATE unwind-headers runtimes-libc-headers ${LIBUNWIND_LIBRARIES})
-@@ -167,7 +167,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL MSVC)
- else()
-   target_compile_options(unwind_static_objects PRIVATE -fno-rtti)
- endif()
--target_compile_options(unwind_static_objects PUBLIC "${LIBUNWIND_ADDITIONAL_COMPILE_FLAGS}")
-+target_compile_options(unwind_static_objects PRIVATE "${LIBUNWIND_ADDITIONAL_COMPILE_FLAGS}")
- target_link_libraries(unwind_static_objects
-   PUBLIC "${LIBUNWIND_ADDITIONAL_LIBRARIES}"
-   PRIVATE unwind-headers runtimes-libc-headers ${LIBUNWIND_LIBRARIES})
+diff --git a/libunwind/src/AddressSpace.hpp b/libunwind/src/AddressSpace.hpp
+index 3711189f57b1..767fed7acf2e 100644
+--- a/libunwind/src/AddressSpace.hpp
++++ b/libunwind/src/AddressSpace.hpp
+@@ -24,7 +24,8 @@
+ #include "Registers.hpp"
+ 
+ #ifndef _LIBUNWIND_USE_DLADDR
+-  #if !(defined(_LIBUNWIND_IS_BAREMETAL) || defined(_WIN32) || defined(_AIX))
++  #if !(defined(_LIBUNWIND_IS_BAREMETAL) || defined(_WIN32) ||                  \
++        defined(__moxnox__) || defined(_AIX))
+     #define _LIBUNWIND_USE_DLADDR 1
+   #else
+     #define _LIBUNWIND_USE_DLADDR 0
+@@ -596,7 +597,8 @@ inline bool LocalAddressSpace::findUnwindSections(
+     }
+   }
+   return false;
+-#elif defined(_LIBUNWIND_SUPPORT_SEH_UNWIND) && defined(_WIN32)
++#elif defined(_LIBUNWIND_SUPPORT_SEH_UNWIND) &&                                \
++    (defined(_WIN32) || defined(__moxnox__))
+   // Don't even bother, since Windows has functions that do all this stuff
+   // for us.
+   (void)targetAddr;
+diff --git a/libunwind/src/RWMutex.hpp b/libunwind/src/RWMutex.hpp
+index 344d35641f07..c0ac33dc4d3b 100644
+--- a/libunwind/src/RWMutex.hpp
++++ b/libunwind/src/RWMutex.hpp
+@@ -15,7 +15,7 @@
+ 
+ #if defined(_WIN32)
+ #include <windows.h>
+-#elif !defined(_LIBUNWIND_HAS_NO_THREADS)
++#elif !defined(_LIBUNWIND_HAS_NO_THREADS) && !defined(__moxnox__)
+ #include <pthread.h>
+ #if defined(__ELF__) && defined(_LIBUNWIND_LINK_PTHREAD_LIB)
+ #pragma comment(lib, "pthread")
+@@ -59,6 +59,45 @@ private:
+   SRWLOCK _lock = SRWLOCK_INIT;
+ };
+ 
++#elif defined(__moxnox__)
++
++// Moxnox is built without the Windows headers, and its pthread.h has no
++// PTHREAD_RWLOCK_INITIALIZER, so use ntdll's slim reader/writer locks
++// directly, which is what the Windows branch above reaches through kernel32.
++struct RTL_SRWLOCK {
++  void *Ptr;
++};
++
++extern "C" {
++void RtlAcquireSRWLockShared(RTL_SRWLOCK *lock);
++void RtlReleaseSRWLockShared(RTL_SRWLOCK *lock);
++void RtlAcquireSRWLockExclusive(RTL_SRWLOCK *lock);
++void RtlReleaseSRWLockExclusive(RTL_SRWLOCK *lock);
++}
++
++class _LIBUNWIND_HIDDEN RWMutex {
++public:
++  bool lock_shared() {
++    RtlAcquireSRWLockShared(&_lock);
++    return true;
++  }
++  bool unlock_shared() {
++    RtlReleaseSRWLockShared(&_lock);
++    return true;
++  }
++  bool lock() {
++    RtlAcquireSRWLockExclusive(&_lock);
++    return true;
++  }
++  bool unlock() {
++    RtlReleaseSRWLockExclusive(&_lock);
++    return true;
++  }
++
++private:
++  RTL_SRWLOCK _lock = {nullptr};
++};
++
+ #elif !defined(LIBUNWIND_USE_WEAK_PTHREAD)
+ 
+ class _LIBUNWIND_HIDDEN RWMutex {
+diff --git a/libunwind/src/Registers.hpp b/libunwind/src/Registers.hpp
+index 88c2d3b4e8c9..0b81e161aca1 100644
+--- a/libunwind/src/Registers.hpp
++++ b/libunwind/src/Registers.hpp
+@@ -347,12 +347,12 @@ private:
+     uint64_t __cs;
+     uint64_t __fs;
+     uint64_t __gs;
+-#if defined(_WIN64)
++#if defined(_WIN64) || defined(__moxnox__)
+     uint64_t __padding; // 16-byte align
+ #endif
+   };
+   GPRs _registers;
+-#if defined(_WIN64)
++#if defined(_WIN64) || defined(__moxnox__)
+   v128 _xmm[16];
+ #endif
+ };
+@@ -568,7 +568,7 @@ inline void Registers_x86_64::setFloatRegister(int, double) {
+ }
+ 
+ inline bool Registers_x86_64::validVectorRegister(int regNum) const {
+-#if defined(_WIN64)
++#if defined(_WIN64) || defined(__moxnox__)
+   if (regNum < UNW_X86_64_XMM0)
+     return false;
+   if (regNum > UNW_X86_64_XMM15)
+@@ -581,7 +581,7 @@ inline bool Registers_x86_64::validVectorRegister(int regNum) const {
+ }
+ 
+ inline v128 Registers_x86_64::getVectorRegister(int regNum) const {
+-#if defined(_WIN64)
++#if defined(_WIN64) || defined(__moxnox__)
+   assert(validVectorRegister(regNum));
+   return _xmm[regNum - UNW_X86_64_XMM0];
+ #else
+@@ -591,7 +591,7 @@ inline v128 Registers_x86_64::getVectorRegister(int regNum) const {
+ }
+ 
+ inline void Registers_x86_64::setVectorRegister(int regNum, v128 value) {
+-#if defined(_WIN64)
++#if defined(_WIN64) || defined(__moxnox__)
+   assert(validVectorRegister(regNum));
+   _xmm[regNum - UNW_X86_64_XMM0] = value;
+ #else
+diff --git a/libunwind/src/UnwindCursor.hpp b/libunwind/src/UnwindCursor.hpp
+index 5838dbcaa998..17e2cbf41286 100644
+--- a/libunwind/src/UnwindCursor.hpp
++++ b/libunwind/src/UnwindCursor.hpp
+@@ -20,6 +20,8 @@
+ #ifdef _WIN32
+   #include <windows.h>
+   #include <ntverp.h>
++#elif defined(__moxnox__)
++  #include "moxnox.h"
+ #endif
+ #ifdef __APPLE__
+   #include <mach-o/dyld.h>
+@@ -514,7 +516,8 @@ public:
+ #endif
+ };
+ 
+-#if defined(_LIBUNWIND_SUPPORT_SEH_UNWIND) && defined(_WIN32)
++#if defined(_LIBUNWIND_SUPPORT_SEH_UNWIND) &&                                  \
++    (defined(_WIN32) || defined(__moxnox__))
+ 
+ /// \c UnwindCursor contains all state (including all register values) during
+ /// an unwind.  This is normally stack-allocated inside a unw_cursor_t.
+@@ -2765,7 +2768,8 @@ void UnwindCursor<A, R>::setInfoBasedOnIPRegister(bool isReturnAddress) {
+     --pc;
+ #endif
+ 
+-#if !(defined(_LIBUNWIND_SUPPORT_SEH_UNWIND) && defined(_WIN32)) &&            \
++#if !(defined(_LIBUNWIND_SUPPORT_SEH_UNWIND) &&                                \
++      (defined(_WIN32) || defined(__moxnox__))) &&                             \
+     !defined(_LIBUNWIND_SUPPORT_TBTAB_UNWIND)
+   // In case of this is frame of signal handler, the IP saved in the signal
+   // handler points to first non-executed instruction, while FDE/CIE expects IP
+diff --git a/libunwind/src/UnwindRegistersRestore.S b/libunwind/src/UnwindRegistersRestore.S
+index 76a80344034f..6640778c6780 100644
+--- a/libunwind/src/UnwindRegistersRestore.S
++++ b/libunwind/src/UnwindRegistersRestore.S
+@@ -79,7 +79,7 @@ DEFINE_LIBUNWIND_FUNCTION(__libunwind_Registers_x86_64_jumpto)
+ #
+ # extern "C" void __libunwind_Registers_x86_64_jumpto(Registers_x86_64 *);
+ #
+-#if defined(_WIN64)
++#if defined(_WIN64) || defined(__moxnox__)
+ # On entry, thread_state pointer is in rcx; move it into rdi
+ # to share restore code below. Since this routine restores and
+ # overwrites all registers, we can use the same registers for
+@@ -120,7 +120,7 @@ DEFINE_LIBUNWIND_FUNCTION(__libunwind_Registers_x86_64_jumpto)
+   # skip fs
+   # skip gs
+ 
+-#if defined(_WIN64)
++#if defined(_WIN64) || defined(__moxnox__)
+   movdqu 176(%rdi),%xmm0
+   movdqu 192(%rdi),%xmm1
+   movdqu 208(%rdi),%xmm2
+diff --git a/libunwind/src/UnwindRegistersSave.S b/libunwind/src/UnwindRegistersSave.S
+index f988fd461def..c1960b27f95f 100644
+--- a/libunwind/src/UnwindRegistersSave.S
++++ b/libunwind/src/UnwindRegistersSave.S
+@@ -121,7 +121,7 @@ DEFINE_LIBUNWIND_FUNCTION("#__unw_getcontext")
+ #  thread_state pointer is in rdi
+ #
+ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
+-#if defined(_WIN64)
++#if defined(_WIN64) || defined(__moxnox__)
+ #define PTR %rcx
+ #define TMP %rdx
+ #else
+@@ -154,7 +154,7 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
+   # skip fs
+   # skip gs
+ 
+-#if defined(_WIN64)
++#if defined(_WIN64) || defined(__moxnox__)
+   movdqu %xmm0,176(PTR)
+   movdqu %xmm1,192(PTR)
+   movdqu %xmm2,208(PTR)
+diff --git a/libunwind/src/assembly.h b/libunwind/src/assembly.h
+index 84c9d526f1d7..4a1bb1202b66 100644
+--- a/libunwind/src/assembly.h
++++ b/libunwind/src/assembly.h
+@@ -184,7 +184,7 @@
+ #define NO_EXEC_STACK_DIRECTIVE
+ #endif
+ 
+-#elif defined(_WIN32)
++#elif defined(_WIN32) || defined(__moxnox__)
+ 
+ #define SYMBOL_IS_FUNC(name)                                                   \
+   .def name SEPARATOR                                                          \
+@@ -202,7 +202,7 @@
+ #endif
+ #define HIDDEN_SYMBOL(name)
+ 
+-#if defined(__MINGW32__)
++#if defined(__MINGW32__) || defined(__moxnox__)
+ #define WEAK_ALIAS(name, aliasname)                                            \
+   .globl SYMBOL_NAME(aliasname) SEPARATOR                                      \
+   EXPORT_SYMBOL(aliasname) SEPARATOR                                           \
+diff --git a/libunwind/src/config.h b/libunwind/src/config.h
+index f017403fa223..90e62123f8ee 100644
+--- a/libunwind/src/config.h
++++ b/libunwind/src/config.h
+@@ -31,7 +31,7 @@
+   #if defined(__aarch64__) || defined(__arm64__) || defined(__arm64e__)
+     #define _LIBUNWIND_TRACE_RET_INJECT 1
+   #endif
+-#elif defined(_WIN32)
++#elif defined(_WIN32) || defined(__moxnox__)
+   #ifdef __SEH__
+     #define _LIBUNWIND_SUPPORT_SEH_UNWIND 1
+   #else
+@@ -102,8 +102,8 @@
+ #define _LIBUNWIND_WEAK_ALIAS(name, aliasname)                                 \
+   extern "C" _LIBUNWIND_EXPORT __typeof(name) aliasname                        \
+       __attribute__((weak, alias(#name)));
+-#elif defined(_WIN32)
+-#if defined(__MINGW32__)
++#elif defined(_WIN32) || defined(__moxnox__)
++#if defined(__MINGW32__) || defined(__moxnox__)
+ #define _LIBUNWIND_WEAK_ALIAS(name, aliasname)                                 \
+   extern "C" _LIBUNWIND_EXPORT __typeof(name) aliasname                        \
+       __attribute__((alias(#name)));
 diff --git a/lld/MachO/Driver.cpp b/lld/MachO/Driver.cpp
 index 973b3f5535cb..7ee04879d90a 100644
 --- a/lld/MachO/Driver.cpp
@@ -2283,20 +2539,24 @@ index f6b86307798c..3088e9eaa230 100644
    return make_error<StringError>("-" + OutOfProcessExecutorConnect.ArgStr +
                                       " not supported on non-unix platforms",
 diff --git a/libunwind/src/Unwind-seh.cpp b/libunwind/src/Unwind-seh.cpp
-index 0b1930b44d1c..cf377d79ed6b 100644
+index 0b1930b44d1c..575051c9eab5 100644
 --- a/libunwind/src/Unwind-seh.cpp
 +++ b/libunwind/src/Unwind-seh.cpp
-@@ -28,6 +28,10 @@
- #include "libunwind_ext.h"
- #include "UnwindCursor.hpp"
+@@ -20,10 +20,14 @@
+ #include <stdbool.h>
+ #include <stdlib.h>
  
 +#ifdef __moxnox__
 +#include "moxnox.h"
++#else
+ #include <windef.h>
+ #include <excpt.h>
+ #include <winnt.h>
+ #include <ntstatus.h>
 +#endif
-+
- using namespace libunwind;
  
- #define STATUS_USER_DEFINED (1u << 29)
+ #include "libunwind_ext.h"
+ #include "UnwindCursor.hpp"
 @@ -391,6 +395,10 @@ unwind_phase2_forced(unw_context_t *uc,
  /// Called by \c __cxa_throw().  Only returns if there is a fatal error.
  _LIBUNWIND_EXPORT _Unwind_Reason_Code
@@ -2329,17 +2589,367 @@ index 0b1930b44d1c..cf377d79ed6b 100644
    // top of the stack. Either way, let libc++abi call std::terminate().
 diff --git a/libunwind/src/moxnox.h b/libunwind/src/moxnox.h
 new file mode 100644
-index 000000000000..9ec8b06ca24d
+index 000000000000..d1cac7f480ce
 --- /dev/null
 +++ b/libunwind/src/moxnox.h
-@@ -0,0 +1,7 @@
+@@ -0,0 +1,358 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++//
++//  Moxnox is built without the Windows headers.  This is the subset of winnt.h
++//  that the SEH unwinder (Unwind-seh.cpp and the SEH UnwindCursor) uses, with
++//  the layouts that Moxnox's ntdll is built from (modules/nt.cpp and
++//  modules/ntdll.cpp).  unwind.h supplies EXCEPTION_DISPOSITION and the
++//  typedefs of EXCEPTION_RECORD, CONTEXT and DISPATCHER_CONTEXT.
++//
++//===----------------------------------------------------------------------===//
++
 +#pragma once
++
++#include <stdint.h>
++#include <unwind.h>
++
++// Moxnox is LLP64, so long is 32 bits on both architectures, as on Windows.
++typedef uint8_t BYTE;
++typedef unsigned long DWORD;
++typedef uint64_t DWORD64;
++typedef uintptr_t ULONG_PTR;
++typedef void *PVOID;
++typedef long NTSTATUS;
++
++#define STATUS_SEVERITY_SUCCESS 0x0
++
++#define EXCEPTION_NONCONTINUABLE 0x01
++#define EXCEPTION_UNWINDING 0x02
++#define EXCEPTION_EXIT_UNWIND 0x04
++#define EXCEPTION_TARGET_UNWIND 0x20
++#define EXCEPTION_COLLIDED_UNWIND 0x40
++#define EXCEPTION_UNWIND                                                       \
++  (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND | EXCEPTION_TARGET_UNWIND |     \
++   EXCEPTION_COLLIDED_UNWIND)
++
++#define IS_UNWINDING(Flag) (((Flag) & EXCEPTION_UNWIND) != 0)
++#define IS_TARGET_UNWIND(Flag) ((Flag) & EXCEPTION_TARGET_UNWIND)
++
++#define ExceptionContinueExecution 0
++#define ExceptionContinueSearch 1
++
++#define UNW_FLAG_EHANDLER 0x1
++#define UNW_FLAG_UHANDLER 0x2
++
++#define EXCEPTION_MAXIMUM_PARAMETERS 15
++
++struct _EXCEPTION_RECORD {
++  DWORD ExceptionCode;
++  DWORD ExceptionFlags;
++  struct _EXCEPTION_RECORD *ExceptionRecord;
++  PVOID ExceptionAddress;
++  DWORD NumberParameters;
++  ULONG_PTR ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
++};
++typedef EXCEPTION_RECORD *PEXCEPTION_RECORD;
++
++typedef CONTEXT *PCONTEXT;
++
++typedef struct _RUNTIME_FUNCTION RUNTIME_FUNCTION, *PRUNTIME_FUNCTION;
++
++typedef EXCEPTION_DISPOSITION EXCEPTION_ROUTINE(
++    struct _EXCEPTION_RECORD *ExceptionRecord, PVOID EstablisherFrame,
++    struct _CONTEXT *ContextRecord, PVOID DispatcherContext);
++typedef EXCEPTION_ROUTINE *PEXCEPTION_ROUTINE;
++
++#define UNWIND_HISTORY_TABLE_SIZE 12
++
++typedef struct _UNWIND_HISTORY_TABLE_ENTRY {
++  DWORD64 ImageBase;
++  PRUNTIME_FUNCTION FunctionEntry;
++} UNWIND_HISTORY_TABLE_ENTRY;
++
++typedef struct _UNWIND_HISTORY_TABLE {
++  DWORD Count;
++  BYTE LocalHint;
++  BYTE GlobalHint;
++  BYTE Search;
++  BYTE Once;
++  DWORD64 LowAddress;
++  DWORD64 HighAddress;
++  UNWIND_HISTORY_TABLE_ENTRY Entry[UNWIND_HISTORY_TABLE_SIZE];
++} UNWIND_HISTORY_TABLE, *PUNWIND_HISTORY_TABLE;
++
++// libunwind only ever passes a null pointer for this.
++typedef struct _KNONVOLATILE_CONTEXT_POINTERS *PKNONVOLATILE_CONTEXT_POINTERS;
++
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
++#pragma clang diagnostic ignored "-Wnested-anon-types"
++
++#if defined(__x86_64__)
++
++#define CONTEXT_AMD64 0x100000
++
++#define CONTEXT_CONTROL (CONTEXT_AMD64 | 0x1)
++#define CONTEXT_INTEGER (CONTEXT_AMD64 | 0x2)
++#define CONTEXT_FLOATING_POINT (CONTEXT_AMD64 | 0x8)
++
++typedef struct _M128A {
++  uint64_t Low;
++  int64_t High;
++} __attribute__((aligned(16))) M128A;
++
++typedef struct _XSAVE_FORMAT {
++  uint16_t ControlWord;
++  uint16_t StatusWord;
++  uint8_t TagWord;
++  uint8_t Reserved1;
++  uint16_t ErrorOpcode;
++  uint32_t ErrorOffset;
++  uint16_t ErrorSelector;
++  uint16_t Reserved2;
++  uint32_t DataOffset;
++  uint16_t DataSelector;
++  uint16_t Reserved3;
++  uint32_t MxCsr;
++  uint32_t MxCsr_Mask;
++  M128A FloatRegisters[8];
++  M128A XmmRegisters[16];
++  uint8_t Reserved4[96];
++} __attribute__((aligned(16))) XSAVE_FORMAT;
++
++struct _CONTEXT {
++  uint64_t P1Home;
++  uint64_t P2Home;
++  uint64_t P3Home;
++  uint64_t P4Home;
++  uint64_t P5Home;
++  uint64_t P6Home;
++  DWORD ContextFlags;
++  DWORD MxCsr;
++  uint16_t SegCs;
++  uint16_t SegDs;
++  uint16_t SegEs;
++  uint16_t SegFs;
++  uint16_t SegGs;
++  uint16_t SegSs;
++  DWORD EFlags;
++  uint64_t Dr0;
++  uint64_t Dr1;
++  uint64_t Dr2;
++  uint64_t Dr3;
++  uint64_t Dr6;
++  uint64_t Dr7;
++  uint64_t Rax;
++  uint64_t Rcx;
++  uint64_t Rdx;
++  uint64_t Rbx;
++  uint64_t Rsp;
++  uint64_t Rbp;
++  uint64_t Rsi;
++  uint64_t Rdi;
++  uint64_t R8;
++  uint64_t R9;
++  uint64_t R10;
++  uint64_t R11;
++  uint64_t R12;
++  uint64_t R13;
++  uint64_t R14;
++  uint64_t R15;
++  uint64_t Rip;
++  union {
++    XSAVE_FORMAT FltSave;
++    struct {
++      M128A Header[2];
++      M128A Legacy[8];
++      M128A Xmm0;
++      M128A Xmm1;
++      M128A Xmm2;
++      M128A Xmm3;
++      M128A Xmm4;
++      M128A Xmm5;
++      M128A Xmm6;
++      M128A Xmm7;
++      M128A Xmm8;
++      M128A Xmm9;
++      M128A Xmm10;
++      M128A Xmm11;
++      M128A Xmm12;
++      M128A Xmm13;
++      M128A Xmm14;
++      M128A Xmm15;
++    };
++  };
++  M128A VectorRegister[26];
++  uint64_t VectorControl;
++  uint64_t DebugControl;
++  uint64_t LastBranchToRip;
++  uint64_t LastBranchFromRip;
++  uint64_t LastExceptionToRip;
++  uint64_t LastExceptionFromRip;
++} __attribute__((aligned(16)));
++
++struct _RUNTIME_FUNCTION {
++  DWORD BeginAddress;
++  DWORD EndAddress;
++  DWORD UnwindData;
++};
++
++struct _DISPATCHER_CONTEXT {
++  DWORD64 ControlPc;
++  DWORD64 ImageBase;
++  PRUNTIME_FUNCTION FunctionEntry;
++  DWORD64 EstablisherFrame;
++  DWORD64 TargetIp;
++  PCONTEXT ContextRecord;
++  PEXCEPTION_ROUTINE LanguageHandler;
++  PVOID HandlerData;
++  PUNWIND_HISTORY_TABLE HistoryTable;
++  DWORD ScopeIndex;
++  DWORD Fill0;
++};
++
++#elif defined(__aarch64__)
++
++#define CONTEXT_ARM64 0x400000
++
++#define CONTEXT_CONTROL (CONTEXT_ARM64 | 0x1)
++#define CONTEXT_INTEGER (CONTEXT_ARM64 | 0x2)
++#define CONTEXT_FLOATING_POINT (CONTEXT_ARM64 | 0x4)
++
++typedef union _ARM64_NT_NEON128 {
++  struct {
++    uint64_t Low;
++    int64_t High;
++  };
++  double D[2];
++  float S[4];
++  uint16_t H[8];
++  uint8_t B[16];
++} ARM64_NT_NEON128;
++
++#define ARM64_MAX_BREAKPOINTS 8
++#define ARM64_MAX_WATCHPOINTS 2
++
++struct _CONTEXT {
++  DWORD ContextFlags;
++  DWORD Cpsr;
++  union {
++    struct {
++      uint64_t X0;
++      uint64_t X1;
++      uint64_t X2;
++      uint64_t X3;
++      uint64_t X4;
++      uint64_t X5;
++      uint64_t X6;
++      uint64_t X7;
++      uint64_t X8;
++      uint64_t X9;
++      uint64_t X10;
++      uint64_t X11;
++      uint64_t X12;
++      uint64_t X13;
++      uint64_t X14;
++      uint64_t X15;
++      uint64_t X16;
++      uint64_t X17;
++      uint64_t X18;
++      uint64_t X19;
++      uint64_t X20;
++      uint64_t X21;
++      uint64_t X22;
++      uint64_t X23;
++      uint64_t X24;
++      uint64_t X25;
++      uint64_t X26;
++      uint64_t X27;
++      uint64_t X28;
++      uint64_t Fp;
++      uint64_t Lr;
++    };
++    uint64_t X[31];
++  };
++  uint64_t Sp;
++  uint64_t Pc;
++  ARM64_NT_NEON128 V[32];
++  DWORD Fpcr;
++  DWORD Fpsr;
++  DWORD Bcr[ARM64_MAX_BREAKPOINTS];
++  uint64_t Bvr[ARM64_MAX_BREAKPOINTS];
++  DWORD Wcr[ARM64_MAX_WATCHPOINTS];
++  uint64_t Wvr[ARM64_MAX_WATCHPOINTS];
++} __attribute__((aligned(16)));
++
++struct _RUNTIME_FUNCTION {
++  DWORD BeginAddress;
++  union {
++    DWORD UnwindData;
++    struct {
++      DWORD Flag : 2;
++      DWORD FunctionLength : 11;
++      DWORD RegF : 3;
++      DWORD RegI : 4;
++      DWORD H : 1;
++      DWORD CR : 2;
++      DWORD FrameSize : 9;
++    };
++  };
++};
++
++typedef union _IMAGE_ARM64_RUNTIME_FUNCTION_ENTRY_XDATA {
++  DWORD HeaderData;
++  struct {
++    DWORD FunctionLength : 18;
++    DWORD Version : 2;
++    DWORD ExceptionDataPresent : 1;
++    DWORD EpilogInHeader : 1;
++    DWORD EpilogCount : 5;
++    DWORD CodeWords : 5;
++  };
++} IMAGE_ARM64_RUNTIME_FUNCTION_ENTRY_XDATA;
++
++struct _DISPATCHER_CONTEXT {
++  DWORD64 ControlPc;
++  DWORD64 ImageBase;
++  PRUNTIME_FUNCTION FunctionEntry;
++  DWORD64 EstablisherFrame;
++  DWORD64 TargetPc;
++  PCONTEXT ContextRecord;
++  PEXCEPTION_ROUTINE LanguageHandler;
++  PVOID HandlerData;
++  PUNWIND_HISTORY_TABLE HistoryTable;
++  DWORD ScopeIndex;
++  BYTE ControlPcIsUnwound;
++  BYTE *NonVolatileRegisters;
++};
++
++#else
++#error Unsupported Moxnox architecture
++#endif
++
++#pragma clang diagnostic pop
 +
 +extern "C" {
 +
 +void RtlRaiseException(EXCEPTION_RECORD* exception_record);
++void RtlUnwindEx(PVOID TargetFrame, PVOID TargetIp,
++                 PEXCEPTION_RECORD ExceptionRecord, PVOID ReturnValue,
++                 PCONTEXT ContextRecord, PUNWIND_HISTORY_TABLE HistoryTable);
++PRUNTIME_FUNCTION RtlLookupFunctionEntry(DWORD64 ControlPc, DWORD64 *ImageBase,
++                                         PUNWIND_HISTORY_TABLE HistoryTable);
++PEXCEPTION_ROUTINE RtlVirtualUnwind(DWORD HandlerType, DWORD64 ImageBase,
++                                    DWORD64 ControlPc,
++                                    PRUNTIME_FUNCTION FunctionEntry,
++                                    PCONTEXT ContextRecord, PVOID *HandlerData,
++                                    DWORD64 *EstablisherFrame,
++                                    PKNONVOLATILE_CONTEXT_POINTERS ContextPointers);
++void RtlCaptureContext(PCONTEXT ContextRecord);
++void RtlRestoreContext(PCONTEXT ContextRecord,
++                       PEXCEPTION_RECORD ExceptionRecord);
 +
 +}
 -- 
 2.55.0
-
