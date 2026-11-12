@@ -26,7 +26,6 @@
 import nt;
 import ntdll;
 import pe;
-import kernelbase;
 
 using DWORD = uint32_t;
 

@@ -11,7 +11,6 @@
 
 import nt;
 import ntdll;
-import kernelbase;
 
 typedef void (__thiscall * dtor_fn)(void*);
 
@@ -28,7 +27,7 @@ extern char __mingw_module_is_dll;
 static RTL_CRITICAL_SECTION lock;
 static int inited = 0;
 static dtor_obj *global_dtors = NULL;
-static uint32_t tls_dtors_slot = TLS_OUT_OF_INDEXES;
+static thread_local dtor_obj** tls_dtors;
 
 extern "C"
 int __mingw_cxa_atexit(dtor_fn dtor, void *obj, void *dso) {
@@ -64,12 +63,12 @@ int __mingw_cxa_thread_atexit(dtor_fn dtor, void *obj, void *dso) {
     return 1;
   assert(!dso || dso == &__dso_handle);
 
-  dtor_obj **head = (dtor_obj **)TlsGetValue(tls_dtors_slot);
+  auto head = tls_dtors;
   if (!head) {
     head = (dtor_obj **) calloc(1, sizeof(*head));
     if (!head)
       return 1;
-    TlsSetValue(tls_dtors_slot, head);
+    tls_dtors = head;
   }
   dtor_obj *handler = (dtor_obj *) calloc(1, sizeof(*handler));
   if (!handler)
@@ -83,23 +82,19 @@ int __mingw_cxa_thread_atexit(dtor_fn dtor, void *obj, void *dso) {
 
 static void tls_atexit_callback(HANDLE, uint32_t dwReason, void*) {
   if (dwReason == DLL_PROCESS_DETACH) {
-    dtor_obj **p = (dtor_obj **)TlsGetValue(tls_dtors_slot);
-    run_dtor_list(p);
-    free(p);
-    TlsSetValue(tls_dtors_slot, NULL);
-    TlsFree(tls_dtors_slot);
+    run_dtor_list(tls_dtors);
+    free(tls_dtors);
+    tls_dtors = nullptr;
     run_dtor_list(&global_dtors);
   }
 }
 
 static void tls_callback(HANDLE hDllHandle, uint32_t dwReason, void*) {
-  dtor_obj **p;
   switch (dwReason) {
   case DLL_PROCESS_ATTACH:
     if (inited == 0) {
       RtlInitializeCriticalSection(&lock);
       __dso_handle = hDllHandle;
-      tls_dtors_slot = TlsAlloc();
       /*
        * We can only call _register_thread_local_exe_atexit_callback once
        * in a process; if we call it a second time the process terminates.
@@ -142,15 +137,13 @@ static void tls_callback(HANDLE hDllHandle, uint32_t dwReason, void*) {
      * linked CRT (which still runs TLS destructors for the main thread).
      */
     if (__mingw_module_is_dll) {
-      p = (dtor_obj **)TlsGetValue(tls_dtors_slot);
-      run_dtor_list(p);
-      free(p);
-      TlsSetValue(tls_dtors_slot, NULL);
+      run_dtor_list(tls_dtors);
+      free(tls_dtors);
+      tls_dtors = nullptr;
       /* For DLLs, run dtors when detached. For EXEs, run dtors via the
        * thread local atexit callback, to make sure they don't run when
        * exiting the process with _exit or ExitProcess. */
       run_dtor_list(&global_dtors);
-      TlsFree(tls_dtors_slot);
     }
     if (inited == 1) {
       inited = 0;
@@ -160,10 +153,9 @@ static void tls_callback(HANDLE hDllHandle, uint32_t dwReason, void*) {
   case DLL_THREAD_ATTACH:
     break;
   case DLL_THREAD_DETACH:
-    p = (dtor_obj **)TlsGetValue(tls_dtors_slot);
-    run_dtor_list(p);
-    free(p);
-    TlsSetValue(tls_dtors_slot, NULL);
+    run_dtor_list(tls_dtors);
+    free(tls_dtors);
+    tls_dtors = nullptr;
     break;
   }
 }
