@@ -4412,7 +4412,8 @@ NTSTATUS process::create_thread(optional<reference_wrapper<handle_t>> thread_han
 
     memcpy(&start_context, &thread_context, sizeof(CONTEXT));
 #ifdef __x86_64__
-    start_context.EFlags |= 0x202; // IF, reserved flag
+    start_context.EFlags &= 0x40dd5; // whitelist: CF, PF, AF, ZF, SF, TF, DF, OF, AC
+    start_context.EFlags |= 0x200; // force IF on
     start_context.SegCs = user_CS;
     start_context.SegSs = user_DS;
     start_context.SegEs = user_DS;
