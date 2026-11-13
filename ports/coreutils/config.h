@@ -1463,7 +1463,7 @@
 #define HAVE_CLOCK_GETTIME 1
 
 /* Define to 1 if you have the 'clock_settime' function. */
-/* #undef HAVE_CLOCK_SETTIME */
+#define HAVE_CLOCK_SETTIME 1
 
 /* Define to 1 if you have the 'closedir' function. */
 #define HAVE_CLOSEDIR 1

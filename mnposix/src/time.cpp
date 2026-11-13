@@ -184,3 +184,29 @@ unsigned int alarm(unsigned int seconds) {
 
     return (unsigned int)((left + 9999999) / 10000000);
 }
+
+extern "C"
+int clock_settime(clockid_t clockid, const timespec* tp) {
+    LARGE_INTEGER time;
+
+    if (clockid != CLOCK_REALTIME) {
+        *_errno() = EINVAL;
+        return -1;
+    }
+
+    if (tp->tv_nsec < 0 || tp->tv_nsec >= 1000000000) {
+        *_errno() = EINVAL;
+        return -1;
+    }
+
+    time.QuadPart = (tp->tv_sec * 10000000) + 116444736000000000;
+    time.QuadPart += (int64_t)tp->tv_nsec * 100;
+
+    auto status = NtSetSystemTime(&time, nullptr);
+    if (!success(status)) {
+        *_errno() = nt_status_to_errno(status);
+        return -1;
+    }
+
+    return 0;
+}

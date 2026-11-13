@@ -152,7 +152,7 @@
 /* #undef HAVE_CLOCK_NANOSLEEP */
 
 /* Define to 1 if you have the `clock_settime' function. */
-/* #undef HAVE_CLOCK_SETTIME */
+#define HAVE_CLOCK_SETTIME 1
 
 /* Define to 1 if the system has the type `clock_t'. */
 #define HAVE_CLOCK_T 1

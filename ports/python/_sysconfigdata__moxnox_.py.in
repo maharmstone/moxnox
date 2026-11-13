@@ -126,7 +126,7 @@ build_time_vars = {
     'HAVE_CLOCK_GETRES': 1,
     'HAVE_CLOCK_GETTIME': 1,
     'HAVE_CLOCK_NANOSLEEP': 0,
-    'HAVE_CLOCK_SETTIME': 0,
+    'HAVE_CLOCK_SETTIME': 1,
     'HAVE_CLOCK_T': 1,
     'HAVE_CLOSEFROM': 0,
     'HAVE_CLOSE_RANGE': 0,
