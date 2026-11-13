@@ -137,6 +137,11 @@ add_library(musl STATIC
     ../ports/musl/repo/src/math/llroundf.c
     ../ports/musl/repo/src/math/llrint.c
     ../ports/musl/repo/src/math/llrintf.c
+    ../ports/musl/repo/src/math/lgamma.c
+    ../ports/musl/repo/src/math/lgammaf.c
+    ../ports/musl/repo/src/math/lgamma_r.c
+    ../ports/musl/repo/src/math/lgammaf_r.c
+    ../ports/musl/repo/src/math/signgam.c
 )
 
 target_include_directories(musl PRIVATE musl_compat ../ports/musl/repo/src/include ../ports/musl/repo/src/internal ../ports/musl/repo/arch/generic)

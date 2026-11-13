@@ -413,3 +413,6 @@ abs
 labs
 llabs
 imaxabs = llabs
+lgamma
+lgammaf
+lgammal = lgamma

@@ -2910,7 +2910,7 @@
  *	available to do the log gamma function.  See also HAS_TGAMMA and
  *	HAS_LGAMMA_R.
  */
-/*#define HAS_LGAMMA		/ **/
+#define HAS_LGAMMA		/**/
 
 /* HAS_LGAMMA_R:
  *	This symbol, if defined, indicates that the lgamma_r routine is

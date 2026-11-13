@@ -415,3 +415,6 @@ abs
 labs
 llabs
 imaxabs
+lgamma
+lgammaf
+lgammal
