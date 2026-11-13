@@ -4,6 +4,7 @@ module;
 #include <optional>
 #include <mutex>
 #include <signal.h>
+#include <string.h>
 #include "timer-asm.h"
 #include "trace.h"
 
@@ -23,6 +24,9 @@ import scheduler;
 import acpica;
 import trace;
 import kernel_time_page;
+import gnu_efi;
+import efi;
+import rwsem;
 
 #ifdef __x86_64__
 import inout;
@@ -654,6 +658,52 @@ void trace_NtSetSystemTime(uintptr_t* args) {
     print("NtSetSystemTime: system_time = {}\n", system_time.QuadPart);
 }
 
+static void hwclock_thread() {
+    static rwsem hwclock_lock;
+
+    lock_guard lock(hwclock_lock);
+
+    if (SetTime) {
+        EFI_TIME t;
+        auto v = kernel_time_page.system_time_offset + kernel_time_page.system_time;
+
+        memset(&t, 0, sizeof(t));
+
+        t.Nanosecond = (uint32_t)((v % 10000000) * 100);
+        v /= 10000000;
+
+        auto secs = v % 86400;
+        auto days = (int64_t)(v / 86400);
+
+        t.Second = (uint8_t)(secs % 60);
+        t.Minute = (uint8_t)((secs % 3600) / 60);
+        t.Hour = (uint8_t)(secs / 3600);
+
+        days -= 145791; // shift epoch to March 1, 2000
+
+        int64_t era = (days >= 0 ? days : (days - 146096)) / 146097;
+        auto day_of_era = (unsigned int)(days - (era * 146097));
+        unsigned int year_of_era = (day_of_era - (day_of_era / 1460) + (day_of_era / 36524) - (day_of_era / 146096)) / 365;
+        unsigned int day_of_year = day_of_era - ((365 * year_of_era) + (year_of_era / 4) - (year_of_era / 100));
+        unsigned int month_index = ((5 * day_of_year) + 2) / 153;
+
+        t.Day = (uint8_t)(day_of_year - (((153 * month_index) + 2) / 5) + 1);
+        t.Month = (uint8_t)((month_index < 10) ? (month_index + 3) : (month_index - 9));
+        t.Year = (uint16_t)(year_of_era + (era * 400) + 2000);
+
+        if (t.Month < 3)
+            t.Year++;
+
+        t.TimeZone = EFI_UNSPECIFIED_TIMEZONE;
+
+        auto ret = SetTime(&t);
+        if (ret != EFI_SUCCESS)
+            print("EFI SetTime returned {:x}\n", ret);
+    }
+
+    // FIXME - x86 RTC
+}
+
 extern "C"
 nt_status NtSetSystemTime(const LARGE_INTEGER* system_time,
                           LARGE_INTEGER* previous_time) {
@@ -672,7 +722,9 @@ nt_status NtSetSystemTime(const LARGE_INTEGER* system_time,
 
     kernel_time_page.system_time_offset = t - kernel_time_page.system_time;
 
-    // FIXME - update hwclock
+    auto thread = add_kernel_thread(hwclock_thread);
+    if (!thread)
+        print("add_kernel_thread failed\n");
 
     return nt_status::SUCCESS;
 }
