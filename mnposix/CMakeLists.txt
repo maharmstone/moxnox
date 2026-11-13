@@ -48,10 +48,18 @@ target_compile_options(musl_crypt PRIVATE "SHELL:-include ${CMAKE_SOURCE_DIR}/mn
 
 add_library(musl_prng STATIC
     ../ports/musl/repo/src/prng/random.c
+    ../ports/musl/repo/src/prng/__rand48_step.c
+    ../ports/musl/repo/src/prng/__seed48.c
+    ../ports/musl/repo/src/prng/drand48.c
+    ../ports/musl/repo/src/prng/lrand48.c
+    ../ports/musl/repo/src/prng/mrand48.c
+    ../ports/musl/repo/src/prng/lcong48.c
+    ../ports/musl/repo/src/prng/seed48.c
+    ../ports/musl/repo/src/prng/srand48.c
 )
 
 target_include_directories(musl_prng PRIVATE prng_compat)
-target_compile_options(musl_prng PRIVATE -fno-exceptions ${USERSPACE_CFLAGS} -Wno-sign-conversion -Wno-conversion)
+target_compile_options(musl_prng PRIVATE -fno-exceptions ${USERSPACE_CFLAGS} -Wno-sign-conversion -Wno-conversion -Wno-parentheses -Wno-array-parameter)
 
 add_library(mnposix SHARED
     src/mnposix.def

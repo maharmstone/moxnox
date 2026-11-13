@@ -307,6 +307,15 @@ random
 srandom
 initstate
 setstate
+drand48
+erand48
+jrand48
+lcong48
+lrand48
+mrand48
+nrand48
+seed48
+srand48
 
 ; stubs
 mlock
