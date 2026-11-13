@@ -1688,8 +1688,7 @@ NTSTATUS user_NtContinue(const CONTEXT* thread_context, bool /*raise_alert*/) {
     ctx.EFlags |= 0x200; // force interrupts on
     ctx.EFlags &= ~(uint32_t)0x3000; // force IOPL to 0
 #elifdef __aarch64__
-    if ((ctx.Cpsr & 0xf) != 0)
-        return nt_status::INVALID_PARAMETER;
+    ctx.Cpsr &= 0xf0000000;
 #endif
 
     memcpy(&t.syscall_context, &ctx, sizeof(CONTEXT));
