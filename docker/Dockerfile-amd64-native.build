@@ -63,8 +63,9 @@ RUN printf "set(CMAKE_SYSTEM_NAME Moxnox)\nset(CMAKE_SYSTEM_PROCESSOR x86_64)\ns
 RUN emerge cross-x86_64-pc-moxnox/compiler-rt
 RUN x86_64-pc-moxnox-emerge --nodeps llvm-runtimes/clang-rtlib-config:22
 
+RUN mkdir -p /usr/x86_64-pc-moxnox/etc/portage/patches/llvm-runtimes/libunwind && cd /usr/x86_64-pc-moxnox/etc/portage/patches/llvm-runtimes/libunwind && wget https://moxnox.dev/libunwind-moxnox.patch
 RUN printf 'llvm-runtimes/libunwind moxnox-libunwind.conf\n' >> /usr/x86_64-pc-moxnox/etc/portage/package.env/moxnox
-RUN printf 'MYCMAKEARGS="${MYCMAKEARGS} -DCMAKE_TOOLCHAIN_FILE=/etc/moxnox-amd64-toolchain.cmake -DLIBUNWIND_ENABLE_SHARED=OFF -DLIBUNWIND_HIDE_SYMBOLS=ON -DLIBUNWIND_INSTALL_HEADERS=OFF"\nCC=x86_64-pc-moxnox-clang\nCXX=x86_64-pc-moxnox-clang++\nCFLAGS=\"${CFLAGS} -D_WIN32 -D_WIN64 -D__MINGW32__ -D__MINGW64__ -D__MSVCRT__ -D__STRALIGN_H_ -idirafter/usr/x86_64-pc-moxnox/mingw-compat/include\"\nCXXFLAGS=\"${CXXFLAGS} -D_WIN32 -D_WIN64 -D__MINGW32__ -D__MINGW64__ -D__MSVCRT__ -D__STRALIGN_H_ -idirafter/usr/x86_64-pc-moxnox/mingw-compat/include\"\nLIBDIR_amd64=\"lib\"\nFEATURES=\"${FEATURES} nostrip\"\n' >> /usr/x86_64-pc-moxnox/etc/portage/env/moxnox-libunwind.conf
+RUN printf 'MYCMAKEARGS="${MYCMAKEARGS} -DCMAKE_TOOLCHAIN_FILE=/etc/moxnox-amd64-toolchain.cmake -DLIBUNWIND_ENABLE_SHARED=OFF -DLIBUNWIND_HIDE_SYMBOLS=ON -DLIBUNWIND_INSTALL_HEADERS=OFF"\nCC=x86_64-pc-moxnox-clang\nCXX=x86_64-pc-moxnox-clang++\nLIBDIR_amd64=\"lib\"\nFEATURES=\"${FEATURES} nostrip\"\n' >> /usr/x86_64-pc-moxnox/etc/portage/env/moxnox-libunwind.conf
 RUN x86_64-pc-moxnox-emerge llvm-runtimes/libunwind llvm-runtimes/clang-unwindlib-config:22
 
 RUN mkdir -p /usr/x86_64-pc-moxnox/etc/portage/patches/llvm-runtimes/libcxx && cd /usr/x86_64-pc-moxnox/etc/portage/patches/llvm-runtimes/libcxx && wget https://moxnox.dev/libcxx-moxnox.tar.gz && tar -xzf libcxx-moxnox.tar.gz && rm libcxx-moxnox.tar.gz
