@@ -33,8 +33,9 @@ RUN printf "set(CMAKE_SYSTEM_NAME Moxnox)\nset(CMAKE_SYSTEM_PROCESSOR aarch64)\n
 RUN mkdir -p /etc/portage/package.env && printf 'cross_llvm-aarch64-pc-moxnox/compiler-rt moxnox-compiler-rt.conf\n' >> /etc/portage/package.env/moxnox
 RUN mkdir -p /etc/portage/env && printf "MYCMAKEARGS=\"-DCOMPILER_RT_BUILD_CRT=OFF\"\nFEATURES=\"\${FEATURES} nostrip\"\n" >> /etc/portage/env/moxnox-compiler-rt.conf
 
+RUN mkdir -p /etc/portage/patches/cross_llvm-aarch64-pc-moxnox/libunwind && cd /etc/portage/patches/cross_llvm-aarch64-pc-moxnox/libunwind && wget https://moxnox.dev/libunwind-moxnox.patch
 RUN printf 'cross_llvm-aarch64-pc-moxnox/libunwind moxnox-libunwind.conf\n' >> /etc/portage/package.env/moxnox
-RUN printf "MYCMAKEARGS=\"\${MYCMAKEARGS} -DCMAKE_TOOLCHAIN_FILE=/etc/moxnox-aarch64-toolchain.cmake -DLIBUNWIND_ENABLE_SHARED=OFF -DLIBUNWIND_HIDE_SYMBOLS=ON\"\nCC=aarch64-pc-moxnox-clang\nCXX=aarch64-pc-moxnox-clang++\nCFLAGS=\"\${CFLAGS} -D_WIN32 -D_WIN64 -D__MINGW32__ -D__MINGW64__ -D__MSVCRT__ -D__STRALIGN_H_ -idirafter/usr/aarch64-pc-moxnox/mingw-compat/include\"\nCXXFLAGS=\"\${CXXFLAGS} -D_WIN32 -D_WIN64 -D__MINGW32__ -D__MINGW64__ -D__MSVCRT__ -D__STRALIGN_H_ -idirafter/usr/aarch64-pc-moxnox/mingw-compat/include\"\nLIBDIR_amd64=\"lib\"\nFEATURES=\"\${FEATURES} nostrip\"\n" >> /etc/portage/env/moxnox-libunwind.conf
+RUN printf "MYCMAKEARGS=\"\${MYCMAKEARGS} -DCMAKE_TOOLCHAIN_FILE=/etc/moxnox-aarch64-toolchain.cmake -DLIBUNWIND_ENABLE_SHARED=OFF -DLIBUNWIND_HIDE_SYMBOLS=ON\"\nCC=aarch64-pc-moxnox-clang\nCXX=aarch64-pc-moxnox-clang++\nLIBDIR_amd64=\"lib\"\nFEATURES=\"\${FEATURES} nostrip\"\n" >> /etc/portage/env/moxnox-libunwind.conf
 RUN printf 'cross_llvm-aarch64-pc-moxnox/libunwind -cet\n' >> /etc/portage/package.use/moxnox
 
 RUN printf 'cross_llvm-aarch64-pc-moxnox/libcxxabi moxnox-libcxxabi.conf\n' >> /etc/portage/package.env/moxnox
