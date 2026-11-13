@@ -592,7 +592,7 @@ msr	fpsr, x1
 // restore elr_e1, spsr_el1, and sp_el0
 ldr	x18, [x19, #CONTEXT_PC]
 msr	elr_el1, x18
-ldr	x18, [x19, #CONTEXT_CPSR]
+ldr	w18, [x19, #CONTEXT_CPSR]
 msr	spsr_el1, x18
 ldr	x18, [x19, #CONTEXT_SP]
 msr	sp_el0, x18
