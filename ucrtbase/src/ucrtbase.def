@@ -422,3 +422,9 @@ nanl = nan
 nearbyint
 nearbyintf
 nearbyintl = nearbyint
+remainder
+remainderf
+remainderl = remainder
+remquo
+remquof
+remquol = remquo

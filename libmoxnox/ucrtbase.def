@@ -424,3 +424,9 @@ nanl
 nearbyint
 nearbyintf
 nearbyintl
+remainder
+remainderf
+remainderl
+remquo
+remquof
+remquol

@@ -3227,13 +3227,13 @@
  *	This symbol, if defined, indicates that the remainder routine is
  *	available to return the floating-point remainder.
  */
-/*#define HAS_REMAINDER		/ **/
+#define HAS_REMAINDER		/**/
 
 /* HAS_REMQUO:
  *	This symbol, if defined, indicates that the remquo routine is
  *	available to return the remainder and part of quotient.
  */
-/*#define HAS_REMQUO		/ **/
+#define HAS_REMQUO		/**/
 
 /* HAS_RINT:
  *	This symbol, if defined, indicates that the rint routine is
