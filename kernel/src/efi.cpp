@@ -22,6 +22,7 @@ using namespace std;
 
 static const uint64_t UEFI_VABLOCK = 0xfffffa6000000000;
 export EFI_GET_TIME GetTime = nullptr;
+export EFI_SET_TIME SetTime = nullptr;
 export EFI_RESET_SYSTEM ResetSystem = nullptr;
 export EFI_SET_VARIABLE SetVariable = nullptr;
 
@@ -73,6 +74,9 @@ export bool map_uefi(const loader_block& lb) {
 
         if (!GetTime && (uintptr_t)lb.GetTime >= d->PhysicalStart && (uintptr_t)lb.GetTime < d->PhysicalStart + (d->NumberOfPages << PAGE_SHIFT))
             GetTime = (EFI_GET_TIME)((uintptr_t)lb.GetTime - d->PhysicalStart + va);
+
+        if (!SetTime && (uintptr_t)lb.SetTime >= d->PhysicalStart && (uintptr_t)lb.SetTime < d->PhysicalStart + (d->NumberOfPages << PAGE_SHIFT))
+            SetTime = (EFI_SET_TIME)((uintptr_t)lb.SetTime - d->PhysicalStart + va);
 
         if (!ResetSystem && (uintptr_t)lb.ResetSystem >= d->PhysicalStart && (uintptr_t)lb.ResetSystem < d->PhysicalStart + (d->NumberOfPages << PAGE_SHIFT))
             ResetSystem = (EFI_RESET_SYSTEM)((uintptr_t)lb.ResetSystem - d->PhysicalStart + va);

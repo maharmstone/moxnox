@@ -132,11 +132,13 @@ struct loader_block {
     char hash[32];
 #ifdef __i386__ // avoid bringing in gnu-efi
     uint64_t GetTime;
+    uint64_t SetTime;
     uint64_t SetVirtualAddressMap;
     uint64_t ResetSystem;
     uint64_t SetVariable;
 #else
     EFI_GET_TIME GetTime;
+    EFI_SET_TIME SetTime;
     EFI_SET_VIRTUAL_ADDRESS_MAP SetVirtualAddressMap;
     EFI_RESET_SYSTEM ResetSystem;
     EFI_SET_VARIABLE SetVariable;

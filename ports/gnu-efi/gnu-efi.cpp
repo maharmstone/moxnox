@@ -38,6 +38,7 @@ export using ::EFI_ALLOCATE_PAGES;
 export using ::EFI_TIME;
 export using ::EFI_TIME_CAPABILITIES;
 export using ::EFI_GET_TIME;
+export using ::EFI_SET_TIME;
 export using ::EFI_SET_VIRTUAL_ADDRESS_MAP;
 export using ::EFI_RESET_SYSTEM;
 export using ::EFI_SET_VARIABLE;

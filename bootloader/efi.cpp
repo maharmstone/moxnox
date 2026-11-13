@@ -1830,6 +1830,7 @@ static EFI_STATUS finish_setting_up(EFI_HANDLE image_handle, uint64_t rsdp_pa,
     lb.trace_ptr = trace_ptr;
     lb.trace_size = trace_size;
     lb.GetTime = (decltype(lb.GetTime))systable->RuntimeServices->GetTime;
+    lb.SetTime = (decltype(lb.SetTime))systable->RuntimeServices->SetTime;
     lb.SetVirtualAddressMap = (decltype(lb.SetVirtualAddressMap))systable->RuntimeServices->SetVirtualAddressMap;
     lb.ResetSystem = (decltype(lb.ResetSystem))systable->RuntimeServices->ResetSystem;
     lb.SetVariable = (decltype(lb.SetVariable))systable->RuntimeServices->SetVariable;
