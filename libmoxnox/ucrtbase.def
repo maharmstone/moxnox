@@ -421,3 +421,6 @@ lgammal
 nan
 nanf
 nanl
+nearbyint
+nearbyintf
+nearbyintl

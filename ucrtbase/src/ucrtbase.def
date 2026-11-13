@@ -419,3 +419,6 @@ lgammal = lgamma
 nan
 nanf
 nanl = nan
+nearbyint
+nearbyintf
+nearbyintl = nearbyint

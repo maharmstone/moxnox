@@ -144,6 +144,8 @@ add_library(musl STATIC
     ../ports/musl/repo/src/math/signgam.c
     ../ports/musl/repo/src/math/nan.c
     ../ports/musl/repo/src/math/nanf.c
+    ../ports/musl/repo/src/math/nearbyint.c
+    ../ports/musl/repo/src/math/nearbyintf.c
 )
 
 target_include_directories(musl PRIVATE musl_compat ../ports/musl/repo/src/include ../ports/musl/repo/src/internal ../ports/musl/repo/arch/generic)

@@ -3094,7 +3094,7 @@
  *	available to return the integral value closest to (according to
  *	the current rounding mode) to x.
  */
-/*#define HAS_NEARBYINT		/ **/
+#define HAS_NEARBYINT		/**/
 
 /* HAS_NEWLOCALE:
  *	This symbol, if defined, indicates that the newlocale routine is
