@@ -146,7 +146,7 @@ init_syscalls:
 
     mov ecx, 0xc0000084 # SFMASK
     xor edx, edx
-    mov eax, 0x200 # disable interrupts when syscall_handler called
+    mov eax, 0x44700 # AC | NT | DF | IF | TF
     wrmsr
 
     ret
