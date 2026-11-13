@@ -443,3 +443,69 @@ fdiml = fdim
 nexttoward
 nexttowardf
 nexttowardl = nexttoward
+cabs
+cabsf
+cabsl = cabs
+cacos
+cacosf
+cacosl = cacos
+cacosh
+cacoshf
+cacoshl = cacosh
+carg
+cargf
+cargl = carg
+casin
+casinf
+casinl = casin
+casinh
+casinhf
+casinhl = casinh
+catan
+catanf
+catanl = catan
+catanh
+catanhf
+catanhl = catanh
+ccos
+ccosf
+ccosl = ccos
+ccosh
+ccoshf
+ccoshl = ccosh
+cexp
+cexpf
+cexpl = cexp
+cimag
+cimagf
+cimagl = cimag
+clog
+clogf
+clogl = clog
+conj
+conjf
+conjl = conj
+cpow
+cpowf
+cpowl = cpow
+cproj
+cprojf
+cprojl = cproj
+creal
+crealf
+creall = creal
+csin
+csinf
+csinl = csin
+csinh
+csinhf
+csinhl = csinh
+csqrt
+csqrtf
+csqrtl = csqrt
+ctan
+ctanf
+ctanl = ctan
+ctanh
+ctanhf
+ctanhl = ctanh

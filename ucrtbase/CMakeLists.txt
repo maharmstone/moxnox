@@ -159,6 +159,52 @@ add_library(musl STATIC
     ../ports/musl/repo/src/math/fdimf.c
     ../ports/musl/repo/src/math/nexttoward.c
     ../ports/musl/repo/src/math/nexttowardf.c
+    ../ports/musl/repo/src/complex/cabs.c
+    ../ports/musl/repo/src/complex/cabsf.c
+    ../ports/musl/repo/src/complex/cacos.c
+    ../ports/musl/repo/src/complex/cacosf.c
+    ../ports/musl/repo/src/complex/cacosh.c
+    ../ports/musl/repo/src/complex/cacoshf.c
+    ../ports/musl/repo/src/complex/carg.c
+    ../ports/musl/repo/src/complex/cargf.c
+    ../ports/musl/repo/src/complex/casin.c
+    ../ports/musl/repo/src/complex/casinf.c
+    ../ports/musl/repo/src/complex/casinh.c
+    ../ports/musl/repo/src/complex/casinhf.c
+    ../ports/musl/repo/src/complex/catan.c
+    ../ports/musl/repo/src/complex/catanf.c
+    ../ports/musl/repo/src/complex/catanh.c
+    ../ports/musl/repo/src/complex/catanhf.c
+    ../ports/musl/repo/src/complex/ccos.c
+    ../ports/musl/repo/src/complex/ccosf.c
+    ../ports/musl/repo/src/complex/ccosh.c
+    ../ports/musl/repo/src/complex/ccoshf.c
+    ../ports/musl/repo/src/complex/cexp.c
+    ../ports/musl/repo/src/complex/cexpf.c
+    ../ports/musl/repo/src/complex/cimag.c
+    ../ports/musl/repo/src/complex/cimagf.c
+    ../ports/musl/repo/src/complex/clog.c
+    ../ports/musl/repo/src/complex/clogf.c
+    ../ports/musl/repo/src/complex/conj.c
+    ../ports/musl/repo/src/complex/conjf.c
+    ../ports/musl/repo/src/complex/cpow.c
+    ../ports/musl/repo/src/complex/cpowf.c
+    ../ports/musl/repo/src/complex/cproj.c
+    ../ports/musl/repo/src/complex/cprojf.c
+    ../ports/musl/repo/src/complex/creal.c
+    ../ports/musl/repo/src/complex/crealf.c
+    ../ports/musl/repo/src/complex/csin.c
+    ../ports/musl/repo/src/complex/csinf.c
+    ../ports/musl/repo/src/complex/csinh.c
+    ../ports/musl/repo/src/complex/csinhf.c
+    ../ports/musl/repo/src/complex/csqrt.c
+    ../ports/musl/repo/src/complex/csqrtf.c
+    ../ports/musl/repo/src/complex/ctan.c
+    ../ports/musl/repo/src/complex/ctanf.c
+    ../ports/musl/repo/src/complex/ctanh.c
+    ../ports/musl/repo/src/complex/ctanhf.c
+    ../ports/musl/repo/src/complex/__cexp.c
+    ../ports/musl/repo/src/complex/__cexpf.c
 )
 
 target_include_directories(musl PRIVATE musl_compat ../ports/musl/repo/src/include ../ports/musl/repo/src/internal ../ports/musl/repo/arch/generic)
