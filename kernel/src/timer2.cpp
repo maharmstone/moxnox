@@ -656,10 +656,23 @@ void trace_NtSetSystemTime(uintptr_t* args) {
 
 extern "C"
 nt_status NtSetSystemTime(const LARGE_INTEGER* system_time,
-                          LARGE_INTEGER* /*previous_time*/) {
+                          LARGE_INTEGER* previous_time) {
     TRACE1("NtSetSystemTime", system_time);
 
-    // FIXME
+    // FIXME - check for privilege
+    // FIXME - re-evaluate absolute waits
 
-    return nt_status::NOT_IMPLEMENTED;
+    auto t = system_time->QuadPart;
+
+    if (t < 0)
+        return nt_status::INVALID_PARAMETER;
+
+    if (previous_time)
+        previous_time->QuadPart = kernel_time_page.system_time_offset + kernel_time_page.system_time;
+
+    kernel_time_page.system_time_offset = t - kernel_time_page.system_time;
+
+    // FIXME - update hwclock
+
+    return nt_status::SUCCESS;
 }
