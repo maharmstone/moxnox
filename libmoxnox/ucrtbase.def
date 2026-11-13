@@ -448,3 +448,6 @@ yn == _yn
 fdim
 fdimf
 fdiml
+nexttoward
+nexttowardf
+nexttowardl

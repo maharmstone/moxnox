@@ -3145,7 +3145,7 @@
  *	available to return the next machine representable long double from
  *	x in direction y.
  */
-/*#define HAS_NEXTTOWARD		/ **/
+#define HAS_NEXTTOWARD		/**/
 
 /* HAS_NL_LANGINFO:
  *	This symbol, if defined, indicates that the nl_langinfo routine is
