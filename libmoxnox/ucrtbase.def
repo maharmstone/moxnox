@@ -418,3 +418,6 @@ imaxabs
 lgamma
 lgammaf
 lgammal
+nan
+nanf
+nanl

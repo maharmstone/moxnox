@@ -3081,7 +3081,7 @@
  *	This symbol, if defined, indicates that the nan routine is
  *	available to generate NaN.
  */
-/*#define HAS_NAN		/ **/
+#define HAS_NAN		/**/
 
 /* HAS_NANOSLEEP:
  *	This symbol, if defined, indicates that the nanosleep

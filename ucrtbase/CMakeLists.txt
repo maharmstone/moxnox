@@ -142,6 +142,8 @@ add_library(musl STATIC
     ../ports/musl/repo/src/math/lgamma_r.c
     ../ports/musl/repo/src/math/lgammaf_r.c
     ../ports/musl/repo/src/math/signgam.c
+    ../ports/musl/repo/src/math/nan.c
+    ../ports/musl/repo/src/math/nanf.c
 )
 
 target_include_directories(musl PRIVATE musl_compat ../ports/musl/repo/src/include ../ports/musl/repo/src/internal ../ports/musl/repo/arch/generic)

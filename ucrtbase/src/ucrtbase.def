@@ -416,3 +416,6 @@ imaxabs = llabs
 lgamma
 lgammaf
 lgammal = lgamma
+nan
+nanf
+nanl = nan
