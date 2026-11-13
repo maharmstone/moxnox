@@ -218,6 +218,12 @@ long double sinl(long double x);
 long double sqrtl(long double x);
 long double tanhl(long double x);
 long double tanl(long double x);
+double j0(double x);
+double j1(double x);
+double jn(int n, double x);
+double y0(double x);
+double y1(double x);
+double yn(int n, double x);
 
 #ifdef __cplusplus
 }

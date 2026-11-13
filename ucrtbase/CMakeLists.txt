@@ -152,6 +152,9 @@ add_library(musl STATIC
     ../ports/musl/repo/src/math/remquof.c
     ../ports/musl/repo/src/math/tgamma.c
     ../ports/musl/repo/src/math/tgammaf.c
+    ../ports/musl/repo/src/math/j0.c
+    ../ports/musl/repo/src/math/j1.c
+    ../ports/musl/repo/src/math/jn.c
 )
 
 target_include_directories(musl PRIVATE musl_compat ../ports/musl/repo/src/include ../ports/musl/repo/src/internal ../ports/musl/repo/arch/generic)

@@ -433,3 +433,15 @@ remquol
 tgamma
 tgammaf
 tgammal
+_j0
+j0 == _j1
+_j1
+j1 == _j1
+_jn
+jn == _jn
+_y0
+y0 == _y1
+_y1
+y1 == _y1
+_yn
+yn == _yn
