@@ -829,7 +829,7 @@ NTSTATUS NtSetContextThread(HANDLE thread_handle, const CONTEXT* context) {
     // FIXME - look at ContextFlags to determine what to copy
 
     // if non-canonical, iretq will cause a kernel-mode GPF
-    if (context->Rip >> 48 != 0x0000 && context->Rip >> 48 != 0xffff)
+    if (context->Rip & 0xffff800000000000)
         return nt_status::INVALID_PARAMETER;
 
     {
