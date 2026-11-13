@@ -2489,7 +2489,7 @@
  *	This symbol, if defined, indicates that the fdim routine is
  *	available to do the positive difference function.
  */
-/*#define HAS_FDIM		/ **/
+#define HAS_FDIM		/**/
 
 /* HAS_FEGETROUND:
  *	This symbol, if defined, indicates that the fegetround routine is

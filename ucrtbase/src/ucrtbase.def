@@ -437,3 +437,6 @@ _jn = jn
 _y0 = y0
 _y1 = y1
 _yn = yn
+fdim
+fdimf
+fdiml = fdim

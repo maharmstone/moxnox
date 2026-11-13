@@ -445,3 +445,6 @@ _y1
 y1 == _y1
 _yn
 yn == _yn
+fdim
+fdimf
+fdiml
