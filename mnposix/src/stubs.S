@@ -13,7 +13,6 @@ do_stub "strptime"
 do_stub "psignal"
 do_stub "dprintf"
 do_stub "getlocalename_l"
-do_stub "alphasort"
 do_stub "insque"
 do_stub "remque"
 

@@ -332,3 +332,8 @@ int scandir(const char* dir, dirent*** namelist, int (*sel)(const dirent*),
 
     return (int)num_entries;
 }
+
+extern "C"
+int alphasort(const dirent** d1, const dirent** d2) {
+    return strcoll((*d1)->d_name, (*d2)->d_name);
+}

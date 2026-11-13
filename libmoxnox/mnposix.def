@@ -316,6 +316,7 @@ mrand48
 nrand48
 seed48
 srand48
+alphasort
 
 ; stubs
 mlock
@@ -329,6 +330,5 @@ strptime
 psignal
 dprintf
 getlocalename_l
-alphasort
 insque
 remque
