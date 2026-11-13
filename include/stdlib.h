@@ -119,6 +119,8 @@ size_t mbstowcs(wchar_t* dest, const char* src, size_t n);
 size_t wcstombs(char* dest, const wchar_t* src, size_t n);
 long random(void);
 void srandom(unsigned int seed);
+char* initstate(unsigned int seed, char* state, size_t size);
+char* setstate(char* state);
 int putenv(char* string);
 
 #ifdef __cplusplus

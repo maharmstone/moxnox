@@ -303,6 +303,10 @@ pthread_atfork
 pipe2
 fdatasync
 secure_getenv
+random
+srandom
+initstate
+setstate
 
 ; stubs
 mlock
@@ -319,5 +323,3 @@ getlocalename_l
 alphasort
 insque
 remque
-random
-srandom

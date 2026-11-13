@@ -46,6 +46,13 @@ target_include_directories(musl_crypt PRIVATE crypt_compat)
 target_compile_options(musl_crypt PRIVATE -fno-exceptions ${USERSPACE_CFLAGS} -Wno-conversion -Wno-sign-compare -Wno-missing-braces) # -Wno-sign-conversion -Wno-parentheses -Wno-unused-parameter
 target_compile_options(musl_crypt PRIVATE "SHELL:-include ${CMAKE_SOURCE_DIR}/mnposix/crypt_compat/crypt.h")
 
+add_library(musl_prng STATIC
+    ../ports/musl/repo/src/prng/random.c
+)
+
+target_include_directories(musl_prng PRIVATE prng_compat)
+target_compile_options(musl_prng PRIVATE -fno-exceptions ${USERSPACE_CFLAGS} -Wno-sign-conversion -Wno-conversion)
+
 add_library(mnposix SHARED
     src/mnposix.def
     src/stubs.S
@@ -105,6 +112,7 @@ target_link_libraries(mnposix PRIVATE
 target_link_libraries(mnposix PRIVATE -Wl,--whole-archive musl_glob -Wl,--no-whole-archive)
 target_link_libraries(mnposix PRIVATE -Wl,--whole-archive tre -Wl,--no-whole-archive)
 target_link_libraries(mnposix PRIVATE -Wl,--whole-archive musl_crypt -Wl,--no-whole-archive)
+target_link_libraries(mnposix PRIVATE -Wl,--whole-archive musl_prng -Wl,--no-whole-archive)
 
 install(TARGETS mnposix
     COMPONENT core

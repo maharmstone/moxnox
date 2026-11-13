@@ -16,7 +16,5 @@ do_stub "getlocalename_l"
 do_stub "alphasort"
 do_stub "insque"
 do_stub "remque"
-do_stub "random"
-do_stub "srandom"
 
 stubs_end
