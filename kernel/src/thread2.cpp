@@ -836,10 +836,14 @@ NTSTATUS NtSetContextThread(HANDLE thread_handle, const CONTEXT* context) {
         sync_lock sl;
         lock_guard lg(sl);
 
-        if (t->kernel_mode)
-            memcpy(&t->syscall_context, context, sizeof(CONTEXT));
-        else
-            memcpy(&t->context, context, sizeof(CONTEXT));
+        auto& dest = t->kernel_mode ? t->syscall_context : t->context;
+
+        memcpy(&dest, context, sizeof(CONTEXT));
+
+        dest.SegCs = user_CS;
+        dest.SegDs = dest.SegEs = dest.SegFs = dest.SegSs = user_DS;
+        dest.EFlags &= 0x40dd5; // whitelist: CF, PF, AF, ZF, SF, TF, DF, OF, AC
+        dest.EFlags |= 0x200; // force IF on
     }
 
     return nt_status::SUCCESS;

@@ -32,6 +32,11 @@ import x86;
 
 using namespace std;
 
+#ifdef __x86_64__
+export constexpr uint16_t user_CS = 0x3b;
+export constexpr uint16_t user_DS = 0x33;
+#endif
+
 export class session {
 public:
     void acquire() {

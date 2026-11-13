@@ -78,9 +78,6 @@ static_assert(sizeof(RTL_USER_PROCESS_PARAMETERS) == 0x440);
 
 static const size_t MAX_PATH = 260;
 
-static const uint16_t user_CS = 0x3b;
-static const uint16_t user_DS = 0x33;
-
 static atomic<uintptr_t> next_pid = 1;
 
 static spinlock process_list_lock;
