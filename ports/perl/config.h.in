@@ -3494,7 +3494,7 @@
  *	This symbol, if defined, indicates that the tgamma routine is
  *	available to do the gamma function. See also HAS_LGAMMA.
  */
-/*#define HAS_TGAMMA		/ **/
+#define HAS_TGAMMA		/**/
 
 /* HAS_CTIME64:
  *	This symbol, if defined, indicates that the ctime64 () routine is

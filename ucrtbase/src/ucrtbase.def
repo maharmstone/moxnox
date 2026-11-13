@@ -428,3 +428,6 @@ remainderl = remainder
 remquo
 remquof
 remquol = remquo
+tgamma
+tgammaf
+tgammal = tgamma
