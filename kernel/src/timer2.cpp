@@ -31,6 +31,7 @@ import rwsem;
 #ifdef __x86_64__
 import inout;
 import apic;
+import rtc;
 #elifdef __aarch64__
 import aarch64;
 #endif
@@ -661,23 +662,17 @@ void trace_NtSetSystemTime(uintptr_t* args) {
 static void hwclock_thread() {
     static rwsem hwclock_lock;
 
-    lock_guard lock(hwclock_lock);
+    int year;
+    uint8_t month, day, hour, minute, second;
+    auto v = kernel_time_page.system_time_offset + kernel_time_page.system_time;
 
-    if (SetTime) {
-        EFI_TIME t;
-        auto v = kernel_time_page.system_time_offset + kernel_time_page.system_time;
+    {
+        auto secs = (v / 10000000) % 86400;
+        auto days = (int64_t)(v / 864000000000);
 
-        memset(&t, 0, sizeof(t));
-
-        t.Nanosecond = (uint32_t)((v % 10000000) * 100);
-        v /= 10000000;
-
-        auto secs = v % 86400;
-        auto days = (int64_t)(v / 86400);
-
-        t.Second = (uint8_t)(secs % 60);
-        t.Minute = (uint8_t)((secs % 3600) / 60);
-        t.Hour = (uint8_t)(secs / 3600);
+        second = (uint8_t)(secs % 60);
+        minute = (uint8_t)((secs % 3600) / 60);
+        hour = (uint8_t)(secs / 3600);
 
         days -= 145791; // shift epoch to March 1, 2000
 
@@ -687,21 +682,42 @@ static void hwclock_thread() {
         unsigned int day_of_year = day_of_era - ((365 * year_of_era) + (year_of_era / 4) - (year_of_era / 100));
         unsigned int month_index = ((5 * day_of_year) + 2) / 153;
 
-        t.Day = (uint8_t)(day_of_year - (((153 * month_index) + 2) / 5) + 1);
-        t.Month = (uint8_t)((month_index < 10) ? (month_index + 3) : (month_index - 9));
-        t.Year = (uint16_t)(year_of_era + (era * 400) + 2000);
+        day = (uint8_t)(day_of_year - (((153 * month_index) + 2) / 5) + 1);
+        month = (uint8_t)((month_index < 10) ? (month_index + 3) : (month_index - 9));
+        year = (int)(year_of_era + (era * 400) + 2000);
 
-        if (t.Month < 3)
-            t.Year++;
+        if (month < 3)
+            year++;
+    }
+
+    lock_guard lock(hwclock_lock);
+
+    if (SetTime) {
+        EFI_TIME t;
+
+        memset(&t, 0, sizeof(t));
+
+        t.Nanosecond = (uint32_t)((v % 10000000) * 100);
+
+        t.Second = second;
+        t.Minute = minute;
+        t.Hour = hour;
+
+        t.Day = day;
+        t.Month = month;
+        t.Year = (uint16_t)year;
 
         t.TimeZone = EFI_UNSPECIFIED_TIMEZONE;
 
         auto ret = SetTime(&t);
         if (ret != EFI_SUCCESS)
             print("EFI SetTime returned {:x}\n", ret);
+    } else {
+#ifdef __x86_64__
+        if (rtc_port.has_value())
+            set_rtc(*rtc_port, year, month, day, hour, minute, second);
+#endif
     }
-
-    // FIXME - x86 RTC
 }
 
 extern "C"

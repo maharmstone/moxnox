@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
+module;
+
 #include <optional>
 #include <chrono>
+
+export module rtc;
 
 import inout;
 import timer;
@@ -28,6 +32,8 @@ static void init_acpi_hids() {
 
 static module_init module_init_rtc(init_acpi_hids);
 
+export optional<uint16_t> rtc_port;
+
 template<unsigned N>
 static uint8_t get_rtc_register(uint16_t port) {
     outb(port, N);
@@ -35,8 +41,67 @@ static uint8_t get_rtc_register(uint16_t port) {
     return inb(port + 1);
 }
 
+template<unsigned N>
+static void set_rtc_register(uint16_t port, uint8_t value) {
+    outb(port, N);
+
+    outb(port + 1, value);
+}
+
 static bool get_update_in_progress(uint16_t port) {
     return get_rtc_register<0xa>(port) & 0x80;
+}
+
+static uint8_t to_bcd(uint8_t v) {
+    return ((v / 10) << 4) | (v % 10);
+}
+
+export void set_rtc(uint16_t port, int year, uint8_t month, uint8_t day,
+                    uint8_t hour, uint8_t minute, uint8_t second) {
+    if (year < 1970 || year > 2069) {
+        print("set_rtc: year {} out of range\n", year);
+        return;
+    }
+
+    year %= 100;
+
+    // FIXME - weekday register?
+    // FIXME - century register?
+
+    disable_interrupts();
+
+    auto register_b = get_rtc_register<0x0b>(port);
+
+    if (!(register_b & 0x02)) { // 12-hour clock
+        if (hour == 0)
+            hour = 12;
+        else if (hour == 12)
+            hour = 0x80 | 12;
+        else if (hour > 12)
+            hour = 0x80 | (hour - 12);
+    }
+
+    if (!(register_b & 0x04)) { // BCD
+        second = to_bcd(second);
+        minute = to_bcd(minute);
+        hour = (hour & 0x80) | to_bcd(hour & 0x7f);
+        day = to_bcd(day);
+        month = to_bcd(month);
+        year = to_bcd((uint8_t)year);
+    }
+
+    set_rtc_register<0xb>(port, register_b | 0x80); // halt update cycle
+
+    set_rtc_register<0x00>(port, second);
+    set_rtc_register<0x02>(port, minute);
+    set_rtc_register<0x04>(port, hour);
+    set_rtc_register<0x07>(port, day);
+    set_rtc_register<0x08>(port, month);
+    set_rtc_register<0x09>(port, (uint8_t)year);
+
+    set_rtc_register<0xb>(port, register_b); // resume update cycle
+
+    enable_interrupts();
 }
 
 static void init_rtc(uint16_t port) {
@@ -108,6 +173,8 @@ static void init_rtc(uint16_t port) {
     auto day_num = ymd_to_num(ymd);
 
     kernel_time_page.system_time_offset = (uint64_t)((((day_num * 86400) + (now.hour * 3600) + (now.minute * 60) + now.second) * 10000000) - kernel_time_page.system_time);
+
+    rtc_port = port;
 }
 
 static void found_rtc(const acpi_device& d) {

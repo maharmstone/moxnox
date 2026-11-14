@@ -77,6 +77,7 @@ set(AMD64_MODULES ${GLOBAL_MODULES}
     src/x86/inout.cpp
     src/x86/apic.cpp
     src/x86/text_console.cpp
+    src/x86/rtc.cpp
 )
 
 set(AARCH64_MODULES ${GLOBAL_MODULES}
@@ -137,7 +138,6 @@ set(SRC_FILES src/kernel.cpp
 
 set(AMD64_SRC_FILES ${SRC_FILES}
     src/x86/ps2.cpp
-    src/x86/rtc.cpp
     src/x86/serial.cpp
     src/x86/framebuffer_avx.cpp
     src/x86/framebuffer_avx512.cpp
