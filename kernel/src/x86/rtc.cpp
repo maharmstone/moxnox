@@ -159,8 +159,17 @@ static void init_rtc(uint16_t port) {
         now.year = (now.year & 0x0f) + (uint8_t)((now.year >> 4) * 10);
     }
 
-    if (!(register_b & 0x02) && now.hour & 0x80)
-        now.hour = (uint8_t)(((now.hour & 0x7f) + 12) % 24);
+    if (!(register_b & 0x02)) {
+        bool afternoon = now.hour & 0x80;
+
+        now.hour &= 0x7f;
+
+        if (now.hour == 12)
+            now.hour = 0;
+
+        if (afternoon)
+            now.hour += 12;
+    }
 
     if (now.year >= 70)
         now.year += 1900;
