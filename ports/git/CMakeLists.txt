@@ -490,6 +490,7 @@ target_compile_definitions(libgit PUBLIC
     NO_SETITIMER
     HAVE_PTHREADS
     HAVE_GETENTROPY
+    USE_LIBPCRE2
     HAVE_STRINGS_H
     COMPAT_MINGW_POSIX_H
     NO_STRUCT_ITIMERVAL
@@ -525,7 +526,7 @@ target_compile_options(libgit PUBLIC
     -Wno-macro-redefined
 )
 
-target_link_libraries(libgit PUBLIC zlib moxnox libcurl)
+target_link_libraries(libgit PUBLIC zlib moxnox libcurl pcre2-8-shared)
 
 add_dependencies(libgit git_generate)
 

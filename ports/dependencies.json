@@ -18,7 +18,7 @@
     "gawk": ["mpfr", "readline"],
     "gcc": ["gmp", "libiconv", "mpc", "mpfr"],
     "gettext": ["gnulib", "libiconv", "libxml2"],
-    "git": ["curl", "expat", "zlib"],
+    "git": ["curl", "expat", "pcre2", "zlib"],
     "gmp": [],
     "gnulib": [],
     "gperf": ["gnulib"],
