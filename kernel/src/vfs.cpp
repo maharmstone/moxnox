@@ -103,9 +103,7 @@ public:
         fs.acquire();
     }
 
-    virtual ~inode() {
-        fs.release();
-    }
+    virtual ~inode();
 
     virtual void release() = 0;
 
@@ -116,6 +114,8 @@ public:
                     uint64_t& written_bytes);
     nt_status write_nonblock(span<const span<const uint8_t>> v,
                              uint64_t& written_bytes);
+    nt_status set_posix_lock(uint64_t start, uint64_t length, bool write,
+                             bool nowait);
 
     virtual nt_status open_child(string_view name, object_ref& obj) = 0;
     virtual nt_status create_child(string_view name, uint32_t create_options,
@@ -151,6 +151,8 @@ public:
     page_cache<inode> cache{*this};
     list_entry writeback_le;
     fifo_object* fifo = nullptr;
+    spinlock posix_locks_lock;
+    list_entry posix_lock_procs = { &posix_lock_procs, &posix_lock_procs };
 };
 
 static_assert(is_readable_object_with_offset<inode>);
@@ -267,6 +269,7 @@ public:
 private:
     nt_status set_eof(span<const uint8_t> buf);
     nt_status set_non_block(span<const uint8_t> buffer);
+    nt_status set_posix_lock(span<const uint8_t> buffer);
 };
 
 static_assert(is_readable_object_without_offset<file>);

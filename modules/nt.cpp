@@ -911,6 +911,7 @@ enum class FILE_INFORMATION_CLASS {
     MoxnoxPosixNonBlock = 0x1000,
     MoxnoxFchown,
     MoxnoxFchmod,
+    MoxnoxSetPosixLock,
 };
 
 struct MN_FCHOWN {
@@ -1506,6 +1507,13 @@ inline constexpr uint32_t LX_FILE_METADATA_HAS_GID = 0x2;
 inline constexpr uint32_t LX_FILE_METADATA_HAS_MODE = 0x4;
 inline constexpr uint32_t LX_FILE_METADATA_HAS_DEVICE_ID = 0x8;
 inline constexpr uint32_t LX_FILE_CASE_SENSITIVE_DIR = 0x10;
+
+struct FILE_MN_SET_POSIX_LOCK {
+    bool write;
+    bool nowait;
+    uint64_t start;
+    uint64_t length;
+};
 
 struct FILE_FS_SIZE_INFORMATION {
     LARGE_INTEGER TotalAllocationUnits;
