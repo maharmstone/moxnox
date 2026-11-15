@@ -29,6 +29,7 @@
     "jsoncpp": [],
     "less": ["ncurses"],
     "libarchive": ["bzip2", "libiconv", "xz", "zlib", "zstd"],
+    "libgit2": ["libssh2", "llhttp", "openssl", "pcre2", "zlib"],
     "libiconv": [],
     "libpng": ["zlib"],
     "libssh2": ["openssl", "zlib"],

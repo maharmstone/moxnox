@@ -280,3 +280,6 @@
 [submodule "ports/libssh2/repo"]
 	path = ports/libssh2/repo
 	url = https://github.com/libssh2/libssh2
+[submodule "ports/libgit2/repo"]
+	path = ports/libgit2/repo
+	url = https://github.com/libgit2/libgit2

@@ -213,3 +213,5 @@
 	insteadOf = https://github.com/nghttp2/nghttp2
 [url "https://git.burntcomma.com/moxnox/libssh2"]
 	insteadOf = https://github.com/libssh2/libssh2
+[url "https://git.burntcomma.com/moxnox/libgit2"]
+	insteadOf = https://github.com/libgit2/libgit2
