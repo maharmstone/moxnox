@@ -22,7 +22,7 @@
     "gmp": [],
     "gnulib": [],
     "gperf": ["gnulib"],
-    "grep": ["gnulib"],
+    "grep": ["gnulib", "pcre2"],
     "gzip": [],
     "harfbuzz": ["freetype"],
     "hexyl": ["rust"],

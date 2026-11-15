@@ -1313,7 +1313,7 @@
 /* #undef HAVE_LIBINTL_H */
 
 /* Define to 1 if you have the Perl Compatible Regular Expressions library. */
-/* #undef HAVE_LIBPCRE */
+#define HAVE_LIBPCRE 1
 
 /* Define if you have the libsigsegv library. */
 /* #undef HAVE_LIBSIGSEGV */

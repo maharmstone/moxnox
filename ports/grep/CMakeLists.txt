@@ -20,6 +20,7 @@ add_executable(grep
     repo/src/grep.c
     repo/src/kwsearch.c
     repo/src/kwset.c
+    repo/src/pcresearch.c
     repo/src/searchutils.c
     repo/lib/colorize-posix.c
     repo/gnulib/lib/argmatch.c
@@ -156,10 +157,10 @@ target_compile_options(grep PRIVATE
     -Wno-type-limits
     -Wno-unused-const-variable
     $<$<C_COMPILER_ID:GNU>:-Wno-calloc-transposed-args>
-    $<$<C_COMPILER_ID:Clang>:-Wno-bitwise-conditional-parentheses -Wno-tautological-constant-out-of-range-compare -Wno-bitwise-instead-of-logical>
+    $<$<C_COMPILER_ID:Clang>:-Wno-bitwise-conditional-parentheses -Wno-tautological-constant-out-of-range-compare -Wno-bitwise-instead-of-logical -Wno-int-in-bool-context>
 )
 
-target_link_libraries(grep PRIVATE moxnox)
+target_link_libraries(grep PRIVATE pcre2-8-shared moxnox)
 
 install(TARGETS grep DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 install(PROGRAMS ${GEN}/src/egrep ${GEN}/src/fgrep DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
