@@ -152,8 +152,10 @@ public:
     page_cache<inode> cache{*this};
     list_entry writeback_le;
     fifo_object* fifo = nullptr;
+
     spinlock posix_locks_lock;
     list_entry posix_lock_procs = { &posix_lock_procs, &posix_lock_procs };
+    list_entry posix_lock_waiters = { &posix_lock_waiters, &posix_lock_waiters };
 };
 
 static_assert(is_readable_object_with_offset<inode>);

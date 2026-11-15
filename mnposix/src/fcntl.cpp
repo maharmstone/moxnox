@@ -192,11 +192,26 @@ static int setlk(int fd, const flock* lock, bool nowait) {
         params.start = start;
         params.length = length == 0 ? (0xffffffffffffffff - start) : length;
 
-        status = NtSetInformationFile(h, &iosb, &params, sizeof(params),
-                                      FILE_INFORMATION_CLASS::MoxnoxSetPosixLock);
-        if (!success(status)) {
-            *_errno() = nt_status_to_errno(status);
-            return -1;
+        while (true) {
+            auto sig_count = mn_handled_nonrestartable_signal_count();
+
+            status = NtSetInformationFile(h, &iosb, &params, sizeof(params),
+                                        FILE_INFORMATION_CLASS::MoxnoxSetPosixLock);
+            if (status == nt_status::ALERTED)
+                continue;
+            else if (status == nt_status::USER_APC) {
+                if (mn_handled_nonrestartable_signal_count() != sig_count) {
+                    *_errno() = EINTR;
+                    return -1;
+                }
+
+                continue;
+            } else if (!success(status)) {
+                *_errno() = nt_status_to_errno(status);
+                return -1;
+            }
+
+            break;
         }
     } else { // F_UNLCK
         FILE_MN_RELEASE_POSIX_LOCK params;

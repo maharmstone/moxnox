@@ -16,6 +16,7 @@ module;
 #include <sys/stat.h>
 #include "assert.h"
 #include "trace.h"
+#include "timer-asm.h"
 
 module vfs;
 
@@ -2488,8 +2489,9 @@ static nt_status set_information_non_inode(file& /*f*/, span<uint8_t> /*buf*/,
 }
 
 nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
-                                bool /*nowait*/) {
-    auto& proc = *get_current_thread()->proc;
+                                bool nowait) {
+    auto& t = *get_current_thread();
+    auto& proc = *t.proc;
 
     // FIXME - detecting deadlocks if not nowait
 
@@ -2500,36 +2502,73 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
         return nt_status::INVALID_PARAMETER;
 
     {
-        lock_guard lock(posix_locks_lock);
+        optional<lock_guard<spinlock>> lock(posix_locks_lock);
 
         posix_lock_proc* this_plp = nullptr;
 
         // check if lock held by other process
 
-        for (auto le = posix_lock_procs.next; le != &posix_lock_procs; le = le->next) {
-            auto& plp = containing_record<posix_lock_proc>(le);
+        while (true) {
+            bool again = false;
 
-            // skip if same process
-            if (&plp.proc == &proc) {
-                this_plp = &plp;
-                continue;
+            for (auto le = posix_lock_procs.next; le != &posix_lock_procs; le = le->next) {
+                auto& plp = containing_record<posix_lock_proc>(le);
+
+                // skip if same process
+                if (&plp.proc == &proc) {
+                    this_plp = &plp;
+                    continue;
+                }
+
+                for (auto le2 = plp.locks.next; le2 != &plp.locks; le2 = le2->next) {
+                    auto& pl = containing_record<posix_lock>(le2);
+
+                    // skip if no overlap
+                    if (start >= pl.start + pl.length || pl.start >= start + length)
+                        continue;
+
+                    // skip if both read locks
+                    if (!write && !pl.write)
+                        continue;
+
+                    if (nowait)
+                        return nt_status::CANT_WAIT;
+
+                    again = true;
+                    break;
+                }
+
+                if (again)
+                    break;
             }
 
-            for (auto le2 = plp.locks.next; le2 != &plp.locks; le2 = le2->next) {
-                auto& pl = containing_record<posix_lock>(le2);
+            if (!again)
+                break;
 
-                // skip if no overlap
-                if (start >= pl.start + pl.length || pl.start >= start + length)
-                    continue;
+            disable_interrupts();
+            acquire_sync_lock();
 
-                // skip if both read locks
-                if (!write && !pl.write)
-                    continue;
+            lock.reset();
 
-                // FIXME - block instead if nowait not set
+            t.wait_obj.wait_type = WAIT_TYPE_READING;
+            insert_tail_list(posix_lock_waiters, t.wait_obj.wait_le);
 
-                return nt_status::CANT_WAIT;
+            set_current_thread_waiting(true);
+
+            if (t.status == thread_status::dying)
+                return nt_status::THREAD_IS_TERMINATING;
+
+            if (t.suspend_count.load() != 0)
+                return nt_status::ALERTED;
+
+            {
+                lock_guard lock(t.apc_lock);
+
+                if (!is_list_empty(t.pending_apcs))
+                    return nt_status::USER_APC;
             }
+
+            lock.emplace(posix_locks_lock);
         }
 
         if (!this_plp) {
@@ -2603,7 +2642,8 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
                 insert_tail_list(*pl.le.next, pl2->le);
                 insert_tail_list(*pl2->le.next, pl3->le);
 
-                return nt_status::SUCCESS;
+                length = 0;
+                break;
             }
 
             // move end back
@@ -2635,7 +2675,8 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
                     insert_tail_list(pl.le, newpl->le);
                 }
 
-                return nt_status::SUCCESS;
+                length = 0;
+                break;
             }
 
             // consume next
@@ -2660,23 +2701,35 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
             }
         }
 
-        if (newpl) {
-            newpl->start = start;
-            newpl->length = length;
-            newpl->write = write;
-        } else {
-            newpl = new posix_lock;
-            if (!newpl) {
-                print("new failed\n");
-                return nt_status::INSUFFICIENT_RESOURCES;
+        if (length > 0) {
+            if (newpl) {
+                newpl->start = start;
+                newpl->length = length;
+                newpl->write = write;
+            } else {
+                newpl = new posix_lock;
+                if (!newpl) {
+                    print("new failed\n");
+                    return nt_status::INSUFFICIENT_RESOURCES;
+                }
+
+                newpl->start = start;
+                newpl->length = length;
+                newpl->write = write;
+
+                insert_tail_list(this_plp->locks, newpl->le);
             }
-
-            newpl->start = start;
-            newpl->length = length;
-            newpl->write = write;
-
-            insert_tail_list(this_plp->locks, newpl->le);
         }
+    }
+
+    if (!write) {
+        disable_interrupts();
+        acquire_sync_lock();
+
+        wake_up_waiters(posix_lock_waiters, WAIT_TYPE_READING);
+
+        release_sync_lock();
+        enable_interrupts();
     }
 
     return nt_status::SUCCESS;
