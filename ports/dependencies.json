@@ -60,6 +60,7 @@
     "ripgrep": ["rust"],
     "rust": [],
     "sed": ["gnulib"],
+    "sqlite": ["readline", "zlib"],
     "tar": ["gnulib", "libiconv"],
     "texinfo": ["gnulib", "libiconv", "ncurses"],
     "tzdb": [],

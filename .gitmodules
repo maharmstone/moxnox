@@ -265,3 +265,6 @@
 [submodule "ports/gettext/repo"]
 	path = ports/gettext/repo
 	url = git://git.sv.gnu.org/gettext.git
+[submodule "ports/sqlite/repo"]
+	path = ports/sqlite/repo
+	url = https://github.com/sqlite/sqlite

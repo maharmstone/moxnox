@@ -203,3 +203,5 @@
 	insteadOf = git://git.sv.gnu.org/texinfo.git
 [url "https://git.burntcomma.com/moxnox/gettext"]
 	insteadOf = git://git.sv.gnu.org/gettext.git
+[url "https://git.burntcomma.com/moxnox/sqlite"]
+	insteadOf = https://github.com/sqlite/sqlite
