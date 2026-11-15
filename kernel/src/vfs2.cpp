@@ -2770,7 +2770,7 @@ nt_status inode::release_posix_lock(uint64_t start, uint64_t length) {
 
             // after, stop
             if (pl.start >= start + length)
-                return nt_status::SUCCESS;
+                break;
 
             // in middle of existing entry
             if (pl.start < start && pl.start + pl.length > start + length) {
@@ -2786,7 +2786,7 @@ nt_status inode::release_posix_lock(uint64_t start, uint64_t length) {
 
                 pl.length = start - pl.start;
                 insert_tail_list(*pl.le.next, pl2->le);
-                return nt_status::SUCCESS;
+                break;
             }
 
             // trim previous
@@ -2799,7 +2799,7 @@ nt_status inode::release_posix_lock(uint64_t start, uint64_t length) {
             if (pl.start + pl.length > start + length) {
                 pl.length -= start + length - pl.start;
                 pl.start = start + length;
-                return nt_status::SUCCESS;
+                break;
             }
 
             auto le2 = le->prev;
@@ -2810,6 +2810,14 @@ nt_status inode::release_posix_lock(uint64_t start, uint64_t length) {
             le = le2;
         }
     }
+
+    disable_interrupts();
+    acquire_sync_lock();
+
+    wake_up_waiters(posix_lock_waiters, WAIT_TYPE_READING);
+
+    release_sync_lock();
+    enable_interrupts();
 
     return nt_status::SUCCESS;
 }
