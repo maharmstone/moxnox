@@ -230,6 +230,121 @@ static int setlk(int fd, const flock* lock, bool nowait) {
     return 0;
 }
 
+static int getlk(int fd, flock* lock) {
+    IO_STATUS_BLOCK iosb;
+    nt_status status;
+    FILE_MN_GET_POSIX_LOCK params;
+    int64_t start;
+    uint64_t new_start, new_length;
+    bool new_write;
+    uintptr_t pid;
+
+    auto h = (HANDLE)_get_osfhandle(fd);
+    if ((intptr_t)h < 0)
+        return -1;
+
+    if (lock->l_type != F_RDLCK && lock->l_type != F_WRLCK) {
+        *_errno() = EINVAL;
+        return -1;
+    }
+
+    switch (lock->l_whence) {
+        case SEEK_SET:
+            start = lock->l_start;
+            break;
+
+        case SEEK_CUR: {
+            FILE_POSITION_INFORMATION fpi;
+
+            auto status = NtQueryInformationFile(h, &iosb, &fpi, sizeof(fpi),
+                                                 FILE_INFORMATION_CLASS::PositionInformation);
+            if (!success(status)) {
+                *_errno() = nt_status_to_errno(status);
+                return -1;
+            }
+
+            start = fpi.CurrentByteOffset.QuadPart + lock->l_start;
+
+            // FIXME - should be decrementing if ungetc_char set in ucrtbase?
+            break;
+        }
+
+        case SEEK_END: {
+            FILE_STANDARD_INFORMATION fsi;
+
+            status = NtQueryInformationFile(h, &iosb, &fsi, sizeof(fsi),
+                                            FILE_INFORMATION_CLASS::StandardInformation);
+            if (!success(status)) {
+                *_errno() = nt_status_to_errno(status);
+                return -1;
+            }
+
+            start = fsi.EndOfFile.QuadPart + lock->l_start;
+            break;
+        }
+
+        default:
+            *_errno() = EINVAL;
+            return -1;
+    }
+
+    auto length = lock->l_len;
+
+    if (length < 0) {
+        if (length == numeric_limits<off_t>::min()) {
+            *_errno() = EINVAL;
+            return -1;
+        }
+
+        start += length;
+        length = -length;
+    }
+
+    if (start < 0) {
+        *_errno() = EINVAL;
+        return -1;
+    }
+
+    if (length > numeric_limits<off_t>::max() - start) {
+        *_errno() = EOVERFLOW;
+        return -1;
+    }
+
+    if (length == 0)
+        length = numeric_limits<uint64_t>::max() - start;
+
+    params.start = start;
+    params.length = length;
+    params.write = lock->l_type == F_WRLCK;
+    params.new_start = &new_start;
+    params.new_length = &new_length;
+    params.new_write = &new_write;
+    params.pid = &pid;
+
+    status = NtSetInformationFile(h, &iosb, &params, sizeof(params),
+                                  FILE_INFORMATION_CLASS::MoxnoxGetPosixLock);
+    if (status == nt_status::NOT_FOUND) {
+        lock->l_type = F_UNLCK;
+        return 0;
+    } else if (!success(status)) {
+        *_errno() = nt_status_to_errno(status);
+        return -1;
+    }
+
+    lock->l_type = new_write ? F_WRLCK : F_RDLCK;
+    lock->l_whence = SEEK_SET;
+    lock->l_start = new_start;
+
+    if (new_start + new_length == numeric_limits<uint64_t>::max())
+        lock->l_len = 0;
+    else
+        lock->l_len = new_length;
+
+    lock->l_pid = (pid_t)pid;
+
+    return 0;
+}
+
 extern "C"
 int fcntl(int fd, int op, ...) {
     va_list ap;
@@ -265,9 +380,13 @@ int fcntl(int fd, int op, ...) {
             return setfl(fd, arg);
         }
 
-        case F_GETLK:
-            print("FIXME - fcntl with F_GETLK\n");
-        break;
+        case F_GETLK: {
+            va_start(ap, op);
+            auto lock = va_arg(ap, flock*);
+            va_end(ap);
+
+            return getlk(fd, lock);
+        }
 
         case F_SETLK: {
             va_start(ap, op);
