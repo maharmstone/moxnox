@@ -51,6 +51,7 @@
     "ninja": [],
     "openssh": ["openssl", "zlib"],
     "openssl": [],
+    "pcre2": ["bzip2", "readline", "zlib"],
     "patch": ["gnulib"],
     "perl": ["bzip2", "zlib"],
     "pixman": [],

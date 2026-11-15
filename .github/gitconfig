@@ -207,3 +207,5 @@
 	insteadOf = https://github.com/sqlite/sqlite
 [url "https://git.burntcomma.com/moxnox/llhttp"]
 	insteadOf = https://github.com/nodejs/llhttp
+[url "https://git.burntcomma.com/moxnox/pcre2"]
+	insteadOf = https://github.com/PCRE2Project/pcre2

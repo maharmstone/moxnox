@@ -271,3 +271,6 @@
 [submodule "ports/llhttp/repo"]
 	path = ports/llhttp/repo
 	url = https://github.com/nodejs/llhttp
+[submodule "ports/pcre2/repo"]
+	path = ports/pcre2/repo
+	url = https://github.com/PCRE2Project/pcre2
