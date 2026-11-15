@@ -96,7 +96,8 @@ struct posix_lock {
 };
 
 struct posix_lock_proc {
-    posix_lock_proc(process& proc) : proc(proc) {
+    posix_lock_proc(inode& ino, process& proc) : ino(ino), proc(&proc) {
+        ino.acquire();
         proc.acquire();
     }
 
@@ -108,11 +109,14 @@ struct posix_lock_proc {
             delete &pl;
         }
 
-        proc.release();
+        ino.release();
+        proc->release();
     }
 
     list_entry le;
-    process& proc;
+    list_entry proc_le;
+    inode& ino;
+    process* proc;
     list_entry locks = { &locks, &locks };
 };
 
@@ -1529,13 +1533,6 @@ nt_status flush_filesystems(bool make_readonly) {
 
 inode::~inode() {
     fs.release();
-
-    while (!is_list_empty(posix_lock_procs)) {
-        auto& plp = containing_record<posix_lock_proc>(posix_lock_procs.next);
-
-        remove_entry_list(plp.le);
-        delete &plp;
-    }
 }
 
 nt_status inode::read(span<const span<uint8_t>> v, uint64_t offset,
@@ -2515,7 +2512,7 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
                 auto& plp = containing_record<posix_lock_proc>(le);
 
                 // skip if same process
-                if (&plp.proc == &proc) {
+                if (plp.proc == &proc) {
                     this_plp = &plp;
                     continue;
                 }
@@ -2572,13 +2569,18 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
         }
 
         if (!this_plp) {
-            this_plp = new posix_lock_proc(proc);
+            this_plp = new posix_lock_proc(*this, proc);
             if (!this_plp) {
                 print("new failed\n");
                 return nt_status::INSUFFICIENT_RESOURCES;
             }
 
             insert_tail_list(posix_lock_procs, this_plp->le);
+
+            {
+                lock_guard lock2(proc.posix_locks_lock);
+                insert_tail_list(proc.posix_locks, this_plp->proc_le);
+            }
         }
 
         posix_lock* newpl = nullptr;
@@ -2752,7 +2754,7 @@ nt_status inode::release_posix_lock(uint64_t start, uint64_t length) {
         for (auto le = posix_lock_procs.next; le != &posix_lock_procs; le = le->next) {
             auto& plp = containing_record<posix_lock_proc>(le);
 
-            if (&plp.proc == &proc) {
+            if (plp.proc == &proc) {
                 this_plp = &plp;
                 break;
             }
@@ -3283,7 +3285,9 @@ nt_status get_dentry_path(dentry& dr, char*& path, size_t& path_len) {
     return nt_status::SUCCESS;
 }
 
-void file::handle_closed(object& proc) {
+void file::handle_closed(object& obj) {
+    auto& proc = static_cast<process&>(obj);
+
     if (ino.type == object_type::inode) {
         auto& i = static_cast<inode&>(ino);
 
@@ -3295,7 +3299,7 @@ void file::handle_closed(object& proc) {
             for (auto le = i.posix_lock_procs.next; le != &i.posix_lock_procs; le = le->next) {
                 auto& plp = containing_record<posix_lock_proc>(le);
 
-                if (&plp.proc == &proc) {
+                if (plp.proc == &proc) {
                     this_plp = &plp;
                     remove_entry_list(plp.le);
                     break;
@@ -3304,6 +3308,11 @@ void file::handle_closed(object& proc) {
         }
 
         if (this_plp) {
+            {
+                lock_guard lock(proc.posix_locks_lock);
+                remove_entry_list(this_plp->proc_le);
+            }
+
             delete this_plp;
 
             disable_interrupts();
@@ -3314,6 +3323,39 @@ void file::handle_closed(object& proc) {
             release_sync_lock();
             enable_interrupts();
         }
+    }
+}
+
+void reassign_posix_locks(object& obj1, object& obj2) {
+    auto& from_proc = static_cast<process&>(obj1);
+    auto& to_proc = static_cast<process&>(obj2);
+
+    while (true) {
+        posix_lock_proc* plp;
+
+        {
+            lock_guard lock(from_proc.posix_locks_lock);
+
+            if (is_list_empty(from_proc.posix_locks))
+                return;
+
+            plp = (posix_lock_proc*)((uint8_t*)from_proc.posix_locks.next - offsetof(posix_lock_proc, proc_le));
+            remove_entry_list(plp->proc_le);
+        }
+
+        {
+            lock_guard lock(to_proc.posix_locks_lock);
+
+            insert_tail_list(to_proc.posix_locks, plp->proc_le);
+        }
+
+        {
+            lock_guard lock(plp->ino.posix_locks_lock);
+            plp->proc = &to_proc;
+        }
+
+        to_proc.acquire();
+        from_proc.release();
     }
 }
 

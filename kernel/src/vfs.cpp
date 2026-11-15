@@ -312,3 +312,4 @@ export nt_status vec_NtReadFile(HANDLE file_handle, HANDLE, PIO_APC_ROUTINE, voi
                                 const uint32_t*);
 export void print_file_access_mask(ACCESS_MASK access_mask);
 export void print_create_disposition(uint32_t create_disposition);
+export void reassign_posix_locks(object& old_proc, object& new_proc);

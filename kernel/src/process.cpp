@@ -214,6 +214,9 @@ public:
     process_group* pg;
     list_entry pg_le;
 
+    spinlock posix_locks_lock;
+    list_entry posix_locks = { &posix_locks, &posix_locks };
+
 private:
     nt_status query_basic_info(span<uint8_t> buf, uint32_t& return_length);
     nt_status query_image_file_name(span<uint8_t> buf, uint32_t& return_length);

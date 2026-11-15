@@ -5963,6 +5963,8 @@ nt_status process::do_exec(span<const uint8_t> buffer) {
         }
     }
 
+    reassign_posix_locks(*t.proc, *newthread.proc);
+
     // resume new thread and terminate old one
 
     newthread.suspend_count.fetch_sub(1);
