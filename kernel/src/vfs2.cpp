@@ -3303,8 +3303,17 @@ void file::handle_closed(object& proc) {
             }
         }
 
-        if (this_plp)
+        if (this_plp) {
             delete this_plp;
+
+            disable_interrupts();
+            acquire_sync_lock();
+
+            wake_up_waiters(i.posix_lock_waiters, WAIT_TYPE_READING);
+
+            release_sync_lock();
+            enable_interrupts();
+        }
     }
 }
 
