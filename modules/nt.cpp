@@ -913,6 +913,7 @@ enum class FILE_INFORMATION_CLASS {
     MoxnoxFchmod,
     MoxnoxSetPosixLock,
     MoxnoxReleasePosixLock,
+    MoxnoxGetPosixLock,
 };
 
 struct MN_FCHOWN {
@@ -1519,6 +1520,16 @@ struct FILE_MN_SET_POSIX_LOCK {
 struct FILE_MN_RELEASE_POSIX_LOCK {
     uint64_t start;
     uint64_t length;
+};
+
+struct FILE_MN_GET_POSIX_LOCK {
+    bool write;
+    uint64_t start;
+    uint64_t length;
+    uintptr_t* pid;
+    bool* new_write;
+    uint64_t* new_start;
+    uint64_t* new_length;
 };
 
 struct FILE_FS_SIZE_INFORMATION {

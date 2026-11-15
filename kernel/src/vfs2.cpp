@@ -2824,6 +2824,54 @@ nt_status inode::release_posix_lock(uint64_t start, uint64_t length) {
     return nt_status::SUCCESS;
 }
 
+nt_status inode::get_posix_lock(uint64_t start, uint64_t length, bool write,
+                                uint64_t& new_start, uint64_t& new_length,
+                                bool& new_write, uintptr_t& pid) {
+    auto& t = *get_current_thread();
+    auto& proc = *t.proc;
+
+    if (length == 0) // fcntl has already rationalized this
+        return nt_status::INVALID_PARAMETER;
+
+    if (length > numeric_limits<uint64_t>::max() - start)
+        return nt_status::INVALID_PARAMETER;
+
+    {
+        lock_guard lock(posix_locks_lock);
+
+        // check if lock held by other process
+
+        for (auto le = posix_lock_procs.next; le != &posix_lock_procs; le = le->next) {
+            auto& plp = containing_record<posix_lock_proc>(le);
+
+            // skip if same process
+            if (plp.proc == &proc)
+                continue;
+
+            for (auto le2 = plp.locks.next; le2 != &plp.locks; le2 = le2->next) {
+                auto& pl = containing_record<posix_lock>(le2);
+
+                // skip if no overlap
+                if (start >= pl.start + pl.length || pl.start >= start + length)
+                    continue;
+
+                // skip if both read locks
+                if (!write && !pl.write)
+                    continue;
+
+                new_start = pl.start;
+                new_length = pl.length;
+                new_write = pl.write;
+                pid = plp.proc->tree.key;
+
+                return nt_status::SUCCESS;
+            }
+        }
+    }
+
+    return nt_status::NOT_FOUND;
+}
+
 nt_status file::set_posix_lock(span<const uint8_t> buffer) {
     if (buffer.size() < sizeof(FILE_MN_SET_POSIX_LOCK))
         return nt_status::INVALID_PARAMETER;
@@ -2853,6 +2901,42 @@ nt_status file::release_posix_lock(span<const uint8_t> buffer) {
     auto& i = static_cast<inode&>(ino);
 
     return i.release_posix_lock(params.start, params.length);
+}
+
+nt_status file::get_posix_lock(span<const uint8_t> buffer) {
+    auto& proc = *get_current_thread()->proc;
+    uint64_t new_start, new_length;
+    uintptr_t pid;
+    bool new_write;
+
+    if (buffer.size() < sizeof(FILE_MN_GET_POSIX_LOCK))
+        return nt_status::INVALID_PARAMETER;
+
+    auto& params = *(FILE_MN_GET_POSIX_LOCK*)buffer.data();
+
+    if (ino.type != object_type::inode)
+        return nt_status::INVALID_PARAMETER;
+
+    auto& i = static_cast<inode&>(ino);
+
+    auto ret = i.get_posix_lock(params.start, params.length, params.write,
+                                new_start, new_length, new_write, pid);
+    if (!success(ret))
+        return ret;
+
+    if (!proc.copy_to(params.new_start, &new_start, sizeof(uint64_t)))
+        return nt_status::ACCESS_VIOLATION;
+
+    if (!proc.copy_to(params.new_length, &new_length, sizeof(uint64_t)))
+        return nt_status::ACCESS_VIOLATION;
+
+    if (!proc.copy_to(params.new_write, &new_write, sizeof(bool)))
+        return nt_status::ACCESS_VIOLATION;
+
+    if (!proc.copy_to(params.pid, &pid, sizeof(uintptr_t)))
+        return nt_status::ACCESS_VIOLATION;
+
+    return nt_status::SUCCESS;
 }
 
 NTSTATUS file::set_information(void* buffer, uint32_t buffer_size,
@@ -2900,6 +2984,9 @@ NTSTATUS file::set_information(void* buffer, uint32_t buffer_size,
 
         case MoxnoxReleasePosixLock:
             return release_posix_lock(span((uint8_t*)buffer, buffer_size));
+
+        case MoxnoxGetPosixLock:
+            return get_posix_lock(span((uint8_t*)buffer, buffer_size));
 
         default:
             if (ino.type != object_type::inode) {
