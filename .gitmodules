@@ -268,3 +268,6 @@
 [submodule "ports/sqlite/repo"]
 	path = ports/sqlite/repo
 	url = https://github.com/sqlite/sqlite
+[submodule "ports/llhttp/repo"]
+	path = ports/llhttp/repo
+	url = https://github.com/nodejs/llhttp
