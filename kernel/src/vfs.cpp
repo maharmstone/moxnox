@@ -116,6 +116,7 @@ public:
                              uint64_t& written_bytes);
     nt_status set_posix_lock(uint64_t start, uint64_t length, bool write,
                              bool nowait);
+    nt_status release_posix_lock(uint64_t start, uint64_t length);
 
     virtual nt_status open_child(string_view name, object_ref& obj) = 0;
     virtual nt_status create_child(string_view name, uint32_t create_options,
@@ -270,6 +271,7 @@ private:
     nt_status set_eof(span<const uint8_t> buf);
     nt_status set_non_block(span<const uint8_t> buffer);
     nt_status set_posix_lock(span<const uint8_t> buffer);
+    nt_status release_posix_lock(span<const uint8_t> buffer);
 };
 
 static_assert(is_readable_object_without_offset<file>);

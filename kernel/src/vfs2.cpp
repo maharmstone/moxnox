@@ -2682,6 +2682,85 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
     return nt_status::SUCCESS;
 }
 
+nt_status inode::release_posix_lock(uint64_t start, uint64_t length) {
+    auto& proc = *get_current_thread()->proc;
+
+    if (length == 0) // fcntl has already rationalized this
+        return nt_status::INVALID_PARAMETER;
+
+    if (length > numeric_limits<uint64_t>::max() - start)
+        return nt_status::INVALID_PARAMETER;
+
+    {
+        lock_guard lock(posix_locks_lock);
+
+        posix_lock_proc* this_plp = nullptr;
+
+        for (auto le = posix_lock_procs.next; le != &posix_lock_procs; le = le->next) {
+            auto& plp = containing_record<posix_lock_proc>(le);
+
+            if (&plp.proc == &proc) {
+                this_plp = &plp;
+                break;
+            }
+        }
+
+        if (!this_plp)
+            return nt_status::SUCCESS;
+
+        for (auto le = this_plp->locks.next; le != &this_plp->locks; le = le->next) {
+            auto& pl = containing_record<posix_lock>(le);
+
+            // before, carry on
+            if (pl.start + pl.length <= start)
+                continue;
+
+            // after, stop
+            if (pl.start >= start + length)
+                return nt_status::SUCCESS;
+
+            // in middle of existing entry
+            if (pl.start < start && pl.start + pl.length > start + length) {
+                auto pl2 = new posix_lock;
+                if (!pl2) {
+                    print("new failed\n");
+                    return nt_status::INSUFFICIENT_RESOURCES;
+                }
+
+                pl2->start = start + length;
+                pl2->length = pl.start + pl.length - start - length;
+                pl2->write = pl.write;
+
+                pl.length = start - pl.start;
+                insert_tail_list(*pl.le.next, pl2->le);
+                return nt_status::SUCCESS;
+            }
+
+            // trim previous
+            if (pl.start < start) {
+                pl.length = start - pl.start;
+                continue;
+            }
+
+            // trim next
+            if (pl.start + pl.length > start + length) {
+                pl.length -= start + length - pl.start;
+                pl.start = start + length;
+                return nt_status::SUCCESS;
+            }
+
+            auto le2 = le->prev;
+
+            remove_entry_list(pl.le);
+            delete &pl;
+
+            le = le2;
+        }
+    }
+
+    return nt_status::SUCCESS;
+}
+
 nt_status file::set_posix_lock(span<const uint8_t> buffer) {
     if (buffer.size() < sizeof(FILE_MN_SET_POSIX_LOCK))
         return nt_status::INVALID_PARAMETER;
@@ -2697,6 +2776,20 @@ nt_status file::set_posix_lock(span<const uint8_t> buffer) {
 
     return i.set_posix_lock(params.start, params.length, params.write,
                             params.nowait);
+}
+
+nt_status file::release_posix_lock(span<const uint8_t> buffer) {
+    if (buffer.size() < sizeof(FILE_MN_RELEASE_POSIX_LOCK))
+        return nt_status::INVALID_PARAMETER;
+
+    auto& params = *(FILE_MN_RELEASE_POSIX_LOCK*)buffer.data();
+
+    if (ino.type != object_type::inode)
+        return nt_status::INVALID_PARAMETER;
+
+    auto& i = static_cast<inode&>(ino);
+
+    return i.release_posix_lock(params.start, params.length);
 }
 
 NTSTATUS file::set_information(void* buffer, uint32_t buffer_size,
@@ -2741,6 +2834,9 @@ NTSTATUS file::set_information(void* buffer, uint32_t buffer_size,
 
         case MoxnoxSetPosixLock:
             return set_posix_lock(span((uint8_t*)buffer, buffer_size));
+
+        case MoxnoxReleasePosixLock:
+            return release_posix_lock(span((uint8_t*)buffer, buffer_size));
 
         default:
             if (ino.type != object_type::inode) {

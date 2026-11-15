@@ -912,6 +912,7 @@ enum class FILE_INFORMATION_CLASS {
     MoxnoxFchown,
     MoxnoxFchmod,
     MoxnoxSetPosixLock,
+    MoxnoxReleasePosixLock,
 };
 
 struct MN_FCHOWN {
@@ -1511,6 +1512,11 @@ inline constexpr uint32_t LX_FILE_CASE_SENSITIVE_DIR = 0x10;
 struct FILE_MN_SET_POSIX_LOCK {
     bool write;
     bool nowait;
+    uint64_t start;
+    uint64_t length;
+};
+
+struct FILE_MN_RELEASE_POSIX_LOCK {
     uint64_t start;
     uint64_t length;
 };
