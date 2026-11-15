@@ -273,6 +273,13 @@ rw_sync_object& object_get_rw_sync_object(object& obj) {
     return *so;
 }
 
+void object_handle_closed(object& obj, object& proc) {
+    visit_obj(obj, [&](auto&& o) {
+        if constexpr (has_handle_closed<remove_reference_t<decltype(o)>>)
+            o.handle_closed(proc);
+    });
+}
+
 void object_last_handle_closed(object& obj) {
     visit_obj(obj, [&](auto&& o) {
         if constexpr (has_last_handle_closed<remove_reference_t<decltype(o)>>)

@@ -126,8 +126,11 @@ void remove_object_name(object& obj) {
     object_release(obj);
 }
 
-void handle_closed(object& obj) {
+void handle_closed(object& obj, object* proc) {
     auto new_handle_count = --obj.handle_count;
+
+    if (proc)
+        object_handle_closed(obj, *proc);
 
     // remove name if last handle closed
 

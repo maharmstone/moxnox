@@ -25,4 +25,4 @@ export list_entry name_list = { &name_list, &name_list };
 export nt_status name_object(object& obj, string_view name, bool persistent = true);
 export nt_status open_object(string_view name, object_ref& obj);
 export void remove_object_name(object& obj);
-export void handle_closed(object& obj);
+export void handle_closed(object& obj, object* proc);

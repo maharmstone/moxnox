@@ -186,6 +186,12 @@ concept has_get_rw_sync_object = requires(T t) {
 
 export
 template<typename T>
+concept has_handle_closed = requires(T t, object& proc) {
+    { t.handle_closed(proc) };
+};
+
+export
+template<typename T>
 concept has_last_handle_closed = requires(T t) {
     { t.last_handle_closed() };
 };

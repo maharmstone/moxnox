@@ -2029,7 +2029,7 @@ void process::terminate() {
         while (n) {
             auto& ho = rbtree_containing_record<handle_obj>(n);
 
-            handle_closed(*ho.obj);
+            handle_closed(*ho.obj, this);
             object_release(*ho.obj);
 
             n = next_rbtree_node(*n);
@@ -3135,7 +3135,7 @@ NTSTATUS process::close_handle(handle_t h) {
         remove_from_rbtree(handles, ho->tree);
     }
 
-    handle_closed(*ho->obj);
+    handle_closed(*ho->obj, this);
     object_release(*ho->obj);
 
     free(ho);

@@ -1716,7 +1716,7 @@ file::file(object& ino, uint32_t create_options, uint32_t access_mask) : object(
 }
 
 file::~file() {
-    handle_closed(ino);
+    ::handle_closed(ino, nullptr);
 
     object_release(ino);
 
@@ -2228,7 +2228,7 @@ NTSTATUS file::rename(span<const uint8_t> buf) {
             }
         }
 
-        handle_closed(victim.get());
+        ::handle_closed(victim.get(), nullptr);
     }
 
     if (success(status)) {
@@ -2424,7 +2424,7 @@ NTSTATUS file::hardlink(span<const uint8_t> buf) {
             }
         }
 
-        handle_closed(victim.get());
+        ::handle_closed(victim.get(), nullptr);
     }
 
     drw->get().release();
@@ -3220,6 +3220,31 @@ nt_status get_dentry_path(dentry& dr, char*& path, size_t& path_len) {
     path_len = len;
 
     return nt_status::SUCCESS;
+}
+
+void file::handle_closed(object& proc) {
+    if (ino.type == object_type::inode) {
+        auto& i = static_cast<inode&>(ino);
+
+        posix_lock_proc* this_plp = nullptr;
+
+        {
+            lock_guard lock(i.posix_locks_lock);
+
+            for (auto le = i.posix_lock_procs.next; le != &i.posix_lock_procs; le = le->next) {
+                auto& plp = containing_record<posix_lock_proc>(le);
+
+                if (&plp.proc == &proc) {
+                    this_plp = &plp;
+                    remove_entry_list(plp.le);
+                    break;
+                }
+            }
+        }
+
+        if (this_plp)
+            delete this_plp;
+    }
 }
 
 void file::last_handle_closed() {

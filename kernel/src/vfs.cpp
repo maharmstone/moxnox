@@ -266,6 +266,7 @@ public:
     nt_status query_volume(FS_INFORMATION_CLASS fs_information_class,
                            span<uint8_t> buf, uint32_t& retlen);
     void last_handle_closed();
+    void handle_closed(object& proc);
 
 private:
     nt_status set_eof(span<const uint8_t> buf);
@@ -280,6 +281,7 @@ static_assert(is_writable_object_without_offset<file>);
 static_assert(is_writable_object_with_offset<file>);
 static_assert(has_ioctls<file>);
 static_assert(has_last_handle_closed<file>);
+static_assert(has_handle_closed<file>);
 
 export list_entry filesystem_types = { &filesystem_types, &filesystem_types };
 export dentry* root_dentry;
