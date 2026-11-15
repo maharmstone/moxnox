@@ -265,6 +265,6 @@ target_compile_options(wget PRIVATE
     $<$<C_COMPILER_ID:Clang>:-Wno-tautological-constant-out-of-range-compare -Wno-deprecated-non-prototype>
 )
 
-target_link_libraries(wget PRIVATE libssl libcrypto zlib libiconv moxnox)
+target_link_libraries(wget PRIVATE libssl libcrypto zlib libiconv pcre2-8-shared moxnox)
 
 install(TARGETS wget DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

@@ -1466,7 +1466,7 @@
 /* #undef HAVE_LIBPCRE */
 
 /* Define if libpcre2 is available. */
-/* #undef HAVE_LIBPCRE2 */
+#define HAVE_LIBPCRE2 1
 
 /* Define if using libproxy. */
 /* #undef HAVE_LIBPROXY */

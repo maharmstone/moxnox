@@ -67,7 +67,7 @@
     "texinfo": ["gnulib", "libiconv", "ncurses"],
     "tzdb": [],
     "vim": ["libiconv", "ncurses"],
-    "wget": ["gnulib", "libiconv", "openssl", "zlib"],
+    "wget": ["gnulib", "libiconv", "openssl", "pcre2", "zlib"],
     "xkeyboard-config": [],
     "xz": [],
     "zlib": [],
