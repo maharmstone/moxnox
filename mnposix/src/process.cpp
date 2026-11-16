@@ -20,9 +20,6 @@ import errno;
 
 using namespace std;
 
-// time.cpp
-void clear_alarm_on_fork();
-
 static thread_local char dl_error_string[255];
 static thread_local bool dl_error_pending;
 
