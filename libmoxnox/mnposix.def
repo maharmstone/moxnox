@@ -333,3 +333,4 @@ dprintf
 getlocalename_l
 insque
 remque
+tcgetsid

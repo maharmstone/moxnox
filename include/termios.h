@@ -190,6 +190,7 @@ int cfsetospeed(struct termios* t, speed_t speed);
 int tcgetwinsize(int fd, struct winsize* winsize_p);
 int tcsetwinsize(int fd, const struct winsize* winsize_p);
 int tcsendbreak(int fd, int duration);
+pid_t tcgetsid(int fd);
 
 #ifdef __cplusplus
 }

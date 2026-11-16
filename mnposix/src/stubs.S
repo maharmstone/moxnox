@@ -15,5 +15,6 @@ do_stub "dprintf"
 do_stub "getlocalename_l"
 do_stub "insque"
 do_stub "remque"
+do_stub "tcgetsid"
 
 stubs_end
