@@ -1335,52 +1335,63 @@ nt_status btrfs_filesystem::flush_cache(uint64_t page_num, uint64_t num_pages) {
     unsigned int pages_per_tree = sb->nodesize >> PAGE_SHIFT;
     uint64_t addr = page_num << PAGE_SHIFT;
 
-    // find chunk
+    while (true) {
+        // find chunk
 
-    auto pc = find_chunk(*this, addr);
+        auto pc = find_chunk(*this, addr);
 
-    if (!pc) {
-        print("Could not find chunk for logical address {:x}\n", addr);
-        return nt_status::INTERNAL_ERROR;
-    }
-
-    auto& c = *pc;
-
-    if (c.ci.type & (BTRFS_BLOCK_GROUP_METADATA | BTRFS_BLOCK_GROUP_SYSTEM)) {
-        uint64_t pages_written = 0;
-
-        if (page_num % pages_per_tree || num_pages % pages_per_tree) // not aligned to tree
-            return nt_status::INVALID_PARAMETER;
-
-        while (addr < c.offset + c.ci.length) {
-            if (!flush_tree(c, addr)) // FIXME - should return nt_status
-                return nt_status::INTERNAL_ERROR;
-
-            addr += sb->nodesize;
-            pages_written += pages_per_tree;
-
-            if (pages_written >= num_pages)
-                break;
+        if (!pc) {
+            print("Could not find chunk for logical address {:x}\n", addr);
+            return nt_status::INTERNAL_ERROR;
         }
-    } else {
-        auto status = flush_data(c, addr, num_pages << PAGE_SHIFT);
-        if (!success(status)) {
-            print("btrfs_filesystem::flush_data returned {}\n", status);
-            return status;
+
+        auto& c = *pc;
+
+        uint64_t chunk_pages = min(num_pages, (c.ci.length - addr + c.offset) >> PAGE_SHIFT);
+
+        if (c.ci.type & (BTRFS_BLOCK_GROUP_METADATA | BTRFS_BLOCK_GROUP_SYSTEM)) {
+            uint64_t pages_written = 0;
+
+            if (page_num % pages_per_tree || chunk_pages % pages_per_tree) // not aligned to tree
+                return nt_status::INVALID_PARAMETER;
+
+            while (addr < c.offset + c.ci.length) {
+                if (!flush_tree(c, addr)) // FIXME - should return nt_status
+                    return nt_status::INTERNAL_ERROR;
+
+                addr += sb->nodesize;
+                pages_written += pages_per_tree;
+
+                if (pages_written >= chunk_pages)
+                    break;
+            }
+        } else {
+            auto status = flush_data(c, addr, chunk_pages << PAGE_SHIFT);
+            if (!success(status)) {
+                print("btrfs_filesystem::flush_data returned {}\n", status);
+                return status;
+            }
         }
-    }
 
-    uint64_t pages_to_flush = num_pages;
-    for (unsigned int i = 0; i < c.ci.num_stripes; i++) {
-        uint64_t disk_addr = (page_num << PAGE_SHIFT) - c.offset + c.ci.stripe[i].offset;
-        uint64_t first_page = disk_addr >> PAGE_SHIFT;
+        uint64_t pages_to_flush = chunk_pages;
+        for (unsigned int i = 0; i < c.ci.num_stripes; i++) {
+            uint64_t disk_addr = (page_num << PAGE_SHIFT) - c.offset + c.ci.stripe[i].offset;
+            uint64_t first_page = disk_addr >> PAGE_SHIFT;
 
-        auto status = vol->flush_cache(first_page, pages_to_flush);
+            auto status = vol->flush_cache(first_page, pages_to_flush);
 
-        if (!success(status)) {
-            print("volume::flush_cache returned {}\n", status);
-            return status;
+            if (!success(status)) {
+                print("volume::flush_cache returned {}\n", status);
+                return status;
+            }
         }
+
+        if (chunk_pages == num_pages)
+            break;
+
+        page_num += chunk_pages;
+        num_pages -= chunk_pages;
+        addr = page_num << PAGE_SHIFT;
     }
 
     return nt_status::SUCCESS;
