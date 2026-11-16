@@ -43,7 +43,7 @@ function(init_rust_crate_submodules)
 endfunction()
 
 function(add_rust_port name binary)
-    cmake_parse_arguments(ARG "" "PATCH" "PATCHED_CRATES" ${ARGN})
+    cmake_parse_arguments(ARG "" "PATCH" "PATCHED_CRATES;RUST_CRATES" ${ARGN})
 
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
         set(RUST_TARGET x86_64-pc-moxnox)
@@ -64,7 +64,7 @@ function(add_rust_port name binary)
 
     set(cargo_args --config
         "patch.crates-io.libc.path=\"${RUST_CRATES_DIR}/libc\"")
-    foreach(crate ${ARG_PATCHED_CRATES})
+    foreach(crate ${ARG_PATCHED_CRATES} ${ARG_RUST_CRATES})
         list(APPEND cargo_args --config
             "patch.crates-io.${crate}.path=\"${RUST_CRATES_DIR}/${crate}\"")
     endforeach()
@@ -97,7 +97,7 @@ function(add_rust_port name binary)
     add_custom_target(${name} DEPENDS ${exe})
 
     add_dependencies(${name} rust_crate_libc)
-    foreach(crate ${ARG_PATCHED_CRATES})
+    foreach(crate ${ARG_PATCHED_CRATES} ${ARG_RUST_CRATES})
         add_dependencies(${name} rust_crate_${crate})
     endforeach()
     if(ARG_PATCH)

@@ -136,8 +136,8 @@
 [submodule "ports/ripgrep/repo"]
 	path = ports/ripgrep/repo
 	url = https://github.com/BurntSushi/ripgrep
-[submodule "ports/ripgrep/memmap2"]
-	path = ports/ripgrep/memmap2
+[submodule "ports/rust/memmap2"]
+	path = ports/rust/memmap2
 	url = https://github.com/RazrFalcon/memmap2-rs
 [submodule "ports/hexyl/repo"]
 	path = ports/hexyl/repo

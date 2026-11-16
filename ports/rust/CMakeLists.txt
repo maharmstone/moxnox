@@ -8,6 +8,7 @@ init_rust_crate_submodules(
     ports/rust/libc
     ports/rust/libloading
     ports/rust/libloading-0.9
+    ports/rust/memmap2
     ports/rust/nix
     ports/rust/rand
     ports/rust/rustix
@@ -50,6 +51,7 @@ rust_export_crate(termize ${CMAKE_CURRENT_SOURCE_DIR}/termize ${CMAKE_CURRENT_SO
 rust_export_crate(rand ${CMAKE_CURRENT_SOURCE_DIR}/rand ${CMAKE_CURRENT_SOURCE_DIR}/rand.patch)
 rust_export_crate(libloading ${CMAKE_CURRENT_SOURCE_DIR}/libloading ${CMAKE_CURRENT_SOURCE_DIR}/libloading.patch)
 rust_export_crate(libloading-0.9 ${CMAKE_CURRENT_SOURCE_DIR}/libloading-0.9 ${CMAKE_CURRENT_SOURCE_DIR}/libloading-0.9.patch)
+rust_export_crate(memmap2 ${CMAKE_CURRENT_SOURCE_DIR}/memmap2 ${CMAKE_CURRENT_SOURCE_DIR}/memmap2.patch)
 rust_export_crate(getrandom ${CMAKE_CURRENT_SOURCE_DIR}/getrandom ${CMAKE_CURRENT_SOURCE_DIR}/getrandom.patch)
 rust_export_crate(getrandom-0.2 ${CMAKE_CURRENT_SOURCE_DIR}/getrandom-0.2 ${CMAKE_CURRENT_SOURCE_DIR}/getrandom-0.2.patch)
 rust_export_crate(stacker ${CMAKE_CURRENT_SOURCE_DIR}/stacker ${CMAKE_CURRENT_SOURCE_DIR}/stacker.patch)
@@ -65,6 +67,7 @@ set(rust_patched_trees
     rand:rand.patch
     libloading:libloading.patch
     libloading-0.9:libloading-0.9.patch
+    memmap2:memmap2.patch
     getrandom:getrandom.patch
     getrandom-0.2:getrandom-0.2.patch
     stacker:stacker.patch
