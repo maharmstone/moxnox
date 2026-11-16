@@ -1,5 +1,5 @@
 diff --git a/Cargo.lock b/Cargo.lock
-index 9ff977e3d94..e4060c8297d 100644
+index 9ff977e3d94..27dd238ef04 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -1212,7 +1212,7 @@ dependencies = [
@@ -439,7 +439,7 @@ index 00000000000..e6ff53c2cca
 +    }
 +}
 diff --git a/library/Cargo.lock b/library/Cargo.lock
-index 4801f92c63e..8e527a2827f 100644
+index 4801f92c63e..d1f2d3512e7 100644
 --- a/library/Cargo.lock
 +++ b/library/Cargo.lock
 @@ -146,9 +146,7 @@ dependencies = [
@@ -516,7 +516,7 @@ index 76374402be4..27d8229cf56 100644
  #[cfg(target_os = "nto")]
 diff --git a/library/std/src/os/moxnox/fs.rs b/library/std/src/os/moxnox/fs.rs
 new file mode 100644
-index 00000000000..09587bb9c87
+index 00000000000..8cded1db37d
 --- /dev/null
 +++ b/library/std/src/os/moxnox/fs.rs
 @@ -0,0 +1,95 @@
@@ -591,22 +591,22 @@ index 00000000000..09587bb9c87
 +        self.as_inner().as_inner().st_size as u64
 +    }
 +    fn st_atime(&self) -> i64 {
-+        self.as_inner().as_inner().st_atim.tv_sec as i64
++        self.as_inner().as_inner().st_atime as i64
 +    }
 +    fn st_atime_nsec(&self) -> i64 {
-+        self.as_inner().as_inner().st_atim.tv_nsec as i64
++        self.as_inner().as_inner().st_atime_nsec as i64
 +    }
 +    fn st_mtime(&self) -> i64 {
-+        self.as_inner().as_inner().st_mtim.tv_sec as i64
++        self.as_inner().as_inner().st_mtime as i64
 +    }
 +    fn st_mtime_nsec(&self) -> i64 {
-+        self.as_inner().as_inner().st_mtim.tv_nsec as i64
++        self.as_inner().as_inner().st_mtime_nsec as i64
 +    }
 +    fn st_ctime(&self) -> i64 {
-+        self.as_inner().as_inner().st_ctim.tv_sec as i64
++        self.as_inner().as_inner().st_ctime as i64
 +    }
 +    fn st_ctime_nsec(&self) -> i64 {
-+        self.as_inner().as_inner().st_ctim.tv_nsec as i64
++        self.as_inner().as_inner().st_ctime_nsec as i64
 +    }
 +    fn st_blksize(&self) -> u64 {
 +        self.as_inner().as_inner().st_blksize as u64
@@ -771,7 +771,7 @@ index bb6c0ac9e18..34f98f69545 100644
          target_os = "redox",
          target_os = "vxworks",
 diff --git a/library/std/src/sys/fs/unix.rs b/library/std/src/sys/fs/unix.rs
-index 7db474544f0..b943773aa75 100644
+index 7db474544f0..3a286d9a6f2 100644
 --- a/library/std/src/sys/fs/unix.rs
 +++ b/library/std/src/sys/fs/unix.rs
 @@ -32,6 +32,7 @@
@@ -828,15 +828,18 @@ index 7db474544f0..b943773aa75 100644
      )))]
      pub fn modified(&self) -> io::Result<SystemTime> {
          #[cfg(target_pointer_width = "32")]
-@@ -643,7 +650,7 @@ pub fn modified(&self) -> io::Result<SystemTime> {
+@@ -643,9 +650,9 @@ pub fn modified(&self) -> io::Result<SystemTime> {
          SystemTime::new(self.stat.st_mtime as i64, 0)
      }
  
 -    #[cfg(any(target_os = "horizon", target_os = "hurd", target_os = "nuttx"))]
 +    #[cfg(any(target_os = "horizon", target_os = "hurd", target_os = "nuttx", target_os = "moxnox"))]
      pub fn modified(&self) -> io::Result<SystemTime> {
-         SystemTime::new(self.stat.st_mtim.tv_sec as i64, self.stat.st_mtim.tv_nsec as i64)
+-        SystemTime::new(self.stat.st_mtim.tv_sec as i64, self.stat.st_mtim.tv_nsec as i64)
++        SystemTime::new(self.stat.st_mtime as i64, self.stat.st_mtime_nsec as i64)
      }
+ 
+     #[cfg(not(any(
 @@ -656,6 +663,7 @@ pub fn modified(&self) -> io::Result<SystemTime> {
          target_os = "hurd",
          target_os = "rtems",
@@ -845,15 +848,18 @@ index 7db474544f0..b943773aa75 100644
      )))]
      pub fn accessed(&self) -> io::Result<SystemTime> {
          #[cfg(target_pointer_width = "32")]
-@@ -678,7 +686,7 @@ pub fn accessed(&self) -> io::Result<SystemTime> {
+@@ -678,9 +686,9 @@ pub fn accessed(&self) -> io::Result<SystemTime> {
          SystemTime::new(self.stat.st_atime as i64, 0)
      }
  
 -    #[cfg(any(target_os = "horizon", target_os = "hurd", target_os = "nuttx"))]
 +    #[cfg(any(target_os = "horizon", target_os = "hurd", target_os = "nuttx", target_os = "moxnox"))]
      pub fn accessed(&self) -> io::Result<SystemTime> {
-         SystemTime::new(self.stat.st_atim.tv_sec as i64, self.stat.st_atim.tv_nsec as i64)
+-        SystemTime::new(self.stat.st_atim.tv_sec as i64, self.stat.st_atim.tv_nsec as i64)
++        SystemTime::new(self.stat.st_atime as i64, self.stat.st_atime_nsec as i64)
      }
+ 
+     #[cfg(any(
 @@ -843,6 +851,7 @@ impl Iterator for ReadDir {
          target_os = "hurd",
          target_os = "illumos",

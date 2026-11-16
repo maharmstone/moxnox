@@ -1,5 +1,5 @@
 diff --git a/src/new/mod.rs b/src/new/mod.rs
-index dd451bb52..b64c134f4 100644
+index 2e6b451a9..ee78d7bc7 100644
 --- a/src/new/mod.rs
 +++ b/src/new/mod.rs
 @@ -53,6 +53,9 @@ cfg_if! {
@@ -58,7 +58,7 @@ index 80a10af4c..6857645b7 100644
          pub type c_ulong = u64;
      } else {
 diff --git a/src/unix/mod.rs b/src/unix/mod.rs
-index 62b2cdee6..20b642efb 100644
+index 227334a9d..fb66a995d 100644
 --- a/src/unix/mod.rs
 +++ b/src/unix/mod.rs
 @@ -45,6 +45,7 @@ extern_ty! {
@@ -69,7 +69,7 @@ index 62b2cdee6..20b642efb 100644
      pub struct group {
          pub gr_name: *mut c_char,
          pub gr_passwd: *mut c_char,
-@@ -151,6 +152,7 @@ s! {
+@@ -155,6 +156,7 @@ s! {
          pub h_addr_list: *mut *mut c_char,
      }
  
@@ -77,7 +77,7 @@ index 62b2cdee6..20b642efb 100644
      pub struct iovec {
          pub iov_base: *mut c_void,
          pub iov_len: size_t,
-@@ -162,6 +164,7 @@ s! {
+@@ -167,6 +169,7 @@ s! {
          pub revents: c_short,
      }
  
@@ -85,7 +85,7 @@ index 62b2cdee6..20b642efb 100644
      pub struct winsize {
          pub ws_row: c_ushort,
          pub ws_col: c_ushort,
-@@ -194,6 +197,7 @@ s! {
+@@ -199,6 +202,7 @@ s! {
          pub tms_cstime: crate::clock_t,
      }
  
@@ -93,7 +93,7 @@ index 62b2cdee6..20b642efb 100644
      pub struct servent {
          pub s_name: *mut c_char,
          pub s_aliases: *mut *mut c_char,
-@@ -565,6 +569,10 @@ cfg_if! {
+@@ -570,6 +574,10 @@ cfg_if! {
          #[link(name = "bsd")]
          #[link(name = "pthread")]
          extern "C" {}
@@ -104,7 +104,7 @@ index 62b2cdee6..20b642efb 100644
      } else {
          #[link(name = "c")]
          #[link(name = "m")]
-@@ -847,6 +855,7 @@ extern "C" {
+@@ -852,6 +860,7 @@ extern "C" {
          link_name = "__xnet_sendto"
      )]
      #[cfg_attr(target_os = "espidf", link_name = "lwip_sendto")]
@@ -112,7 +112,7 @@ index 62b2cdee6..20b642efb 100644
      pub fn sendto(
          socket: c_int,
          buf: *const c_void,
-@@ -1480,6 +1489,7 @@ extern "C" {
+@@ -1496,6 +1505,7 @@ extern "C" {
      )]
      pub fn mknod(pathname: *const c_char, mode: mode_t, dev: crate::dev_t) -> c_int;
      #[cfg(not(target_os = "espidf"))]
@@ -120,7 +120,7 @@ index 62b2cdee6..20b642efb 100644
      pub fn gethostname(name: *mut c_char, len: size_t) -> c_int;
      pub fn endservent();
      pub fn getservbyname(name: *const c_char, proto: *const c_char) -> *mut servent;
-@@ -1502,12 +1512,14 @@ extern "C" {
+@@ -1518,12 +1528,14 @@ extern "C" {
          link_name = "send$UNIX2003"
      )]
      #[cfg_attr(target_os = "espidf", link_name = "lwip_send")]
@@ -135,7 +135,7 @@ index 62b2cdee6..20b642efb 100644
      pub fn recv(socket: c_int, buf: *mut c_void, len: size_t, flags: c_int) -> ssize_t;
      #[cfg_attr(
          all(target_os = "macos", target_arch = "x86"),
-@@ -1704,7 +1716,7 @@ cfg_if! {
+@@ -2095,7 +2107,7 @@ cfg_if! {
  }
  
  cfg_if! {
@@ -144,7 +144,7 @@ index 62b2cdee6..20b642efb 100644
          extern "C" {
              pub fn dladdr(addr: *const c_void, info: *mut Dl_info) -> c_int;
          }
-@@ -1911,6 +1923,9 @@ cfg_if! {
+@@ -2400,6 +2412,9 @@ cfg_if! {
      } else if #[cfg(target_os = "cygwin")] {
          mod cygwin;
          pub use self::cygwin::*;
@@ -156,10 +156,10 @@ index 62b2cdee6..20b642efb 100644
          pub use self::nto::*;
 diff --git a/src/unix/moxnox/mod.rs b/src/unix/moxnox/mod.rs
 new file mode 100644
-index 000000000..bac10587d
+index 000000000..33aaec448
 --- /dev/null
 +++ b/src/unix/moxnox/mod.rs
-@@ -0,0 +1,1463 @@
+@@ -0,0 +1,1466 @@
 +//! Definitions for Moxnox: PE/COFF and the Windows ABI, but a POSIX 2024
 +//! userland (mnposix/ucrtbase). Transcribed from the platform's include/
 +//! headers, which are the source of truth. Note LLP64: c_long is 32-bit.
@@ -234,9 +234,12 @@ index 000000000..bac10587d
 +        pub st_gid: gid_t,
 +        pub st_rdev: dev_t,
 +        pub st_size: off_t,
-+        pub st_atim: crate::timespec,
-+        pub st_mtim: crate::timespec,
-+        pub st_ctim: crate::timespec,
++        pub st_atime: time_t,
++        pub st_atime_nsec: c_long,
++        pub st_mtime: time_t,
++        pub st_mtime_nsec: c_long,
++        pub st_ctime: time_t,
++        pub st_ctime_nsec: c_long,
 +        pub st_blksize: blksize_t,
 +        pub st_blocks: blkcnt_t,
 +    }
