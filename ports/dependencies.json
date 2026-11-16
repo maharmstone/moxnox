@@ -8,7 +8,7 @@
     "cairo": ["freetype", "libpng", "pixman", "zlib"],
     "cmake": ["curl", "expat", "jsoncpp", "libarchive", "librhash", "libuv", "zlib"],
     "coreutils": ["gmp", "libiconv", "openssl"],
-    "curl": ["openssl", "zlib", "zstd"],
+    "curl": ["nghttp2", "openssl", "zlib", "zstd"],
     "diffutils": ["gnulib"],
     "expat": [],
     "file": ["bzip2", "xz", "zlib", "zstd"],

@@ -81,8 +81,11 @@ set(CURL_ZSTD ON)
 set(ZSTD_LIBRARY ${CMAKE_BINARY_DIR}/ports/zstd/libzstd.dll.a)
 set(ZSTD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../zstd/repo/lib)
 
+set(USE_NGHTTP2 ON)
+set(NGHTTP2_INCLUDE_DIR ${CMAKE_BINARY_DIR}/ports/nghttp2/gen/include)
+set(NGHTTP2_LIBRARY ${CMAKE_BINARY_DIR}/ports/nghttp2/libnghttp2.dll.a)
+
 set(CURL_BROTLI OFF)
-set(USE_NGHTTP2 OFF)
 set(USE_LIBIDN2 OFF)
 set(CURL_USE_LIBPSL OFF)
 set(CURL_USE_LIBSSH2 OFF)
@@ -112,4 +115,4 @@ target_compile_options(curl PRIVATE
 )
 
 cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}
-    CALL add_dependencies libcurl_shared libssl libcrypto zlib zstd)
+    CALL add_dependencies libcurl_shared libssl libcrypto nghttp2 zlib zstd)
