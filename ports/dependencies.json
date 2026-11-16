@@ -65,7 +65,7 @@
     "pyyaml": [],
     "readline": ["ncurses"],
     "ripgrep": ["rust"],
-    "rust": [],
+    "rust": ["curl", "libgit2", "libssh2", "llhttp", "nghttp2", "openssl", "pcre2", "sqlite", "zlib", "zstd"],
     "sed": ["gnulib"],
     "sqlite": ["readline", "zlib"],
     "tar": ["gnulib", "libiconv"],

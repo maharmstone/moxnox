@@ -219,3 +219,7 @@
 	insteadOf = https://github.com/libffi/libffi
 [url "https://git.burntcomma.com/moxnox/meson"]
 	insteadOf = https://github.com/mesonbuild/meson
+[url "https://git.burntcomma.com/moxnox/rust-socket2"]
+	insteadOf = https://github.com/rust-lang/socket2
+[url "https://git.burntcomma.com/moxnox/rust-filetime"]
+	insteadOf = https://github.com/alexcrichton/filetime

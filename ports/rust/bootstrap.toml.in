@@ -8,6 +8,9 @@ rustc = "@RUSTC_STAGE0@"
 cargo = "@CARGO_STAGE0@"
 # stage0 is the same version as this tree
 local-rebuild = true
+# cargo is a tool, which bootstrap only builds for an extended build
+extended = true
+tools = ["cargo", "rustdoc"]
 
 [llvm]
 download-ci-llvm = false
@@ -34,5 +37,7 @@ cxx = "@RUST_TARGET@-clang++"
 llvm-config = "@CMAKE_CURRENT_SOURCE_DIR@/@RUST_TARGET@-llvm-config"
 # the target spec passes -static-libgcc too, but with local-rebuild the
 # stage0 compiler is the installed one, whose spec may predate that;
-# this keeps the gcc runtime static regardless of stage0's vintage
-rustflags = ["-Clink-arg=-static-libgcc", "-Clink-arg=-fuse-ld=lld"]
+# this keeps the gcc runtime static regardless of stage0's vintage; the
+# import libraries come from this tree rather than the compiler's sysroot,
+# whose copies predate what the ports being built here need
+rustflags = ["-Clink-arg=-static-libgcc", "-Clink-arg=-fuse-ld=lld", "-Clink-arg=-L@CMAKE_BINARY_DIR@/libmoxnox", "-Clink-arg=-L@CMAKE_BINARY_DIR@/ports/mingw-w64"]

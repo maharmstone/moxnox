@@ -935,6 +935,57 @@ index d91e983c..5043db17 100644
      target_os = "redox",
  ))]
  pub(crate) fn dup3(fd: BorrowedFd<'_>, new: &mut OwnedFd, _flags: DupFlags) -> io::Result<()> {
+diff --git a/src/backend/libc/termios/syscalls.rs b/src/backend/libc/termios/syscalls.rs
+index dbe4a6e0..6b64ca86 100644
+--- a/src/backend/libc/termios/syscalls.rs
++++ b/src/backend/libc/termios/syscalls.rs
+@@ -350,12 +350,28 @@ pub(crate) fn tcgetsid(fd: BorrowedFd<'_>) -> io::Result<Pid> {
+     }
+ }
+ 
+-#[cfg(not(any(target_os = "espidf", target_os = "horizon", target_os = "wasi")))]
++#[cfg(not(any(
++    target_os = "espidf",
++    target_os = "horizon",
++    target_os = "moxnox",
++    target_os = "wasi"
++)))]
+ pub(crate) fn tcsetwinsize(fd: BorrowedFd<'_>, winsize: Winsize) -> io::Result<()> {
+     unsafe { ret(c::ioctl(borrowed_fd(fd), c::TIOCSWINSZ, &winsize)) }
+ }
+ 
+-#[cfg(not(any(target_os = "espidf", target_os = "horizon", target_os = "wasi")))]
++// Moxnox has the POSIX.1-2024 functions and no ioctl.
++#[cfg(target_os = "moxnox")]
++pub(crate) fn tcsetwinsize(fd: BorrowedFd<'_>, winsize: Winsize) -> io::Result<()> {
++    unsafe { ret(c::tcsetwinsize(borrowed_fd(fd), (&winsize as *const Winsize).cast())) }
++}
++
++#[cfg(not(any(
++    target_os = "espidf",
++    target_os = "horizon",
++    target_os = "moxnox",
++    target_os = "wasi"
++)))]
+ pub(crate) fn tcgetwinsize(fd: BorrowedFd<'_>) -> io::Result<Winsize> {
+     unsafe {
+         let mut buf = MaybeUninit::<Winsize>::uninit();
+@@ -368,6 +384,15 @@ pub(crate) fn tcgetwinsize(fd: BorrowedFd<'_>) -> io::Result<Winsize> {
+     }
+ }
+ 
++#[cfg(target_os = "moxnox")]
++pub(crate) fn tcgetwinsize(fd: BorrowedFd<'_>) -> io::Result<Winsize> {
++    unsafe {
++        let mut buf = MaybeUninit::<Winsize>::uninit();
++        ret(c::tcgetwinsize(borrowed_fd(fd), buf.as_mut_ptr().cast()))?;
++        Ok(buf.assume_init())
++    }
++}
++
+ #[cfg(not(any(target_os = "espidf", target_os = "nto", target_os = "wasi")))]
+ #[inline]
+ pub(crate) fn set_speed(termios: &mut Termios, arbitrary_speed: u32) -> io::Result<()> {
 diff --git a/src/fs/abs.rs b/src/fs/abs.rs
 index 6642fee6..0a44ca1d 100644
 --- a/src/fs/abs.rs
@@ -1140,3 +1191,55 @@ index 8d4a5e52..b760bbf3 100644
  ))]
  #[macro_use]
  mod weak;
+diff --git a/src/termios/ioctl.rs b/src/termios/ioctl.rs
+index 22945566..6b9aa969 100644
+--- a/src/termios/ioctl.rs
++++ b/src/termios/ioctl.rs
+@@ -25,7 +25,8 @@ use backend::c;
+     windows,
+     target_os = "horizon",
+     target_os = "redox",
+-    target_os = "wasi"
++    target_os = "wasi",
++    target_os = "moxnox",
+ )))]
+ #[inline]
+ #[doc(alias = "TIOCEXCL")]
+@@ -53,7 +54,8 @@ pub fn ioctl_tiocexcl<Fd: AsFd>(fd: Fd) -> io::Result<()> {
+     windows,
+     target_os = "horizon",
+     target_os = "redox",
+-    target_os = "wasi"
++    target_os = "wasi",
++    target_os = "moxnox",
+ )))]
+ #[inline]
+ #[doc(alias = "TIOCNXCL")]
+diff --git a/src/termios/types.rs b/src/termios/types.rs
+index 899fa74b..ec7e922b 100644
+--- a/src/termios/types.rs
++++ b/src/termios/types.rs
+@@ -460,6 +460,7 @@ bitflags! {
+             target_os = "aix",
+             target_os = "haiku",
+             target_os = "redox",
++            target_os = "moxnox",
+         )))]
+         const XTABS = c::XTABS;
+ 
+@@ -583,6 +584,7 @@ bitflags! {
+             target_os = "hurd",
+             target_os = "nto",
+             target_os = "redox",
++            target_os = "moxnox",
+         )))]
+         const CMSPAR = c::CMSPAR;
+ 
+@@ -627,6 +629,7 @@ bitflags! {
+             target_os = "haiku",
+             target_os = "nto",
+             target_os = "redox",
++            target_os = "moxnox",
+         )))]
+         const EXTPROC = c::EXTPROC;
+ 

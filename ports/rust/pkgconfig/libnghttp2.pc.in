@@ -1,0 +1,5 @@
+Name: libnghttp2
+Description: HTTP/2 C library
+Version: 1.70.0
+Libs: -L@CMAKE_BINARY_DIR@/ports/nghttp2 -lnghttp2
+Cflags: -I@CMAKE_BINARY_DIR@/ports/nghttp2/gen/include

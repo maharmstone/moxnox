@@ -1,0 +1,334 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index a720ed6bf..eeddca400 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -885,7 +885,6 @@ checksum = "5830daf304027db10c82632a464879d46a3f7c4ba17a31592657ad16c719b483"
+ dependencies = [
+  "cc",
+  "libc",
+- "libnghttp2-sys",
+  "libz-sys",
+  "openssl-sys",
+  "pkg-config",
+@@ -1059,7 +1058,7 @@ version = "2.2.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "33ce99a9e19c84beb4cc35ece85374335ccc398240712114c85038319ed709bd"
+ dependencies = [
+- "getrandom 0.3.4",
++ "getrandom 0.3.3",
+ ]
+ 
+ [[package]]
+@@ -1118,11 +1117,9 @@ dependencies = [
+ [[package]]
+ name = "errno"
+ version = "0.3.14"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
+ dependencies = [
+  "libc",
+- "windows-sys 0.61.2",
++ "windows-sys 0.52.0",
+ ]
+ 
+ [[package]]
+@@ -1183,8 +1180,6 @@ checksum = "64cd1e32ddd350061ae6edb1b082d7c54915b5c672c389143b9a63403a109f24"
+ [[package]]
+ name = "filetime"
+ version = "0.2.27"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "f98844151eee8917efc50bd9e8318cb963ae8b297431495d3f758616ea5c57db"
+ dependencies = [
+  "cfg-if",
+  "libc",
+@@ -1312,26 +1307,22 @@ dependencies = [
+ 
+ [[package]]
+ name = "getrandom"
+-version = "0.2.17"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0"
++version = "0.2.16"
+ dependencies = [
+  "cfg-if",
+  "libc",
+- "wasi",
++ "wasi 0.11.1+wasi-snapshot-preview1",
+ ]
+ 
+ [[package]]
+ name = "getrandom"
+-version = "0.3.4"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd"
++version = "0.3.3"
+ dependencies = [
+  "cfg-if",
+  "js-sys",
+  "libc",
+  "r-efi",
+- "wasip2",
++ "wasi 0.14.7+wasi-0.2.4",
+  "wasm-bindgen",
+ ]
+ 
+@@ -2697,7 +2688,7 @@ dependencies = [
+  "portable-atomic",
+  "portable-atomic-util",
+  "serde_core",
+- "windows-sys 0.61.2",
++ "windows-sys 0.52.0",
+ ]
+ 
+ [[package]]
+@@ -2729,10 +2720,8 @@ dependencies = [
+ [[package]]
+ name = "jobserver"
+ version = "0.1.34"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "9afb3de4395d6b3e67a780b6de64b51c978ecf11cb9a462c66be7d4ca9039d33"
+ dependencies = [
+- "getrandom 0.3.4",
++ "getrandom 0.3.3",
+  "libc",
+ ]
+ 
+@@ -2770,8 +2759,6 @@ checksum = "884e2677b40cc8c339eaefcb701c32ef1fd2493d71118dc0ca4b6a736c93bd67"
+ [[package]]
+ name = "libc"
+ version = "0.2.180"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "bcc35a38544a891a5f7c865aca548a982ccb3b8650a5b06d0fd33a10283c56fc"
+ 
+ [[package]]
+ name = "libgit2-sys"
+@@ -2797,16 +2784,6 @@ dependencies = [
+  "windows-link",
+ ]
+ 
+-[[package]]
+-name = "libnghttp2-sys"
+-version = "0.1.11+1.64.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "1b6c24e48a7167cffa7119da39d577fa482e66c688a4aac016bee862e1a713c4"
+-dependencies = [
+- "cc",
+- "libc",
+-]
+-
+ [[package]]
+ name = "libredox"
+ version = "0.1.12"
+@@ -2824,7 +2801,6 @@ version = "0.36.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "95b4103cffefa72eb8428cb6b47d6627161e51c2739fc5e3b734584157bc642a"
+ dependencies = [
+- "cc",
+  "pkg-config",
+  "vcpkg",
+ ]
+@@ -2933,8 +2909,6 @@ dependencies = [
+ [[package]]
+ name = "memmap2"
+ version = "0.9.9"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "744133e4a0e0a658e1374cf3bf8e415c4052a15a111acd372764c55b4177d490"
+ dependencies = [
+  "libc",
+ ]
+@@ -2968,7 +2942,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "a69bcab0ad47271a0234d9422b131806bf3968021e5dc9328caf2d4cd58557fc"
+ dependencies = [
+  "libc",
+- "wasi",
++ "wasi 0.11.1+wasi-snapshot-preview1",
+  "windows-sys 0.61.2",
+ ]
+ 
+@@ -2984,8 +2958,6 @@ dependencies = [
+ [[package]]
+ name = "nix"
+ version = "0.30.1"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6"
+ dependencies = [
+  "bitflags",
+  "cfg-if",
+@@ -3024,7 +2996,7 @@ version = "0.50.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
+ dependencies = [
+- "windows-sys 0.61.2",
++ "windows-sys 0.59.0",
+ ]
+ 
+ [[package]]
+@@ -3407,7 +3379,7 @@ checksum = "03e1ed71dcdf863d9f66d9de86de714db38aedc2fcabc1a60207d1fde603e2d5"
+ dependencies = [
+  "ct-codecs",
+  "ed25519-compact",
+- "getrandom 0.3.4",
++ "getrandom 0.3.3",
+  "orion",
+  "p384",
+  "rand_core 0.6.4",
+@@ -3691,7 +3663,7 @@ version = "0.6.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
+ dependencies = [
+- "getrandom 0.2.17",
++ "getrandom 0.2.16",
+ ]
+ 
+ [[package]]
+@@ -3700,7 +3672,7 @@ version = "0.9.5"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "76afc826de14238e6e8c374ddcc1fa19e374fd8dd986b0d2af0d02377261d83c"
+ dependencies = [
+- "getrandom 0.3.4",
++ "getrandom 0.3.3",
+ ]
+ 
+ [[package]]
+@@ -3873,7 +3845,7 @@ checksum = "a4689e6c2294d81e88dc6261c768b63bc4fcdb852be6d1352498b114f61383b7"
+ dependencies = [
+  "cc",
+  "cfg-if",
+- "getrandom 0.2.17",
++ "getrandom 0.2.16",
+  "libc",
+  "untrusted",
+  "windows-sys 0.52.0",
+@@ -3941,14 +3913,12 @@ dependencies = [
+ [[package]]
+ name = "rustix"
+ version = "1.1.3"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "146c9e247ccc180c1f61615433868c99f3de3ae256a30a43b49f67c2d9171f34"
+ dependencies = [
+  "bitflags",
+  "errno",
+  "libc",
+  "linux-raw-sys",
+- "windows-sys 0.61.2",
++ "windows-sys 0.52.0",
+ ]
+ 
+ [[package]]
+@@ -4340,8 +4310,6 @@ dependencies = [
+ [[package]]
+ name = "socket2"
+ version = "0.6.2"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "86f4aa3ad99f2088c990dfa82d367e19cb29268ed67c574d10d0a4bfe71f07e0"
+ dependencies = [
+  "libc",
+  "windows-sys 0.60.2",
+@@ -4476,10 +4444,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "655da9c7eb6305c55742045d5a8d2037996d61d8de95806335c7c86ce0f82e9c"
+ dependencies = [
+  "fastrand",
+- "getrandom 0.3.4",
++ "getrandom 0.3.3",
+  "once_cell",
+  "rustix",
+- "windows-sys 0.61.2",
++ "windows-sys 0.52.0",
+ ]
+ 
+ [[package]]
+@@ -5059,6 +5027,15 @@ version = "0.11.1+wasi-snapshot-preview1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "ccf3ec651a847eb01de73ccad15eb7d99f80485de043efb2f370cd654f4ea44b"
+ 
++[[package]]
++name = "wasi"
++version = "0.14.7+wasi-0.2.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "883478de20367e224c0090af9cf5f9fa85bed63a95c1abf3afc5c083ebc06e8c"
++dependencies = [
++ "wasip2",
++]
++
+ [[package]]
+ name = "wasip2"
+ version = "1.0.2+wasi-0.2.9"
+@@ -5159,7 +5136,7 @@ version = "0.1.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
+ dependencies = [
+- "windows-sys 0.61.2",
++ "windows-sys 0.52.0",
+ ]
+ 
+ [[package]]
+diff --git a/Cargo.toml b/Cargo.toml
+index d3c86cef7..407ff0fe8 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -83,7 +83,7 @@ proptest = "1.9.0"
+ pulldown-cmark = { version = "0.13.0", default-features = false, features = ["html"] }
+ rand = "0.9.2"
+ regex = "1.12.2"
+-rusqlite = { version = "0.38.0", features = ["bundled"] }
++rusqlite = "0.38.0"
+ rustc-hash = "2.1.1"
+ rustc-stable-hash = "0.1.2"
+ rustfix = { version = "0.9.5", path = "crates/rustfix" }
+@@ -169,7 +169,7 @@ clap = { workspace = true, features = ["wrap_help"] }
+ clap_complete.workspace = true
+ color-print.workspace = true
+ crates-io.workspace = true
+-curl = { workspace = true, features = ["http2"] }
++curl.workspace = true
+ curl-sys.workspace = true
+ filetime.workspace = true
+ flate2.workspace = true
+@@ -291,3 +291,16 @@ http-transport-reqwest = ["gix/blocking-http-transport-reqwest"]
+ 
+ [lints]
+ workspace = true
++
++[patch.crates-io]
++# the Moxnox forks that the compiler's own workspace is patched with
++libc = { path = "../../../../libc" }
++getrandom = { path = "../../../../getrandom" }
++getrandom_02 = { path = "../../../../getrandom-0.2", package = "getrandom" }
++rustix = { path = "../../../../rustix" }
++nix = { path = "../../../../nix" }
++errno = { path = "../../../../errno" }
++jobserver = { path = "../../../../jobserver" }
++memmap2 = { path = "../../../../memmap2" }
++filetime = { path = "../../../../filetime" }
++socket2 = { path = "../../../../socket2" }
+diff --git a/src/cargo/core/shell.rs b/src/cargo/core/shell.rs
+index 4adb58948..3719a3191 100644
+--- a/src/cargo/core/shell.rs
++++ b/src/cargo/core/shell.rs
+@@ -719,7 +719,11 @@ mod imp {
+             let mut winsize: libc::winsize = mem::zeroed();
+             // The .into() here is needed for FreeBSD which defines TIOCGWINSZ
+             // as c_uint but ioctl wants c_ulong.
+-            if libc::ioctl(libc::STDERR_FILENO, libc::TIOCGWINSZ.into(), &mut winsize) < 0 {
++            #[cfg(not(target_os = "moxnox"))]
++            let r = libc::ioctl(libc::STDERR_FILENO, libc::TIOCGWINSZ.into(), &mut winsize);
++            #[cfg(target_os = "moxnox")]
++            let r = libc::tcgetwinsize(libc::STDERR_FILENO, &mut winsize);
++            if r < 0 {
+                 return TtyWidth::NoTty;
+             }
+             if winsize.ws_col > 0 {
+diff --git a/src/cargo/util/hostname.rs b/src/cargo/util/hostname.rs
+index 3f53c9cf6..55d9e73e1 100644
+--- a/src/cargo/util/hostname.rs
++++ b/src/cargo/util/hostname.rs
+@@ -50,7 +50,8 @@ fn gethostname() -> io::Result<OsString> {
+     // SAFETY: The pointer we give is valid as it is derived directly from a
+     // Vec. Similarly, `maxlen` is the length of our Vec, and is thus valid
+     // to write to.
+-    let rc = unsafe { libc::gethostname(buf.as_mut_ptr().cast::<libc::c_char>(), maxlen) };
++    // Moxnox's gethostname takes the length as an int, as winsock's does.
++    let rc = unsafe { libc::gethostname(buf.as_mut_ptr().cast::<libc::c_char>(), maxlen as _) };
+     if rc == -1 {
+         return Err(io::Error::last_os_error());
+     }

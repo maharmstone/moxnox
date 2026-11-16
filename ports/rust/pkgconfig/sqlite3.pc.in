@@ -1,0 +1,5 @@
+Name: SQLite
+Description: SQL database engine
+Version: 3.53.4
+Libs: -L@CMAKE_BINARY_DIR@/ports/sqlite -lsqlite3
+Cflags: -I@CMAKE_BINARY_DIR@/ports/sqlite/gen

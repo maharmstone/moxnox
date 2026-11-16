@@ -1,0 +1,204 @@
+diff --git a/src/socket.rs b/src/socket.rs
+index 6a4423a..ab5ade5 100644
+--- a/src/socket.rs
++++ b/src/socket.rs
+@@ -1330,6 +1330,7 @@ impl Socket {
+         target_os = "espidf",
+         target_os = "vita",
+         target_os = "cygwin",
++        target_os = "moxnox",
+     )))]
+     pub fn join_multicast_v4_n(
+         &self,
+@@ -1364,6 +1365,7 @@ impl Socket {
+         target_os = "espidf",
+         target_os = "vita",
+         target_os = "cygwin",
++        target_os = "moxnox",
+     )))]
+     pub fn leave_multicast_v4_n(
+         &self,
+@@ -1399,6 +1401,7 @@ impl Socket {
+         target_os = "nto",
+         target_os = "espidf",
+         target_os = "vita",
++        target_os = "moxnox",
+     )))]
+     pub fn join_ssm_v4(
+         &self,
+@@ -1437,6 +1440,7 @@ impl Socket {
+         target_os = "nto",
+         target_os = "espidf",
+         target_os = "vita",
++        target_os = "moxnox",
+     )))]
+     pub fn leave_ssm_v4(
+         &self,
+@@ -1609,6 +1613,7 @@ impl Socket {
+         target_os = "solaris",
+         target_os = "illumos",
+         target_os = "haiku",
++        target_os = "moxnox",
+     )))]
+     pub fn set_tos_v4(&self, tos: u32) -> io::Result<()> {
+         unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IP, sys::IP_TOS, tos as c_int) }
+@@ -1628,6 +1633,7 @@ impl Socket {
+         target_os = "solaris",
+         target_os = "illumos",
+         target_os = "haiku",
++        target_os = "moxnox",
+     )))]
+     pub fn tos_v4(&self) -> io::Result<u32> {
+         unsafe {
+@@ -1655,6 +1661,7 @@ impl Socket {
+         target_os = "espidf",
+         target_os = "vita",
+         target_os = "cygwin",
++        target_os = "moxnox",
+     )))]
+     pub fn set_recv_tos_v4(&self, recv_tos: bool) -> io::Result<()> {
+         unsafe {
+@@ -1687,6 +1694,7 @@ impl Socket {
+         target_os = "espidf",
+         target_os = "vita",
+         target_os = "cygwin",
++        target_os = "moxnox",
+     )))]
+     pub fn recv_tos_v4(&self) -> io::Result<bool> {
+         unsafe {
+@@ -2014,6 +2022,7 @@ impl Socket {
+         target_os = "hurd",
+         target_os = "espidf",
+         target_os = "vita",
++        target_os = "moxnox",
+     )))]
+     pub fn recv_tclass_v6(&self) -> io::Result<bool> {
+         unsafe {
+@@ -2039,6 +2048,7 @@ impl Socket {
+         target_os = "hurd",
+         target_os = "espidf",
+         target_os = "vita",
++        target_os = "moxnox",
+     )))]
+     pub fn set_recv_tclass_v6(&self, recv_tclass: bool) -> io::Result<()> {
+         unsafe {
+diff --git a/src/sys/unix.rs b/src/sys/unix.rs
+index 3a60ada..e277a1b 100644
+--- a/src/sys/unix.rs
++++ b/src/sys/unix.rs
+@@ -144,6 +144,7 @@ pub(crate) use libc::IPV6_RECVHOPLIMIT;
+     target_os = "haiku",
+     target_os = "espidf",
+     target_os = "vita",
++    target_os = "moxnox",
+ )))]
+ pub(crate) use libc::IPV6_RECVTCLASS;
+ #[cfg(all(feature = "all", not(any(target_os = "redox", target_os = "espidf"))))]
+@@ -163,6 +164,7 @@ pub(crate) use libc::IP_HDRINCL;
+     target_os = "espidf",
+     target_os = "vita",
+     target_os = "cygwin",
++    target_os = "moxnox",
+ )))]
+ pub(crate) use libc::IP_RECVTOS;
+ #[cfg(not(any(
+@@ -171,6 +173,7 @@ pub(crate) use libc::IP_RECVTOS;
+     target_os = "solaris",
+     target_os = "haiku",
+     target_os = "illumos",
++    target_os = "moxnox",
+ )))]
+ pub(crate) use libc::IP_TOS;
+ #[cfg(not(any(
+@@ -214,6 +217,7 @@ pub(crate) use libc::{
+     target_os = "nto",
+     target_os = "espidf",
+     target_os = "vita",
++    target_os = "moxnox",
+ )))]
+ pub(crate) use libc::{
+     ip_mreq_source as IpMreqSource, IP_ADD_SOURCE_MEMBERSHIP, IP_DROP_SOURCE_MEMBERSHIP,
+@@ -232,6 +236,7 @@ pub(crate) use libc::{
+     target_os = "solaris",
+     target_os = "tvos",
+     target_os = "watchos",
++    target_os = "moxnox",
+ )))]
+ pub(crate) use libc::{IPV6_ADD_MEMBERSHIP, IPV6_DROP_MEMBERSHIP};
+ #[cfg(any(
+@@ -247,6 +252,7 @@ pub(crate) use libc::{IPV6_ADD_MEMBERSHIP, IPV6_DROP_MEMBERSHIP};
+     target_os = "solaris",
+     target_os = "tvos",
+     target_os = "watchos",
++    target_os = "moxnox",
+ ))]
+ pub(crate) use libc::{
+     IPV6_JOIN_GROUP as IPV6_ADD_MEMBERSHIP, IPV6_LEAVE_GROUP as IPV6_DROP_MEMBERSHIP,
+@@ -317,6 +323,7 @@ macro_rules! syscall {
+     target_os = "tvos",
+     target_os = "watchos",
+     target_os = "cygwin",
++    target_os = "moxnox",
+ )))]
+ const MAX_BUF_LEN: usize = ssize_t::MAX as usize;
+ 
+@@ -335,6 +342,7 @@ const MAX_BUF_LEN: usize = ssize_t::MAX as usize;
+     target_os = "tvos",
+     target_os = "watchos",
+     target_os = "cygwin",
++    target_os = "moxnox",
+ ))]
+ const MAX_BUF_LEN: usize = c_int::MAX as usize - 1;
+ 
+@@ -382,6 +390,7 @@ type IovLen = usize;
+     target_os = "espidf",
+     target_os = "vita",
+     target_os = "cygwin",
++    target_os = "moxnox",
+ ))]
+ type IovLen = c_int;
+ 
+@@ -1006,7 +1015,7 @@ pub(crate) fn recv(fd: RawSocket, buf: &mut [MaybeUninit<u8>], flags: c_int) ->
+     syscall!(recv(
+         fd,
+         buf.as_mut_ptr().cast(),
+-        min(buf.len(), MAX_BUF_LEN),
++        min(buf.len(), MAX_BUF_LEN) as _,
+         flags,
+     ))
+     .map(|n| n as usize)
+@@ -1023,7 +1032,7 @@ pub(crate) fn recv_from(
+             syscall!(recvfrom(
+                 fd,
+                 buf.as_mut_ptr().cast(),
+-                min(buf.len(), MAX_BUF_LEN),
++                min(buf.len(), MAX_BUF_LEN) as _,
+                 flags,
+                 addr.cast(),
+                 addrlen
+@@ -1088,7 +1097,7 @@ pub(crate) fn send(fd: RawSocket, buf: &[u8], flags: c_int) -> io::Result<usize>
+     syscall!(send(
+         fd,
+         buf.as_ptr().cast(),
+-        min(buf.len(), MAX_BUF_LEN),
++        min(buf.len(), MAX_BUF_LEN) as _,
+         flags,
+     ))
+     .map(|n| n as usize)
+@@ -1113,7 +1122,7 @@ pub(crate) fn send_to(
+     syscall!(sendto(
+         fd,
+         buf.as_ptr().cast(),
+-        min(buf.len(), MAX_BUF_LEN),
++        min(buf.len(), MAX_BUF_LEN) as _,
+         flags,
+         addr.as_ptr().cast::<sockaddr>(),
+         addr.len(),
+@@ -1352,6 +1361,7 @@ pub(crate) fn from_in6_addr(addr: in6_addr) -> Ipv6Addr {
+     target_os = "espidf",
+     target_os = "vita",
+     target_os = "cygwin",
++    target_os = "moxnox",
+ )))]
+ pub(crate) const fn to_mreqn(
+     multiaddr: &Ipv4Addr,

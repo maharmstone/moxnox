@@ -1,0 +1,12 @@
+diff --git a/src/unix/mod.rs b/src/unix/mod.rs
+index f5a48b2..fd5edcd 100644
+--- a/src/unix/mod.rs
++++ b/src/unix/mod.rs
+@@ -16,6 +16,7 @@ cfg_if::cfg_if! {
+         mod macos;
+         pub use self::macos::*;
+     } else if #[cfg(any(target_os = "aix",
++                        target_os = "moxnox",
+                         target_os = "solaris",
+                         target_os = "illumos",
+                         target_os = "emscripten",

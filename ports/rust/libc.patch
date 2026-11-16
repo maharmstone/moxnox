@@ -156,10 +156,10 @@ index 227334a9d..fb66a995d 100644
          pub use self::nto::*;
 diff --git a/src/unix/moxnox/mod.rs b/src/unix/moxnox/mod.rs
 new file mode 100644
-index 000000000..33aaec448
+index 000000000..00e5b99d3
 --- /dev/null
 +++ b/src/unix/moxnox/mod.rs
-@@ -0,0 +1,1466 @@
+@@ -0,0 +1,1472 @@
 +//! Definitions for Moxnox: PE/COFF and the Windows ABI, but a POSIX 2024
 +//! userland (mnposix/ucrtbase). Transcribed from the platform's include/
 +//! headers, which are the source of truth. Note LLP64: c_long is 32-bit.
@@ -796,6 +796,8 @@ index 000000000..33aaec448
 +pub const MSG_CTRUNC: c_int = 1 << 1;
 +pub const MSG_TRUNC: c_int = 1 << 2;
 +pub const MSG_NOSIGNAL: c_int = 1 << 3;
++pub const MSG_OOB: c_int = 1 << 4;
++pub const MSG_EOR: c_int = 1 << 5;
 +
 +pub const LITTLE_ENDIAN: c_int = 1234;
 +pub const BIG_ENDIAN: c_int = 4321;
@@ -813,6 +815,9 @@ index 000000000..33aaec448
 +
 +// netinet/tcp.h
 +pub const TCP_NODELAY: c_int = 1;
++pub const TCP_KEEPIDLE: c_int = 4;
++pub const TCP_KEEPINTVL: c_int = 5;
++pub const TCP_KEEPCNT: c_int = 6;
 +
 +// netinet/in.h
 +pub const INET_ADDRSTRLEN: c_int = 16;
@@ -825,6 +830,7 @@ index 000000000..33aaec448
 +pub const IP_ADD_MEMBERSHIP: c_int = 12;
 +pub const IP_DROP_MEMBERSHIP: c_int = 13;
 +
++pub const IPV6_UNICAST_HOPS: c_int = 4;
 +pub const IPV6_MULTICAST_IF: c_int = 9;
 +pub const IPV6_MULTICAST_HOPS: c_int = 10;
 +pub const IPV6_MULTICAST_LOOP: c_int = 11;

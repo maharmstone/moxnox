@@ -1,0 +1,6 @@
+Name: libgit2
+Description: The git library, take 2
+Version: 1.9.7
+Requires.private: openssl libpcre2-8 zlib
+Libs: -L@CMAKE_BINARY_DIR@/ports/libgit2/repo -lgit2
+Cflags: -I@CMAKE_SOURCE_DIR@/ports/libgit2/repo/include

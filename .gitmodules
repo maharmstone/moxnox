@@ -289,3 +289,9 @@
 [submodule "ports/meson/repo"]
 	path = ports/meson/repo
 	url = https://github.com/mesonbuild/meson
+[submodule "ports/rust/socket2"]
+	path = ports/rust/socket2
+	url = https://github.com/rust-lang/socket2
+[submodule "ports/rust/filetime"]
+	path = ports/rust/filetime
+	url = https://github.com/alexcrichton/filetime

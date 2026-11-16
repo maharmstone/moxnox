@@ -1,0 +1,5 @@
+Name: libpcre2-8
+Description: PCRE2 - Perl compatible regular expressions C library (2nd API) with 8 bit character support
+Version: 10.49
+Libs: -L@CMAKE_BINARY_DIR@/ports/pcre2/repo -lpcre2-8
+Cflags: -I@CMAKE_BINARY_DIR@/ports/pcre2/repo/interface

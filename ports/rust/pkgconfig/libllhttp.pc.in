@@ -1,0 +1,5 @@
+Name: libllhttp
+Description: Node.js llhttp Library
+Version: 9.4.3
+Libs: -L@CMAKE_BINARY_DIR@/ports/llhttp -lllhttp
+Cflags: -I@CMAKE_SOURCE_DIR@/ports/llhttp/repo/include

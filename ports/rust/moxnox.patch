@@ -771,7 +771,7 @@ index bb6c0ac9e18..34f98f69545 100644
          target_os = "redox",
          target_os = "vxworks",
 diff --git a/library/std/src/sys/fs/unix.rs b/library/std/src/sys/fs/unix.rs
-index 7db474544f0..3a286d9a6f2 100644
+index 7db474544f0..7597cb4c0ff 100644
 --- a/library/std/src/sys/fs/unix.rs
 +++ b/library/std/src/sys/fs/unix.rs
 @@ -32,6 +32,7 @@
@@ -900,7 +900,92 @@ index 7db474544f0..3a286d9a6f2 100644
          target_os = "solaris",
          target_os = "illumos",
          target_os = "fuchsia",
-@@ -2135,6 +2148,7 @@ pub fn link(original: &CStr, link: &CStr) -> io::Result<()> {
+@@ -1448,7 +1461,7 @@ pub fn lock(&self) -> io::Result<()> {
+         return Ok(());
+     }
+ 
+-    #[cfg(target_os = "solaris")]
++    #[cfg(any(target_os = "solaris", target_os = "moxnox"))]
+     pub fn lock(&self) -> io::Result<()> {
+         let mut flock: libc::flock = unsafe { mem::zeroed() };
+         flock.l_type = libc::F_WRLCK as libc::c_short;
+@@ -1468,6 +1481,7 @@ pub fn lock(&self) -> io::Result<()> {
+         target_os = "solaris",
+         target_os = "illumos",
+         target_os = "aix",
++        target_os = "moxnox",
+         target_vendor = "apple",
+     )))]
+     pub fn lock(&self) -> io::Result<()> {
+@@ -1491,7 +1505,7 @@ pub fn lock_shared(&self) -> io::Result<()> {
+         return Ok(());
+     }
+ 
+-    #[cfg(target_os = "solaris")]
++    #[cfg(any(target_os = "solaris", target_os = "moxnox"))]
+     pub fn lock_shared(&self) -> io::Result<()> {
+         let mut flock: libc::flock = unsafe { mem::zeroed() };
+         flock.l_type = libc::F_RDLCK as libc::c_short;
+@@ -1511,6 +1525,7 @@ pub fn lock_shared(&self) -> io::Result<()> {
+         target_os = "solaris",
+         target_os = "illumos",
+         target_os = "aix",
++        target_os = "moxnox",
+         target_vendor = "apple",
+     )))]
+     pub fn lock_shared(&self) -> io::Result<()> {
+@@ -1542,7 +1557,7 @@ pub fn try_lock(&self) -> Result<(), TryLockError> {
+         }
+     }
+ 
+-    #[cfg(target_os = "solaris")]
++    #[cfg(any(target_os = "solaris", target_os = "moxnox"))]
+     pub fn try_lock(&self) -> Result<(), TryLockError> {
+         let mut flock: libc::flock = unsafe { mem::zeroed() };
+         flock.l_type = libc::F_WRLCK as libc::c_short;
+@@ -1570,6 +1585,7 @@ pub fn try_lock(&self) -> Result<(), TryLockError> {
+         target_os = "solaris",
+         target_os = "illumos",
+         target_os = "aix",
++        target_os = "moxnox",
+         target_vendor = "apple",
+     )))]
+     pub fn try_lock(&self) -> Result<(), TryLockError> {
+@@ -1604,7 +1620,7 @@ pub fn try_lock_shared(&self) -> Result<(), TryLockError> {
+         }
+     }
+ 
+-    #[cfg(target_os = "solaris")]
++    #[cfg(any(target_os = "solaris", target_os = "moxnox"))]
+     pub fn try_lock_shared(&self) -> Result<(), TryLockError> {
+         let mut flock: libc::flock = unsafe { mem::zeroed() };
+         flock.l_type = libc::F_RDLCK as libc::c_short;
+@@ -1632,6 +1648,7 @@ pub fn try_lock_shared(&self) -> Result<(), TryLockError> {
+         target_os = "solaris",
+         target_os = "illumos",
+         target_os = "aix",
++        target_os = "moxnox",
+         target_vendor = "apple",
+     )))]
+     pub fn try_lock_shared(&self) -> Result<(), TryLockError> {
+@@ -1658,7 +1675,7 @@ pub fn unlock(&self) -> io::Result<()> {
+         return Ok(());
+     }
+ 
+-    #[cfg(target_os = "solaris")]
++    #[cfg(any(target_os = "solaris", target_os = "moxnox"))]
+     pub fn unlock(&self) -> io::Result<()> {
+         let mut flock: libc::flock = unsafe { mem::zeroed() };
+         flock.l_type = libc::F_UNLCK as libc::c_short;
+@@ -1678,6 +1695,7 @@ pub fn unlock(&self) -> io::Result<()> {
+         target_os = "solaris",
+         target_os = "illumos",
+         target_os = "aix",
++        target_os = "moxnox",
+         target_vendor = "apple",
+     )))]
+     pub fn unlock(&self) -> io::Result<()> {
+@@ -2135,6 +2153,7 @@ pub fn link(original: &CStr, link: &CStr) -> io::Result<()> {
              // Other misc platforms
              target_os = "horizon",
              target_os = "vita",
@@ -908,7 +993,7 @@ index 7db474544f0..3a286d9a6f2 100644
              target_env = "nto70",
          ) => {
              cvt(unsafe { libc::link(original.as_ptr(), link.as_ptr()) })?;
-@@ -2474,7 +2488,12 @@ pub fn lchown(path: &Path, uid: u32, gid: u32) -> io::Result<()> {
+@@ -2474,7 +2493,12 @@ pub fn lchown(path: &Path, uid: u32, gid: u32) -> io::Result<()> {
      Err(io::const_error!(io::ErrorKind::Unsupported, "lchown not supported by vxworks"))
  }
  
@@ -922,7 +1007,7 @@ index 7db474544f0..3a286d9a6f2 100644
  pub fn chroot(dir: &Path) -> io::Result<()> {
      run_path_with_cstr(dir, &|dir| cvt(unsafe { libc::chroot(dir.as_ptr()) }).map(|_| ()))
  }
-@@ -2485,6 +2504,12 @@ pub fn chroot(dir: &Path) -> io::Result<()> {
+@@ -2485,6 +2509,12 @@ pub fn chroot(dir: &Path) -> io::Result<()> {
      Err(io::const_error!(io::ErrorKind::Unsupported, "chroot not supported by vxworks"))
  }
  

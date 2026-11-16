@@ -2,6 +2,7 @@ include(${CMAKE_SOURCE_DIR}/rust-port.cmake)
 
 init_rust_crate_submodules(
     ports/rust/errno
+    ports/rust/filetime
     ports/rust/getrandom
     ports/rust/getrandom-0.2
     ports/rust/jobserver
@@ -12,6 +13,7 @@ init_rust_crate_submodules(
     ports/rust/nix
     ports/rust/rand
     ports/rust/rustix
+    ports/rust/socket2
     ports/rust/stacker
     ports/rust/termize
 )
@@ -55,9 +57,12 @@ rust_export_crate(memmap2 ${CMAKE_CURRENT_SOURCE_DIR}/memmap2 ${CMAKE_CURRENT_SO
 rust_export_crate(getrandom ${CMAKE_CURRENT_SOURCE_DIR}/getrandom ${CMAKE_CURRENT_SOURCE_DIR}/getrandom.patch)
 rust_export_crate(getrandom-0.2 ${CMAKE_CURRENT_SOURCE_DIR}/getrandom-0.2 ${CMAKE_CURRENT_SOURCE_DIR}/getrandom-0.2.patch)
 rust_export_crate(stacker ${CMAKE_CURRENT_SOURCE_DIR}/stacker ${CMAKE_CURRENT_SOURCE_DIR}/stacker.patch)
+rust_export_crate(filetime ${CMAKE_CURRENT_SOURCE_DIR}/filetime ${CMAKE_CURRENT_SOURCE_DIR}/filetime.patch)
+rust_export_crate(socket2 ${CMAKE_CURRENT_SOURCE_DIR}/socket2 ${CMAKE_CURRENT_SOURCE_DIR}/socket2.patch)
 
 set(rust_patched_trees
     repo:moxnox.patch
+    repo/src/tools/cargo:cargo.patch
     libc:libc.patch
     rustix:rustix.patch
     nix:nix.patch
@@ -71,6 +76,8 @@ set(rust_patched_trees
     getrandom:getrandom.patch
     getrandom-0.2:getrandom-0.2.patch
     stacker:stacker.patch
+    filetime:filetime.patch
+    socket2:socket2.patch
 )
 
 set(rust_apply_commands)
@@ -89,11 +96,23 @@ foreach(entry ${rust_patched_trees})
     list(APPEND rust_patch_files ${patch})
 endforeach()
 
+set(RUST_PKGCONFIG ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig)
+foreach(pc libcurl libgit2 libssh2 libllhttp libnghttp2 openssl libssl libcrypto libpcre2-8 sqlite3 zlib libzstd)
+    configure_file(pkgconfig/${pc}.pc.in ${RUST_PKGCONFIG}/${pc}.pc @ONLY)
+endforeach()
+
+string(REPLACE "-" "_" RUST_TARGET_UNDERSCORED ${RUST_TARGET})
+
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rust.stamp
     BYPRODUCTS ${rustc_main}
     ${rust_apply_commands}
-    COMMAND ${RUST_PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/repo/x.py build
+    COMMAND ${CMAKE_COMMAND} -E env
+        PKG_CONFIG_LIBDIR_${RUST_TARGET_UNDERSCORED}=${RUST_PKGCONFIG}
+        PKG_CONFIG_ALLOW_CROSS_${RUST_TARGET_UNDERSCORED}=1
+        LIBGIT2_SYS_USE_PKG_CONFIG=1
+        LIBSSH2_SYS_USE_PKG_CONFIG=1
+        ${RUST_PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/repo/x.py build
         --stage 1
         --config ${CMAKE_CURRENT_BINARY_DIR}/bootstrap.toml
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -102,6 +121,17 @@ add_custom_command(
     ${rust_revert_commands}
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/rust.stamp
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bootstrap.toml ${rust_patch_files}
+        $<TARGET_FILE:libcurl_shared>
+        $<TARGET_FILE:libgit2package>
+        $<TARGET_FILE:libssh2_shared>
+        $<TARGET_FILE:llhttp>
+        $<TARGET_FILE:nghttp2>
+        $<TARGET_FILE:libssl>
+        $<TARGET_FILE:libcrypto>
+        $<TARGET_FILE:pcre2-8-shared>
+        $<TARGET_FILE:sqlite3>
+        $<TARGET_FILE:zlib>
+        $<TARGET_FILE:zstd>
     JOB_POOL cargo_pool
     COMMENT "Building rustc (${RUST_TARGET})"
     VERBATIM
@@ -109,7 +139,12 @@ add_custom_command(
 
 add_custom_target(rust DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/rust.stamp)
 
+add_dependencies(rust moxnox ucrtbase mingwex mingw32)
+
 install(PROGRAMS ${RUSTC_STAGE1}/bin/rustc.exe ${RUSTC_STAGE1}/bin/rustdoc.exe
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin OPTIONAL)
+
+install(PROGRAMS ${RUSTC_BUILD_DIR}/${RUST_BUILD_TRIPLE}/stage2-tools-bin/cargo.exe
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin OPTIONAL)
 
 install(DIRECTORY ${RUSTC_STAGE1}/lib/

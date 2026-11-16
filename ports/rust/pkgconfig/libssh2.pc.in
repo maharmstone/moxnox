@@ -1,0 +1,6 @@
+Name: libssh2
+Description: Library for SSH-based communication
+Version: 1.11.1
+Requires.private: libcrypto,zlib
+Libs: -L@CMAKE_BINARY_DIR@/ports/libssh2/repo/src -lssh2
+Cflags: -I@CMAKE_SOURCE_DIR@/ports/libssh2/repo/include

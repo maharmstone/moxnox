@@ -1,0 +1,6 @@
+Name: libcurl
+Description: Library to transfer files with HTTP, FTP, etc.
+Version: 8.19.0
+Requires.private: openssl,zlib,libzstd,libnghttp2
+Libs: -L@CMAKE_BINARY_DIR@/ports/curl/repo/lib -lcurl
+Cflags: -I@CMAKE_BINARY_DIR@/ports/curl/gen/include
