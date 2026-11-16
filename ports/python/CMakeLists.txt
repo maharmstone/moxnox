@@ -42,6 +42,15 @@ python_patch(Modules/socketmodule.c
     -e [[s|    name = sock_decode_hostname(hbuf)\;|    name = PyUnicode_DecodeFSDefault(hbuf)\;|g]]
 )
 
+python_patch(Modules/_ctypes/cfield.c
+    -e [[s@#ifdef MS_WIN32\n        /\* MSVC, GCC with -mms-bitfields \*/@#if defined(MS_WIN32) || defined(__moxnox__)\n        /* MSVC, GCC with -mms-bitfields */@]]
+    -e [[s@#ifndef MS_WIN32\n    } else if (bitsize@#if !defined(MS_WIN32) \&\& !defined(__moxnox__)\n    } else if (bitsize@]]
+)
+
+python_patch(Modules/_ctypes/callproc.c
+    -e [[s@defined(__MINGW64__) || defined(__CYGWIN__)@defined(__MINGW64__) || defined(__CYGWIN__) || defined(__moxnox__)@]]
+)
+
 python_patch(Python/dynload_shlib.c
     -e [[s|#ifdef __CYGWIN__|#if defined(__CYGWIN__) \|\| defined(MOXNOX)|g]]
 )
@@ -534,6 +543,16 @@ add_python_module(_sqlite3
 )
 target_include_directories(python__sqlite3 PRIVATE repo/Modules/_sqlite)
 target_link_libraries(python__sqlite3 PRIVATE sqlite3)
+
+add_python_module(_ctypes
+    repo/Modules/_ctypes/_ctypes.c
+    repo/Modules/_ctypes/callbacks.c
+    ${GEN}/Modules/_ctypes/callproc.c
+    repo/Modules/_ctypes/stgdict.c
+    ${GEN}/Modules/_ctypes/cfield.c
+)
+target_include_directories(python__ctypes PRIVATE repo/Modules/_ctypes)
+target_link_libraries(python__ctypes PRIVATE ffi)
 
 add_python_module(_multibytecodec repo/Modules/cjkcodecs/multibytecodec.c)
 add_python_module(_codecs_cn repo/Modules/cjkcodecs/_codecs_cn.c)

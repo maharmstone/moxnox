@@ -376,13 +376,13 @@
 /* #undef HAVE_FEXECVE */
 
 /* Define if you have the 'ffi_closure_alloc' function. */
-/* #undef HAVE_FFI_CLOSURE_ALLOC */
+#define HAVE_FFI_CLOSURE_ALLOC 1
 
 /* Define if you have the 'ffi_prep_cif_var' function. */
-/* #undef HAVE_FFI_PREP_CIF_VAR */
+#define HAVE_FFI_PREP_CIF_VAR 1
 
 /* Define if you have the 'ffi_prep_closure_loc' function. */
-/* #undef HAVE_FFI_PREP_CLOSURE_LOC */
+#define HAVE_FFI_PREP_CLOSURE_LOC 1
 
 /* Define to 1 if you have the `flock' function. */
 /* #undef HAVE_FLOCK */
