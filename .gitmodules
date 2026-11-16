@@ -274,3 +274,6 @@
 [submodule "ports/pcre2/repo"]
 	path = ports/pcre2/repo
 	url = https://github.com/PCRE2Project/pcre2
+[submodule "ports/nghttp2/repo"]
+	path = ports/nghttp2/repo
+	url = https://github.com/nghttp2/nghttp2

@@ -48,6 +48,7 @@
     "nano": ["file", "gnulib", "ncurses"],
     "ncurses": [],
     "netcat": ["openssh"],
+    "nghttp2": [],
     "ninja": [],
     "openssh": ["openssl", "zlib"],
     "openssl": [],

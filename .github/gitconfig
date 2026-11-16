@@ -209,3 +209,5 @@
 	insteadOf = https://github.com/nodejs/llhttp
 [url "https://git.burntcomma.com/moxnox/pcre2"]
 	insteadOf = https://github.com/PCRE2Project/pcre2
+[url "https://git.burntcomma.com/moxnox/nghttp2"]
+	insteadOf = https://github.com/nghttp2/nghttp2
