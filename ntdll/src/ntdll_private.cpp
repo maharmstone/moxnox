@@ -45,4 +45,10 @@ extern "C++" void call_tls_callbacks(const LDR_DATA_TABLE_ENTRY& ent, uint32_t r
 extern "C++" void call_process_detach_img(LDR_DATA_TABLE_ENTRY& ent,
                                           bool process_exit);
 
+// time.cpp
+extern "C++" void clear_alarm_on_fork();
+
+// heap.cpp
+extern "C++" void clear_heap_lock_on_fork();
+
 }

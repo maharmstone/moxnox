@@ -525,3 +525,10 @@ bool RtlUnlockHeap(void* heap_handle) {
 
     return true;
 }
+
+void clear_heap_lock_on_fork() {
+    auto& h = *reinterpret_cast<heap*>((void*)NtCurrentTeb()->ProcessEnvironmentBlock->ProcessHeap);
+
+    RtlDeleteCriticalSection(&h.cs);
+    RtlInitializeCriticalSection(&h.cs);
+}

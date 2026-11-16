@@ -533,3 +533,9 @@ uint32_t RtlRandom(uint32_t* seed) {
 
     return (uint32_t)v;
 }
+
+extern "C"
+void mn_on_fork() {
+    clear_heap_lock_on_fork();
+    clear_alarm_on_fork();
+}

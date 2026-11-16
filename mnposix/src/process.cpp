@@ -324,10 +324,15 @@ pid_t fork() {
 
     RtlReleaseSRWLockShared(&atfork_lock);
 
+    RtlLockHeap((void*)NtCurrentTeb()->ProcessEnvironmentBlock->ProcessHeap);
+
     status = NtSetInformationProcess(NtCurrentProcess(),
                                      PROCESS_INFORMATION_CLASS::MoxnoxFork,
                                      &ptr, sizeof(ptr));
+
     if (!success(status)) {
+        RtlUnlockHeap((void*)NtCurrentTeb()->ProcessEnvironmentBlock->ProcessHeap);
+
         RtlAcquireSRWLockShared(&atfork_lock);
 
         for (auto le = parent_atfork.next; le != &parent_atfork; le = le->next) {
@@ -343,7 +348,7 @@ pid_t fork() {
     }
 
     if (pid == 0) {
-        mn_clear_alarm_on_fork();
+        mn_on_fork();
 
         for (auto le = child_atfork.next; le != &child_atfork; le = le->next) {
             auto& s = containing_record<atfork_func>(le);
@@ -351,6 +356,8 @@ pid_t fork() {
             s.func();
         }
     } else {
+        RtlUnlockHeap((void*)NtCurrentTeb()->ProcessEnvironmentBlock->ProcessHeap);
+
         RtlAcquireSRWLockShared(&atfork_lock);
 
         for (auto le = parent_atfork.next; le != &parent_atfork; le = le->next) {
