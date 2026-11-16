@@ -529,7 +529,7 @@ function(add_moxnox_deps dir)
         get_target_property(type ${target} TYPE)
 
         if(type STREQUAL "EXECUTABLE" OR type STREQUAL "SHARED_LIBRARY")
-            add_dependencies(${target} moxnox ucrtbase mingwex mingw32)
+            add_dependencies(${target} moxnox ucrtbase_static mingwex mingw32)
         endif()
     endforeach()
 
