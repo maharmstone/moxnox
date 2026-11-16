@@ -215,3 +215,5 @@
 	insteadOf = https://github.com/libssh2/libssh2
 [url "https://git.burntcomma.com/moxnox/libgit2"]
 	insteadOf = https://github.com/libgit2/libgit2
+[url "https://git.burntcomma.com/moxnox/libffi"]
+	insteadOf = https://github.com/libffi/libffi

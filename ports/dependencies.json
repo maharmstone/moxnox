@@ -28,6 +28,7 @@
     "hexyl": ["rust"],
     "jsoncpp": [],
     "less": ["ncurses"],
+    "libffi": [],
     "libarchive": ["bzip2", "libiconv", "xz", "zlib", "zstd"],
     "libgit2": ["libssh2", "llhttp", "openssl", "pcre2", "zlib"],
     "libiconv": [],

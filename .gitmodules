@@ -283,3 +283,6 @@
 [submodule "ports/libgit2/repo"]
 	path = ports/libgit2/repo
 	url = https://github.com/libgit2/libgit2
+[submodule "ports/libffi/repo"]
+	path = ports/libffi/repo
+	url = https://github.com/libffi/libffi
