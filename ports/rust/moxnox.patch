@@ -1422,7 +1422,7 @@ index 9816981c7fc..d2f9bc3ab7e 100644
          pub use unsupported::set_name;
      }
 diff --git a/library/std/src/sys/thread/unix.rs b/library/std/src/sys/thread/unix.rs
-index 22f9bfef5a3..163aacdc01b 100644
+index 22f9bfef5a3..f3f5e551fc7 100644
 --- a/library/std/src/sys/thread/unix.rs
 +++ b/library/std/src/sys/thread/unix.rs
 @@ -7,6 +7,7 @@
@@ -1433,6 +1433,14 @@ index 22f9bfef5a3..163aacdc01b 100644
  use crate::ffi::CStr;
  use crate::mem::{self, DropGuard, ManuallyDrop};
  use crate::num::NonZero;
+@@ -155,6 +156,7 @@ pub fn available_parallelism() -> io::Result<NonZero<usize>> {
+             target_os = "aix",
+             target_vendor = "apple",
+             target_os = "cygwin",
++            target_os = "moxnox",
+         ) => {
+             #[allow(unused_assignments)]
+             #[allow(unused_mut)]
 diff --git a/library/unwind/src/libunwind.rs b/library/unwind/src/libunwind.rs
 index 091efa9c512..487f2f09769 100644
 --- a/library/unwind/src/libunwind.rs
