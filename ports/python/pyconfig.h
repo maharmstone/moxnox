@@ -1682,10 +1682,10 @@
 /* #undef PY_HAVE_PERF_TRAMPOLINE */
 
 /* Define to 1 to build the sqlite module with loadable extensions support. */
-/* #undef PY_SQLITE_ENABLE_LOAD_EXTENSION */
+#define PY_SQLITE_ENABLE_LOAD_EXTENSION 1
 
 /* Define if SQLite was compiled with the serialize API */
-/* #undef PY_SQLITE_HAVE_SERIALIZE */
+#define PY_SQLITE_HAVE_SERIALIZE 1
 
 /* Default cipher suites list for ssl module. 1: Python's preferred selection,
    2: leave OpenSSL defaults untouched, 0: custom string */

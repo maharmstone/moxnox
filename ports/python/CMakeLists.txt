@@ -521,6 +521,20 @@ target_link_libraries(python_zlib PRIVATE zlib)
 add_python_module(readline repo/Modules/readline.c)
 target_link_libraries(python_readline PRIVATE readline)
 
+add_python_module(_sqlite3
+    repo/Modules/_sqlite/blob.c
+    repo/Modules/_sqlite/connection.c
+    repo/Modules/_sqlite/cursor.c
+    repo/Modules/_sqlite/microprotocols.c
+    repo/Modules/_sqlite/module.c
+    repo/Modules/_sqlite/prepare_protocol.c
+    repo/Modules/_sqlite/row.c
+    repo/Modules/_sqlite/statement.c
+    repo/Modules/_sqlite/util.c
+)
+target_include_directories(python__sqlite3 PRIVATE repo/Modules/_sqlite)
+target_link_libraries(python__sqlite3 PRIVATE sqlite3)
+
 add_python_module(_multibytecodec repo/Modules/cjkcodecs/multibytecodec.c)
 add_python_module(_codecs_cn repo/Modules/cjkcodecs/_codecs_cn.c)
 add_python_module(_codecs_hk repo/Modules/cjkcodecs/_codecs_hk.c)
