@@ -1,0 +1,12 @@
+function(moxnox_libssh2_regenerate_pc)
+    set(_src ${PROJECT_SOURCE_DIR}/src)
+    foreach(_var prefix exec_prefix libdir includedir
+            LIBSSH2_PC_REQUIRES LIBSSH2_PC_REQUIRES_PRIVATE LIBSSH2_PC_LIBS LIBSSH2_PC_LIBS_PRIVATE)
+        get_directory_property(${_var} DIRECTORY ${_src} DEFINITION ${_var})
+    endforeach()
+    separate_arguments(_libs UNIX_COMMAND "${LIBSSH2_PC_LIBS_PRIVATE}")
+    list(FILTER _libs EXCLUDE REGEX "^-L")
+    string(JOIN " " LIBSSH2_PC_LIBS_PRIVATE ${_libs})
+    configure_file("${PROJECT_SOURCE_DIR}/libssh2.pc.in" "${PROJECT_BINARY_DIR}/src/libssh2.pc" @ONLY)
+endfunction()
+cmake_language(DEFER CALL moxnox_libssh2_regenerate_pc)

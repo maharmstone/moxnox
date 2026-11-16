@@ -277,3 +277,6 @@
 [submodule "ports/nghttp2/repo"]
 	path = ports/nghttp2/repo
 	url = https://github.com/nghttp2/nghttp2
+[submodule "ports/libssh2/repo"]
+	path = ports/libssh2/repo
+	url = https://github.com/libssh2/libssh2
