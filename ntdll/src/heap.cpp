@@ -507,3 +507,21 @@ void* heap::allocate_aligned(size_t alignment, size_t size) {
 
     return ret;
 }
+
+extern "C"
+bool RtlLockHeap(void* heap_handle) {
+    auto& h = *reinterpret_cast<heap*>(heap_handle);
+
+    RtlEnterCriticalSection(&h.cs);
+
+    return true;
+}
+
+extern "C"
+bool RtlUnlockHeap(void* heap_handle) {
+    auto& h = *reinterpret_cast<heap*>(heap_handle);
+
+    RtlLeaveCriticalSection(&h.cs);
+
+    return true;
+}
