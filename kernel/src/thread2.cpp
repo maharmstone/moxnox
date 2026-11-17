@@ -1125,6 +1125,22 @@ static nt_status do_poll(span<const uint8_t> buffer) {
         return nt_status::THREAD_IS_TERMINATING;
     }
 
+    if (t.alerted) {
+        t.alerted = false;
+        release_sync_lock();
+        enable_interrupts();
+
+        for (size_t i = 0; i < p.nfds; i++) {
+            if (objs[i])
+                object_release(*objs[i]);
+        }
+
+        free(objs);
+        free(entries);
+
+        return nt_status::ALERTED;
+    }
+
     {
         bool has_apcs;
 
@@ -1283,6 +1299,8 @@ static nt_status do_poll(span<const uint8_t> buffer) {
     t.current_cpu = 0xffffffff;
     t.wait_interruptible = true;
 
+    t.woken_by_alert = false;
+
     if (t.proc)
         t.proc->running_cpus &= ~((uint64_t)1 << cb.cpu_no);
 
@@ -1350,7 +1368,11 @@ static nt_status do_poll(span<const uint8_t> buffer) {
         status = nt_status::THREAD_IS_TERMINATING;
     else if (t.suspend_count.load() != 0)
         status = nt_status::ALERTED;
-    else if (p.timeout < numeric_limits<uint64_t>::max() && t.wait_timeout == 0)
+    else if (t.alerted && t.woken_by_alert) {
+        t.alerted = false;
+        t.woken_by_alert = false;
+        status = nt_status::ALERTED;
+    } else if (p.timeout < numeric_limits<uint64_t>::max() && t.wait_timeout == 0)
         status = nt_status::TIMEOUT;
 
     if (status != nt_status::SUCCESS) {
