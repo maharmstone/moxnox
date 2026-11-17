@@ -31,8 +31,14 @@ public:
 
     static const size_t BUF_PAGES = 1;
 
-    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes);
-    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes);
+    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
+        return do_read<false>(v, read_bytes);
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) {
+        return do_read<true>(v, read_bytes);
+    }
+
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes);
     nt_status write_nonblock(span<const span<const uint8_t>> v,
@@ -48,6 +54,10 @@ public:
     size_t buf_unread = 0;
     size_t buf_write_pos = 0;
     event not_full_event{false};
+
+private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
 };
 
 static_assert(is_rw_sync_object<fifo_object>);
