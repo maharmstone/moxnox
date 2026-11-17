@@ -1298,7 +1298,7 @@ NTSTATUS NtCreateFile(HANDLE* file_handle, ACCESS_MASK access_mask,
             } else
                 status = nt_status::SUCCESS;
 
-            if (!success(status) || status == nt_status::USER_APC) {
+            if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED) {
                 {
                     sync_lock sl;
                     lock_guard lock1(sl);
