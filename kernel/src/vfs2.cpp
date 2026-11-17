@@ -2547,6 +2547,13 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
 
             lock.reset();
 
+            if (t.alerted) {
+                t.alerted = false;
+                release_sync_lock();
+                enable_interrupts();
+                return nt_status::ALERTED;
+            }
+
             t.wait_obj.wait_type = WAIT_TYPE_READING;
             insert_tail_list(posix_lock_waiters, t.wait_obj.wait_le);
 
@@ -2557,6 +2564,12 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
 
             if (t.suspend_count.load() != 0)
                 return nt_status::ALERTED;
+
+            if (t.alerted && t.woken_by_alert) {
+                t.alerted = false;
+                t.woken_by_alert = false;
+                return nt_status::ALERTED;
+            }
 
             {
                 lock_guard lock(t.apc_lock);
