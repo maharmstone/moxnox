@@ -181,7 +181,8 @@ pid_t waitpid(pid_t pid, int* wstatus, int options) {
             }
 
             continue;
-        }
+        } else if (status == nt_status::ALERTED)
+            continue;
 
         break;
     }
