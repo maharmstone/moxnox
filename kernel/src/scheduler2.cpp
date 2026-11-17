@@ -1114,6 +1114,8 @@ void set_current_thread_waiting(bool interruptible) {
 
     active_cpus.fetch_and(~((uint64_t)1 << cb.cpu_no), memory_order::relaxed);
 
+    t->woken_by_alert = false;
+
     yield();
 }
 
