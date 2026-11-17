@@ -2454,7 +2454,7 @@ static void network_thread() {
     }
 
     while (true) {
-        status = wait_for_object(tim, true);
+        status = wait_for_object(tim, false);
         if (!success(status)) {
             print("wait_for_object returned {}, exiting network thread\n", status);
             break;
