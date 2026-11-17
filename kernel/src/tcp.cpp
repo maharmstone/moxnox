@@ -2423,7 +2423,7 @@ void tcp_socket<FAMILY>::retransmission_thread() {
     while (true) {
         bool time_wait_done = false;
 
-        auto status = wait_for_object(ev, true, SYSTEM_TIME_RESOLUTION);
+        auto status = wait_for_object(ev, false, SYSTEM_TIME_RESOLUTION);
 
         if (status == nt_status::SUCCESS)
             break;
