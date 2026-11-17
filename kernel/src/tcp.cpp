@@ -2130,28 +2130,19 @@ nt_status tcp_socket<FAMILY>::do_sendto(span<const span<const uint8_t>> v,
                 sent_bytes = done;
 
                 return done == 0 ? nt_status::CANT_WAIT : nt_status::SUCCESS;
-            } else if (!success(status)) {
-                ni.release();
-                return status;
-            } else if (status == nt_status::USER_APC) {
-                ni.release();
-
-                sent_bytes = done;
-
-                return done == 0 ? nt_status::USER_APC : nt_status::SUCCESS;
             }
-        } else {
+        } else
             status = wait_for_object(send_window_open_event.get(), true);
-            if (!success(status)) {
-                ni.release();
-                return status;
-            } else if (status == nt_status::USER_APC) {
-                ni.release();
 
-                sent_bytes = done;
+        if (!success(status)) {
+            ni.release();
+            return status;
+        } else if (status == nt_status::USER_APC || status == nt_status::ALERTED) {
+            ni.release();
 
-                return done == 0 ? nt_status::USER_APC : nt_status::SUCCESS;
-            }
+            sent_bytes = done;
+
+            return done == 0 ? status : nt_status::SUCCESS;
         }
 
         if (dead || shutdown_write) {
