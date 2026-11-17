@@ -5,6 +5,7 @@ on:
       - 'docker/**'
       - 'ports/**'
       - '.gitmodules'
+      - '.github/gitconfig'
 jobs:
   aarch64 Clang:
     runs-on: moxnox-ci-aarch64

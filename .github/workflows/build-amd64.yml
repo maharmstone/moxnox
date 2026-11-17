@@ -5,6 +5,7 @@ on:
       - 'docker/**'
       - 'ports/**'
       - '.gitmodules'
+      - '.github/gitconfig'
 concurrency:
   group: build-amd64
 jobs:
