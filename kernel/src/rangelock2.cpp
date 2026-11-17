@@ -61,6 +61,8 @@ void rangelock_req::lock() {
     disable_interrupts();
     acquire_sync_lock();
 
+    t = (uintptr_t)get_cpu_block()->current_thread;
+
     bool overlaps = false;
 
     for (auto le = rl.active.next; le != &rl.active; le = le->next) {
@@ -93,8 +95,6 @@ void rangelock_req::lock() {
         enable_interrupts();
         return;
     }
-
-    t = (uintptr_t)get_cpu_block()->current_thread;
 
     insert_tail_list(rl.waiting, le);
 
