@@ -2705,7 +2705,7 @@ void xhci::port_status_changed(uint8_t port_id) {
             if (portsc.PED)
                 break;
 
-            wait_for_object(tim, true); // wait 1ms
+            wait_for_object(tim, false); // wait 1ms
         }
     }
 
