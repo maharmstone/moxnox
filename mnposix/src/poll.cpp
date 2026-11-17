@@ -99,6 +99,9 @@ int ppoll(pollfd* fds, nfds_t nfds, const timespec* timeout,
         if (status == nt_status::USER_APC && mn_handled_signal_count() == sig_count)
             continue;
 
+        if (status == nt_status::ALERTED)
+            continue;
+
         break;
     }
 
