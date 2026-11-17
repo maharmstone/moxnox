@@ -2887,7 +2887,7 @@ nt_status tcp_socket<FAMILY>::accept(HANDLE& sock, void* us_addr, int& addrlen) 
 
     while (true) {
         status = wait_for_object(accept_queue_event.get(), true);
-        if (!success(status) || status == nt_status::USER_APC)
+        if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
             return status;
 
         if (dead)
