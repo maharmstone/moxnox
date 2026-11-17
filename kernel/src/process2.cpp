@@ -4100,6 +4100,13 @@ nt_status process::set_wait_pid(span<const uint8_t> buf) {
             disable_interrupts();
             acquire_sync_lock();
 
+            if (t.alerted) {
+                t.alerted = false;
+                release_sync_lock();
+                enable_interrupts();
+                return nt_status::ALERTED;
+            }
+
             {
                 lock_guard lock2(process_list_lock);
 
@@ -4166,6 +4173,8 @@ nt_status process::set_wait_pid(span<const uint8_t> buf) {
                 t.wait_obj.wait_type = WAIT_TYPE_READING;
                 insert_tail_list(wait_child_waiters, t.wait_obj.wait_le);
 
+                t.woken_by_alert = false;
+
                 set_current_thread_waiting(true);
 
                 if (t.status == thread_status::dying)
@@ -4173,6 +4182,12 @@ nt_status process::set_wait_pid(span<const uint8_t> buf) {
 
                 if (t.suspend_count.load() != 0)
                     return nt_status::ALERTED;
+
+                if (t.alerted && t.woken_by_alert) {
+                    t.alerted = false;
+                    t.woken_by_alert = false;
+                    return nt_status::ALERTED;
+                }
 
                 {
                     lock_guard lock(t.apc_lock);
