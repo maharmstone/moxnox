@@ -782,7 +782,7 @@ bool xhci::reset_port(uint8_t port_id) {
             break;
         }
 
-        wait_for_object(tim, true); // wait 1ms
+        wait_for_object(tim, false); // wait 1ms
     }
 
     if (!port_enabled)
