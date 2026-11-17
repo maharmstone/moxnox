@@ -18,16 +18,16 @@ export enum class rangelock_mode {
 };
 
 export struct rangelock_req {
-    rangelock_req(rangelock& rl, uint64_t start, uint64_t length, rangelock_mode mode) : rl(rl), start(start), length(length) {
+    rangelock_req(rangelock& rl, uint64_t start, uint64_t length, rangelock_mode mode, bool kick = false) : rl(rl), start(start), length(length) {
         exclusive = mode == rangelock_mode::exclusive;
-        this->lock();
+        this->lock(kick);
     }
 
     ~rangelock_req() {
         this->unlock();
     }
 
-    void lock();
+    void lock(bool kick);
     void unlock();
 
     list_entry le;

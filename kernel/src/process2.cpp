@@ -7651,7 +7651,7 @@ nt_status process::do_fork(span<const uint8_t> buf) {
     // copy mappings
 
     {
-        rangelock_req rlr(rl, 0, 0xffffffffffffffff, rangelock_mode::exclusive);
+        rangelock_req rlr(rl, 0, 0xffffffffffffffff, rangelock_mode::exclusive, true);
 
         {
             lock_guard lock(mappings_lock);

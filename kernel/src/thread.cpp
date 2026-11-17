@@ -105,6 +105,7 @@ public:
     nt_status wait_for_signal(span<const uint8_t> buffer);
     nt_status query_signals_pending(span<uint8_t> buffer, uint32_t& return_length);
     void break_apc_waits();
+    void alert();
 
     list_entry le;
     CONTEXT context;

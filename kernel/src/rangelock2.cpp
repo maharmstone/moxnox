@@ -26,7 +26,7 @@ static bool rlr_overlap(const rangelock_req& r1, const rangelock_req& r2) {
     return false;
 }
 
-void rangelock_req::lock() {
+void rangelock_req::lock(bool kick) {
 #ifdef DEBUG
     if (interrupts_disabled())
         bsod("calling rangelock_req::lock with interrupts disabled");
@@ -86,6 +86,15 @@ void rangelock_req::lock() {
                 overlaps = true;
                 break;
             }
+        }
+    }
+
+    if (overlaps && kick) {
+        for (auto le = rl.active.next; le != &rl.active; le = le->next) {
+            auto& rlr = containing_record<rangelock_req>(le);
+
+            if (rlr_overlap(rlr, *this) && (exclusive || rlr.exclusive))
+                ((thread*)rlr.t)->alert();
         }
     }
 
