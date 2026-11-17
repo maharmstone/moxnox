@@ -391,13 +391,10 @@ NTSTATUS pipe::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
 
     auto status = wait_for_object(*this, true, timeout);
 
-    if (status == nt_status::ALERTED) {
-        read_bytes = 0;
-        return nt_status::SUCCESS; // FIXME - really should be ALERTED (but make sure userspace handles this properly)
-    } else if (status == nt_status::TIMEOUT) {
+    if (status == nt_status::TIMEOUT) {
         read_bytes = 0;
         return nt_status::PIPE_DISCONNECTED;
-    } else if (!success(status) || status == nt_status::USER_APC) {
+    } else if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED) {
         read_bytes = 0;
         return status;
     }
