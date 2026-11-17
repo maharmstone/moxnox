@@ -1200,7 +1200,7 @@ nt_status pty_info::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
 
     while (true) {
         status = wait_for_object(*this, true);
-        if (!success(status) || status == nt_status::USER_APC)
+        if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
             return status;
 
         pty_info_event2* ev;
