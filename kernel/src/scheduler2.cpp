@@ -873,6 +873,13 @@ nt_status wait_for_objects(span<object*> objects, bool wait_any,
             enable_interrupts();
             return nt_status::USER_APC;
         }
+
+        if (current_thread->alerted) {
+            current_thread->alerted = false;
+            release_sync_lock();
+            enable_interrupts();
+            return nt_status::ALERTED;
+        }
     }
 
     if (timeout.has_value() && *timeout == 0) {
@@ -941,6 +948,8 @@ nt_status wait_for_objects(span<object*> objects, bool wait_any,
         insert_tail_list(thread_list_timeout, current_thread->timeout_le);
     }
 
+    current_thread->woken_by_alert = false;
+
     yield(); // releases sync_lock
 
     if (interruptible) {
@@ -972,6 +981,12 @@ nt_status wait_for_objects(span<object*> objects, bool wait_any,
 
     if (interruptible && current_thread->suspend_count.load() != 0)
         return nt_status::ALERTED;
+
+    if (interruptible && current_thread->alerted && current_thread->woken_by_alert) {
+        current_thread->alerted = false;
+        current_thread->woken_by_alert = false;
+        return nt_status::ALERTED;
+    }
 
     if (timeout.has_value() && current_thread->wait_timeout == 0)
         return nt_status::TIMEOUT;
