@@ -2561,16 +2561,13 @@ nt_status tcp_socket<FAMILY>::do_recvfrom(span<const span<uint8_t>> v, int flags
             if (status == nt_status::TIMEOUT) {
                 release();
                 return recv_bytes == 0 ? nt_status::CANT_WAIT : nt_status::SUCCESS;
-            } else if (!success(status) || status == nt_status::USER_APC) {
-                release();
-                return status;
             }
-        } else {
+        } else
             status = wait_for_object(*this, true);
-            if (!success(status) || status == nt_status::USER_APC) {
-                release();
-                return status;
-            }
+
+        if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED) {
+            release();
+            return status;
         }
 
         if (dead || shutdown_read)
