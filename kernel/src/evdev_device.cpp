@@ -429,7 +429,7 @@ nt_status evdev_multiplexer_client::read(span<const span<uint8_t>> v,
 
     while (true) {
         auto status = wait_for_object(*this, true);
-        if (!success(status) || status == nt_status::USER_APC)
+        if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
             return status;
 
         while (true) {
