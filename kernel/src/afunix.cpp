@@ -149,7 +149,7 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
         } else {
             auto status = wait_for_object(*this, true);
 
-            if (!success(status) || status == nt_status::USER_APC) {
+            if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED) {
                 recv_bytes = 0;
                 return status;
             }
