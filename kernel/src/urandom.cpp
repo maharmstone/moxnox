@@ -77,7 +77,7 @@ nt_status random_chardev::read(span<const span<uint8_t>> v,
         return nt_status::SUCCESS;
 
     status = wait_for_object(urandom_event, true);
-    if (!success(status) || status == nt_status::USER_APC)
+    if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
         return status;
 
     // see RFC 8439
