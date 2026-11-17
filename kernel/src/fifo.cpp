@@ -40,9 +40,14 @@ public:
     }
 
     nt_status write(span<const span<const uint8_t>> v,
-                    uint64_t& written_bytes);
+                    uint64_t& written_bytes) {
+        return do_write<false>(v, written_bytes);
+    }
+
     nt_status write_nonblock(span<const span<const uint8_t>> v,
-                             uint64_t& written_bytes);
+                             uint64_t& written_bytes) {
+        return do_write<true>(v, written_bytes);
+    }
 
     bool init = false;
     spinlock lock;
@@ -58,6 +63,10 @@ public:
 private:
     template<bool NONBLOCK>
     nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
+
+    template<bool NONBLOCK>
+    nt_status do_write(span<const span<const uint8_t>> v,
+                       uint64_t& written_bytes);
 };
 
 static_assert(is_rw_sync_object<fifo_object>);
