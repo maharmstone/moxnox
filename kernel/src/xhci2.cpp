@@ -524,7 +524,7 @@ bool xhci::init(span<volatile uint8_t> mmio) {
             if (op_regs.USBSTS & 1) // halted
                 break;
 
-            wait_for_object(tim, true); // wait 1ms
+            wait_for_object(tim, false); // wait 1ms
         }
     }
 
@@ -554,7 +554,7 @@ bool xhci::init(span<volatile uint8_t> mmio) {
                 break;
             }
 
-            wait_for_object(tim, true); // wait 1ms
+            wait_for_object(tim, false); // wait 1ms
         }
     }
 
