@@ -2748,7 +2748,7 @@ void xhci::port_status_changed(uint8_t port_id) {
 
 void xhci::port_status_change_thread() {
     while (true) {
-        wait_for_object(port_status_change_event.get(), true);
+        wait_for_object(port_status_change_event.get(), false);
 
         while (true) {
             port_status_change* ent = nullptr;
