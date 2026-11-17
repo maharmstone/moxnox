@@ -225,7 +225,7 @@ nt_status pl011_out_pipe::write(span<const span<const uint8_t>> v,
 
             auto status = wait_for_object(not_full_event, true);
 
-            if (!success(status))
+            if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
                 return status;
         }
     }
