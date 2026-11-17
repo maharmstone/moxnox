@@ -70,7 +70,7 @@ jobs:
         run: |
           for port in $(echo '${{ needs.compute-ports.outputs.ports }}' | jq -r '.[]'); do
             echo "Building $port"
-            DESTDIR=${PWD}/install/$port cmake --build work --parallel `nproc` --target $port
+            DESTDIR=${PWD}/install/$port cmake --build work --parallel `nproc` --target ports/$port/all
             DESTDIR=${PWD}/install/$port cmake --build work --parallel `nproc` --target ports/$port/install
             mkdir -p ${PWD}/install/$port
             tar -czf $port.tar.gz -C ${PWD}/install/$port .
