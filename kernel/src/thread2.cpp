@@ -1554,9 +1554,17 @@ nt_status thread::wait_for_signal(span<const uint8_t> buffer) {
         return nt_status::INVALID_PARAMETER;
 
     auto set = *(sigset_t*)buffer.data();
+    auto& t = *get_current_thread();
 
     disable_interrupts();
     acquire_sync_lock();
+
+    if (t.alerted) {
+        t.alerted = false;
+        release_sync_lock();
+        enable_interrupts();
+        return nt_status::ALERTED;
+    }
 
     proc->signals_lock.lock();
 
@@ -1586,8 +1594,6 @@ nt_status thread::wait_for_signal(span<const uint8_t> buffer) {
         return (nt_status)sig;
     }
 
-    auto& t = *get_cpu_block()->current_thread;
-
     sw.set = set;
     sw.t = &t;
     sw.sig = 0;
@@ -1595,7 +1601,26 @@ nt_status thread::wait_for_signal(span<const uint8_t> buffer) {
 
     proc->signals_lock.unlock();
 
-    set_current_thread_waiting(true);
+    if (t.status == thread_status::dying)
+        t.kill_on_wake = true;
+
+    t.status = thread_status::waiting_no_object;
+    t.current_cpu = 0xffffffff;
+    t.wait_interruptible = true;
+    t.wait_timeout = 0;
+
+    {
+        auto& cb = *get_cpu_block();
+
+        if (t.proc)
+            t.proc->running_cpus &= ~((uint64_t)1 << cb.cpu_no);
+
+        active_cpus.fetch_and(~((uint64_t)1 << cb.cpu_no), memory_order::relaxed);
+    }
+
+    t.woken_by_alert = false;
+
+    yield();
 
     // after wait - sync_lock released and interrupts re-enabled
 
@@ -1614,6 +1639,12 @@ nt_status thread::wait_for_signal(span<const uint8_t> buffer) {
 
     if (t.suspend_count.load() != 0)
         return nt_status::ALERTED;
+
+    if (t.alerted && t.woken_by_alert) {
+        t.alerted = false;
+        t.woken_by_alert = false;
+        return nt_status::ALERTED;
+    }
 
     {
         lock_guard lock(t.apc_lock);

@@ -5734,7 +5734,7 @@ void set_pending_signal3(process& proc, int sig, object_ref& victim) {
             sw.sig = sig;
             remove_entry_list(sw.le);
 
-            if (t.status == thread_status::waiting) {
+            if (t.status == thread_status::waiting_no_object) {
                 if (t.wait_timeout != 0)
                     remove_entry_list(t.timeout_le);
 
