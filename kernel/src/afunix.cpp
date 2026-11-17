@@ -425,7 +425,7 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
             // block while we wait for space to become available
             auto status = wait_for_object(other_end->not_full_event, true);
 
-            if (status == nt_status::USER_APC || !success(status)) {
+            if (status == nt_status::USER_APC || status == nt_status::ALERTED || !success(status)) {
                 while (!is_list_empty(fds)) {
                     auto& f = containing_record<sent_fd>(fds.next);
 
@@ -433,9 +433,9 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
                     delete &f;
                 }
 
-                if (status == nt_status::USER_APC) {
+                if (status == nt_status::USER_APC || status == nt_status::ALERTED) {
                     if (sent_bytes == 0)
-                        return nt_status::USER_APC;
+                        return status;
                     else
                         break;
                 } else if (!success(status))
