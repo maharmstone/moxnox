@@ -140,6 +140,8 @@ public:
     uint64_t last_userspace_transition;
     uint64_t time_running_in_userspace = 0;
     unsigned int in_allocator = 0;
+    bool alerted = false;
+    bool woken_by_alert = false;
 #ifdef __x86_64__
     xsave_area xsave; // must be last
 #endif

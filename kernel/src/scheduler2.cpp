@@ -359,6 +359,13 @@ nt_status wait_for_object(object& obj, bool interruptible,
                 enable_interrupts();
                 return nt_status::USER_APC;
             }
+
+            if (current_thread->alerted) {
+                current_thread->alerted = false;
+                release_sync_lock();
+                enable_interrupts();
+                return nt_status::ALERTED;
+            }
         }
 
         if (timeout.has_value() && *timeout == 0) {
@@ -397,6 +404,8 @@ nt_status wait_for_object(object& obj, bool interruptible,
         }
     }
 
+    current_thread->woken_by_alert = false;
+
 #ifdef __aarch64__
     __asm __volatile (
         "mov x0, lr"
@@ -420,6 +429,12 @@ nt_status wait_for_object(object& obj, bool interruptible,
 
     if (interruptible && current_thread->suspend_count.load() != 0)
         return nt_status::ALERTED;
+
+    if (interruptible && current_thread->alerted && current_thread->woken_by_alert) {
+        current_thread->alerted = false;
+        current_thread->woken_by_alert = false;
+        return nt_status::ALERTED;
+    }
 
     if (interruptible) {
         lock_guard lock(current_thread->apc_lock);
