@@ -72,7 +72,7 @@ nt_status fifo_object::do_read(span<const span<uint8_t>> v, uint64_t& read_bytes
         } else
             status = wait_for_object(*this, true);
 
-        if (!success(status) || status == nt_status::USER_APC) {
+        if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED) {
             read_bytes = 0;
             return status;
         }
