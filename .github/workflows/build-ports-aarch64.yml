@@ -70,6 +70,9 @@ jobs:
           for port in $(echo '${{ needs.compute-ports.outputs.ports }}' | jq -r '.[]'); do
             echo "Building $port"
             DESTDIR=${PWD}/install/$port cmake --build work --parallel `nproc` --target ports/$port/all
+            if ninja -C work -t targets all | grep "^$port: phony" > /dev/null; then
+                DESTDIR=${PWD}/install/$port cmake --build work --parallel `nproc` --target $port
+            fi
             DESTDIR=${PWD}/install/$port cmake --build work --parallel `nproc` --target ports/$port/install
             mkdir -p ${PWD}/install/$port
             tar -czf $port.tar.gz -C ${PWD}/install/$port .
