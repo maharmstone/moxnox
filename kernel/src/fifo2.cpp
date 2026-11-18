@@ -223,12 +223,12 @@ nt_status fifo_object::do_write(span<const span<const uint8_t>> v,
         } else
             status = wait_for_object(not_full_event, true);
 
-        if (status == nt_status::USER_APC || status == nt_status::ALERTED) {
+        if (status == nt_status::USER_APC) {
             if (written_bytes == 0)
                 return status;
             else
                 break;
-        } else if (!success(status))
+        } else if (!success(status) || status == nt_status::ALERTED)
             return status;
     } while (true);
 
