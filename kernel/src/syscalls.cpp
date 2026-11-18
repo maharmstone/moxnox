@@ -143,30 +143,52 @@ NTSTATUS user_NtWriteFile(HANDLE file_handle, HANDLE event, PIO_APC_ROUTINE apc_
     if (length > 0 && (!is_userspace_address((uintptr_t)us_buf) || !is_userspace_address((uintptr_t)us_buf + length - 1)))
         return nt_status::ACCESS_VIOLATION;
 
-    optional<rangelock_req> rlr;
-    span<const uint8_t>* spans = nullptr;
-    size_t num_spans = 0;
+    iosb.Information = 0;
 
-    if (length > 0) {
-        status = pin_userspace_buffer_for_reading(*t.proc, span((uint8_t*)us_buf, length),
-                                                  rlr, spans, num_spans);
-        if (!success(status))
-            return status;
+    while (true) {
+        optional<rangelock_req> rlr;
+        span<const uint8_t>* spans = nullptr;
+        size_t num_spans = 0;
+        IO_STATUS_BLOCK iosb2;
+
+        if (length > 0) {
+            status = pin_userspace_buffer_for_reading(*t.proc, span((uint8_t*)us_buf, length),
+                                                    rlr, spans, num_spans);
+            if (!success(status))
+                return status;
+        }
+
+        status = vec_NtWriteFile(file_handle, event, apc_routine, apc_context, &iosb2,
+                                span(spans, num_spans), us_byte_offset ? &byte_offset : nullptr,
+                                us_key ? &key : nullptr);
+
+        rlr.reset();
+
+        auto spans_size = sizeof(span<const uint8_t>) * num_spans;
+        if (spans_size > PAGE_SIZE)
+            vfree(spans, spans_size);
+        else if (spans_size > 0)
+            free(spans);
+
+        if (success(status))
+            iosb.Information += iosb2.Information;
+
+        if (status != nt_status::ALERTED)
+            break;
+
+        us_buf = (uint8_t*)us_buf + iosb2.Information;
+        length -= (uint32_t)iosb2.Information;
+
+        if (us_byte_offset && byte_offset.QuadPart >= 0)
+            byte_offset.QuadPart += iosb2.Information;
     }
 
-    status = vec_NtWriteFile(file_handle, event, apc_routine, apc_context, &iosb,
-                             span(spans, num_spans), us_byte_offset ? &byte_offset : nullptr,
-                             us_key ? &key : nullptr);
+    if (success(status) || iosb.Information != 0) {
+        if (!success(status))
+            status = nt_status::SUCCESS;
 
-    rlr.reset();
+        iosb.Status = nt_status::SUCCESS;
 
-    auto spans_size = sizeof(span<const uint8_t>) * num_spans;
-    if (spans_size > PAGE_SIZE)
-        vfree(spans, spans_size);
-    else if (spans_size > 0)
-        free(spans);
-
-    if (success(status)) {
         if (!copy_to_process(us_iosb, &iosb, sizeof(IO_STATUS_BLOCK)))
             status = nt_status::ACCESS_VIOLATION;
     }

@@ -1506,10 +1506,10 @@ nt_status vec_NtWriteFile(HANDLE file_handle, HANDLE, PIO_APC_ROUTINE, void*,
 
     assert(written <= vec_size);
 
-    io_status_block->Status = nt_status::SUCCESS;
+    io_status_block->Status = status;
     io_status_block->Information = written;
 
-    return nt_status::SUCCESS;
+    return status;
 }
 
 nt_status flush_filesystems(bool make_readonly) {
