@@ -2137,11 +2137,13 @@ nt_status tcp_socket<FAMILY>::do_sendto(span<const span<const uint8_t>> v,
         if (!success(status)) {
             ni.release();
             return status;
-        } else if (status == nt_status::USER_APC || status == nt_status::ALERTED) {
+        } else if (status == nt_status::ALERTED) {
             ni.release();
-
             sent_bytes = done;
-
+            return status;
+        } else if (status == nt_status::USER_APC) {
+            ni.release();
+            sent_bytes = done;
             return done == 0 ? status : nt_status::SUCCESS;
         }
 
