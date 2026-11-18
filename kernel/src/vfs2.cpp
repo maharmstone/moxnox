@@ -878,10 +878,10 @@ nt_status vec_NtReadFile(HANDLE file_handle, HANDLE, PIO_APC_ROUTINE, void*,
 
     assert(read <= vec_size);
 
-    io_status_block->Status = nt_status::SUCCESS;
+    io_status_block->Status = status;
     io_status_block->Information = read;
 
-    return nt_status::SUCCESS;
+    return status;
 }
 
 void print_file_access_mask(ACCESS_MASK access_mask) {
