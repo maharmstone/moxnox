@@ -433,12 +433,12 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
                     delete &f;
                 }
 
-                if (status == nt_status::USER_APC || status == nt_status::ALERTED) {
+                if (status == nt_status::USER_APC) {
                     if (sent_bytes == 0)
                         return status;
                     else
                         break;
-                } else if (!success(status))
+                } else if (!success(status) || status == nt_status::ALERTED)
                     return status;
             }
         }
