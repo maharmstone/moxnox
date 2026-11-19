@@ -37,7 +37,7 @@ add_library(ucrtbase_static STATIC
 target_include_directories(ucrtbase_static PRIVATE ${CMAKE_CURRENT_BINARY_DIR} repo/mingw-w64-headers/crt repo/mingw-w64-crt/include repo/mingw-w64-headers/include)
 
 target_compile_definitions(ucrtbase_static PRIVATE -D_CRTIMP= -D_WIN32 -D_WIN64)
-target_compile_options(ucrtbase_static PRIVATE -ffreestanding -fno-stack-protector)
+target_compile_options(ucrtbase_static PRIVATE -fno-builtin -fno-stack-protector)
 target_compile_options(ucrtbase_static PRIVATE -Wno-include-next-absolute-path)
 
 ###
