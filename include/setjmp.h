@@ -69,8 +69,6 @@ typedef struct _JUMP_BUFFER {
     SETJMP_FLOAT128 Xmm15;
 } _JUMP_BUFFER;
 
-#else
-#error Invalid architecture.
 #endif
 
 typedef struct {
