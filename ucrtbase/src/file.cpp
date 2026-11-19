@@ -945,7 +945,7 @@ int _fclose(FILE* file) {
 }
 
 extern "C"
-int _fputs(const char* s, FILE* file) {
+int fputs(const char* s, FILE* file) {
     auto len = strlen(s);
 
     __lock_file(file);
