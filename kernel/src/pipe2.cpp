@@ -389,60 +389,69 @@ NTSTATUS pipe::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
     if (server_closed)
         timeout = 0;
 
-    auto status = wait_for_object(*this, true, timeout);
+    while (true) {
+        auto status = wait_for_object(*this, true, timeout);
 
-    if (status == nt_status::TIMEOUT) {
-        read_bytes = 0;
-        return nt_status::PIPE_DISCONNECTED;
-    } else if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED) {
-        read_bytes = 0;
-        return status;
-    }
-
-    {
-        sync_lock sl;
-        lock_guard l(sl);
-        lock_guard l2(lock);
-
-        if (buf_unread == 0) {
+        if (status == nt_status::TIMEOUT) {
             read_bytes = 0;
+            return nt_status::PIPE_DISCONNECTED;
+        } else if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED) {
+            read_bytes = 0;
+            return status;
+        }
 
-            if (eof_pending) {
-                eof_pending = false;
-                return nt_status::END_OF_FILE;
+        {
+            sync_lock sl;
+            lock_guard l(sl);
+            lock_guard l2(lock);
+
+            if (buf_unread == 0) {
+                read_bytes = 0;
+
+                if (eof_pending) {
+                    eof_pending = false;
+                    return nt_status::END_OF_FILE;
+                }
+
+                if (!server_closed) {
+                    signalled = false;
+                    continue;
+                }
+
+                return nt_status::SUCCESS;
             }
 
-            return nt_status::SUCCESS;
+            size_t buf_read_pos = buf_write_pos + (buf_pages << PAGE_SHIFT) - buf_unread;
+
+            while (buf_read_pos >= buf_pages << PAGE_SHIFT) {
+                buf_read_pos -= buf_pages << PAGE_SHIFT;
+            }
+
+            size_t to_copy = min(vec_size, buf_unread);
+
+            if (buf_read_pos + to_copy > buf_pages << PAGE_SHIFT) {
+                auto first_bit = (buf_pages << PAGE_SHIFT) - buf_read_pos;
+
+                memcpy_vec(v, top, &buf[buf_read_pos], first_bit);
+
+                buf_read_pos = 0;
+                buf_unread -= first_bit;
+                to_copy -= first_bit;
+                copied = first_bit;
+            }
+
+            memcpy_vec(v, top, &buf[buf_read_pos], to_copy);
+            buf_unread -= to_copy;
+            copied += to_copy;
+
+            if (buf_unread == 0 && !eof_pending && !server_closed)
+                signalled = false;
+
+            if (!not_full_event.signalled)
+                not_full_event.set_holding_sync_lock();
         }
 
-        size_t buf_read_pos = buf_write_pos + (buf_pages << PAGE_SHIFT) - buf_unread;
-
-        while (buf_read_pos >= buf_pages << PAGE_SHIFT) {
-            buf_read_pos -= buf_pages << PAGE_SHIFT;
-        }
-
-        size_t to_copy = min(vec_size, buf_unread);
-
-        if (buf_read_pos + to_copy > buf_pages << PAGE_SHIFT) {
-            auto first_bit = (buf_pages << PAGE_SHIFT) - buf_read_pos;
-
-            memcpy_vec(v, top, &buf[buf_read_pos], first_bit);
-
-            buf_read_pos = 0;
-            buf_unread -= first_bit;
-            to_copy -= first_bit;
-            copied = first_bit;
-        }
-
-        memcpy_vec(v, top, &buf[buf_read_pos], to_copy);
-        buf_unread -= to_copy;
-        copied += to_copy;
-
-        if (buf_unread == 0 && !eof_pending && !server_closed)
-            signalled = false;
-
-        if (!not_full_event.signalled)
-            not_full_event.set_holding_sync_lock();
+        break;
     }
 
     read_bytes = copied;
