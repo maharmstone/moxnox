@@ -13,7 +13,7 @@ malloc
 free
 _errno = __errno
 fread = _fread
-fwrite = _fwrite
+fwrite
 fclose = _fclose
 _fwrite_nolock = __fwrite_nolock
 fputs = _fputs

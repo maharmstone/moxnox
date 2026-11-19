@@ -783,7 +783,7 @@ size_t __fwrite_nolock(const void* ptr, size_t size, size_t n, FILE* file) {
 }
 
 extern "C"
-size_t _fwrite(const void* ptr, size_t size, size_t n, FILE* file) {
+size_t fwrite(const void* ptr, size_t size, size_t n, FILE* file) {
     __lock_file(file);
     auto ret = __fwrite_nolock(ptr, size, n, file);
     __unlock_file(file);
