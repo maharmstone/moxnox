@@ -131,7 +131,10 @@ int pthread_key_delete(pthread_key_t key) {
     return 0;
 }
 
-static void run_dtors() {
+static void run_dtors(HANDLE, uint32_t reason, void*) {
+    if (reason != DLL_THREAD_DETACH)
+        return;
+
     for (unsigned int i = 0; i < 4; i++) {
         bool ran_dtor = false;
 
@@ -1003,4 +1006,4 @@ int pthread_setschedparam(pthread_t /*thread*/, int policy, const sched_param* p
     return 0;
 }
 
-__attribute__((section (".CRT$XLD"), used)) void(*__xl_d2)() = run_dtors;
+__attribute__((section (".CRT$XLD"), used)) void(*__xl_d2)(HANDLE, uint32_t, void*) = run_dtors;
