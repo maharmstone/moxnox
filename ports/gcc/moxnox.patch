@@ -1668,7 +1668,7 @@ index 6713e4504b1..ff7b76ca3d5 100755
        freebsd*|netbsd*|dragonfly*|rtems*)
          ac_has_clock_monotonic=yes
          ac_has_clock_realtime=yes
-@@ -42692,6 +42704,72 @@ fi
+@@ -42692,6 +42704,118 @@ fi
  done
  
  
@@ -1679,6 +1679,8 @@ index 6713e4504b1..ff7b76ca3d5 100755
 +    $as_echo "#define HAVE_HYPOT 1" >>confdefs.h
 +
 +    $as_echo "#define HAVE_HYPOTF 1" >>confdefs.h
++
++    $as_echo "#define HAVE_HYPOTL 1" >>confdefs.h
 +
 +    $as_echo "#define HAVE_ISINF 1" >>confdefs.h
 +
@@ -1730,6 +1732,50 @@ index 6713e4504b1..ff7b76ca3d5 100755
 +
 +    $as_echo "#define HAVE_TANHF 1" >>confdefs.h
 +
++    $as_echo "#define HAVE_ACOSL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_ASINL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_ATAN2L 1" >>confdefs.h
++
++    $as_echo "#define HAVE_ATANL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_CEILL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_COSL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_COSHL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_EXPL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_FABSL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_FLOORL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_FMODL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_FREXPL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_LDEXPL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_LOG10L 1" >>confdefs.h
++
++    $as_echo "#define HAVE_LOGL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_MODFL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_POWL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_SINL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_SINHL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_SQRTL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_TANL 1" >>confdefs.h
++
++    $as_echo "#define HAVE_TANHL 1" >>confdefs.h
++
 +    $as_echo "#define HAVE_STRTOF 1" >>confdefs.h
 +
 +    $as_echo "#define HAVE_STRTOLD 1" >>confdefs.h
@@ -1761,7 +1807,7 @@ diff --git a/libstdc++-v3/crossconfig.m4 b/libstdc++-v3/crossconfig.m4
 index b3269cb88e0..4ce92ad45ce 100644
 --- a/libstdc++-v3/crossconfig.m4
 +++ b/libstdc++-v3/crossconfig.m4
-@@ -190,6 +190,44 @@ case "${host}" in
+@@ -190,6 +190,67 @@ case "${host}" in
      AC_CHECK_FUNCS(secure_getenv)
      AM_ICONV
      ;;
@@ -1773,6 +1819,7 @@ index b3269cb88e0..4ce92ad45ce 100644
 +    AC_DEFINE(HAVE_SETENV)
 +    AC_DEFINE(HAVE_HYPOT)
 +    AC_DEFINE(HAVE_HYPOTF)
++    AC_DEFINE(HAVE_HYPOTL)
 +    AC_DEFINE(HAVE_ISINF)
 +    AC_DEFINE(HAVE_ISNAN)
 +    AC_DEFINE(HAVE_ISNANF)
@@ -1798,6 +1845,28 @@ index b3269cb88e0..4ce92ad45ce 100644
 +    AC_DEFINE(HAVE_SQRTF)
 +    AC_DEFINE(HAVE_TANF)
 +    AC_DEFINE(HAVE_TANHF)
++    AC_DEFINE(HAVE_ACOSL)
++    AC_DEFINE(HAVE_ASINL)
++    AC_DEFINE(HAVE_ATAN2L)
++    AC_DEFINE(HAVE_ATANL)
++    AC_DEFINE(HAVE_CEILL)
++    AC_DEFINE(HAVE_COSL)
++    AC_DEFINE(HAVE_COSHL)
++    AC_DEFINE(HAVE_EXPL)
++    AC_DEFINE(HAVE_FABSL)
++    AC_DEFINE(HAVE_FLOORL)
++    AC_DEFINE(HAVE_FMODL)
++    AC_DEFINE(HAVE_FREXPL)
++    AC_DEFINE(HAVE_LDEXPL)
++    AC_DEFINE(HAVE_LOG10L)
++    AC_DEFINE(HAVE_LOGL)
++    AC_DEFINE(HAVE_MODFL)
++    AC_DEFINE(HAVE_POWL)
++    AC_DEFINE(HAVE_SINL)
++    AC_DEFINE(HAVE_SINHL)
++    AC_DEFINE(HAVE_SQRTL)
++    AC_DEFINE(HAVE_TANL)
++    AC_DEFINE(HAVE_TANHL)
 +    AC_DEFINE(HAVE_STRTOF)
 +    AC_DEFINE(HAVE_STRTOLD)
 +    AC_DEFINE(HAVE_ALIGNED_ALLOC)
