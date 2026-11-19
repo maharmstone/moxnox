@@ -23,5 +23,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
+set(CMAKE_CXX_STDLIB_MODULES_JSON /usr/aarch64-pc-moxnox/usr/lib/libc++.modules.json)
+
 add_compile_options(--sysroot=/usr/aarch64-pc-moxnox -rtlib=compiler-rt)
 add_link_options(--sysroot=/usr/aarch64-pc-moxnox -fuse-ld=lld)
