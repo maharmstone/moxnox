@@ -2443,21 +2443,7 @@ NTSTATUS process::allocate_vm(void** base_address, uintptr_t, size_t* region_siz
         if (addr == 0) {
             uintptr_t last_addr = 0x100000; // don't allocate in first megabyte
 
-            auto n1 = get_tree_minimum(mappings);
-
-            while (n1) {
-                auto& m1 = rbtree_containing_record<mapping>(n1);
-
-                if (m1.tree.key >= last_addr + m->size) {
-                    addr = last_addr;
-                    break;
-                }
-
-                n1 = next_rbtree_node(*n1);
-                last_addr = max(last_addr, m1.tree.key + m1.size);
-            }
-
-            if (addr == 0) {
+            {
                 auto n1 = get_tree_maximum(mappings);
 
                 if (!n1)
@@ -2465,12 +2451,29 @@ NTSTATUS process::allocate_vm(void** base_address, uintptr_t, size_t* region_siz
                 else {
                     auto& m1 = rbtree_containing_record<mapping>(n1);
 
-                    if (m1.tree.key + m1.size + m->size >= MAX_USERSPACE_ADDRESS) {
-                        m->release();
-                        return nt_status::NO_MEMORY;
+                    if (m1.tree.key + m1.size + m->size < MAX_USERSPACE_ADDRESS)
+                        addr = m1.tree.key + m1.size;
+                }
+            }
+
+            if (addr == 0) {
+                auto n1 = get_tree_minimum(mappings);
+
+                while (n1) {
+                    auto& m1 = rbtree_containing_record<mapping>(n1);
+
+                    if (m1.tree.key >= last_addr + m->size) {
+                        addr = last_addr;
+                        break;
                     }
 
-                    addr = m1.tree.key + m1.size;
+                    n1 = next_rbtree_node(*n1);
+                    last_addr = max(last_addr, m1.tree.key + m1.size);
+                }
+
+                if (addr == 0) {
+                    m->release();
+                    return nt_status::NO_MEMORY;
                 }
             }
         } else {
