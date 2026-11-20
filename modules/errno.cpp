@@ -183,6 +183,9 @@ export int nt_status_to_errno(nt_status status) {
         case nt_status::MEDIA_WRITE_PROTECTED:
             return EROFS;
 
+        case nt_status::OBJECT_NAME_COLLISION:
+            return EEXIST;
+
         default:
             return EINVAL;
     }

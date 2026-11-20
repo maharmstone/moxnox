@@ -2033,14 +2033,11 @@ int __mkdir(const char* path) {
 
     free(u16);
 
-    if (status == nt_status::OBJECT_NAME_COLLISION) {
-        *__errno() = EEXIST;
-        return -1;
-    } else if (status == nt_status::OBJECT_PATH_NOT_FOUND) {
+    if (status == nt_status::OBJECT_PATH_NOT_FOUND) {
         *__errno() = ENOENT;
         return -1;
     } else if (!success(status)) {
-        *__errno() = EINVAL;
+        *__errno() = nt_status_to_errno(status);
         return -1;
     }
 

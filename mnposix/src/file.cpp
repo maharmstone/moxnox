@@ -597,10 +597,7 @@ int symlinkat(const char* target, int newdirfd, const char* linkpath) {
 
     free(u16);
 
-    if (status == nt_status::OBJECT_NAME_COLLISION) {
-        *_errno() = EEXIST;
-        return -1;
-    } else if (!success(status)) {
+    if (!success(status)) {
         *_errno() = nt_status_to_errno(status);
         return -1;
     } else
@@ -1500,10 +1497,7 @@ int mkdirat(int dirfd, const char* path, mode_t mode) {
 
     free(u16);
 
-    if (status == nt_status::OBJECT_NAME_COLLISION) {
-        *_errno() = EEXIST;
-        return -1;
-    } else if (status == nt_status::OBJECT_PATH_NOT_FOUND) {
+    if (status == nt_status::OBJECT_PATH_NOT_FOUND) {
         *_errno() = ENOENT;
         return -1;
     } else if (!success(status)) {
@@ -2059,10 +2053,7 @@ int mkfifoat(int fd, const char* path, mode_t mode) {
 
     free(u16);
 
-    if (status == nt_status::OBJECT_NAME_COLLISION) {
-        *_errno() = EEXIST;
-        return -1;
-    } else if (!success(status)) {
+    if (!success(status)) {
         *_errno() = nt_status_to_errno(status);
         return -1;
     } else
