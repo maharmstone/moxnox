@@ -62,7 +62,7 @@ using namespace std;
 
 static rwsem ipi_lock;
 
-static const uint64_t MAX_USERSPACE_ADDRESS = 0xffffffffffff;
+static const uint64_t MAX_USERSPACE_ADDRESS = 0x7fffffffffff;
 
 extern "C++" {
     section* ntdll = nullptr;
@@ -5521,8 +5521,6 @@ nt_status process::mark_as_child() {
 }
 
 nt_status process::memory_unmap(span<const uint8_t> buf) {
-    static const uintptr_t MAX_USERSPACE_ADDRESS = 0x7fffffffffff;
-
     if (buf.size() < sizeof(MN_MEMORY_UNMAP))
         return nt_status::BUFFER_TOO_SMALL;
 
