@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 module;
 
+#include "list.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <string_view>
@@ -8,6 +9,7 @@ module;
 
 export module ntdll_private;
 
+import pe;
 import ntdll;
 import crt;
 import pagesize;
@@ -50,5 +52,9 @@ extern "C++" void clear_alarm_on_fork();
 
 // heap.cpp
 extern "C++" void clear_heap_lock_on_fork();
+
+IMAGE_TLS_DIRECTORY64** tls_dirs = nullptr;
+uint16_t num_tls_dirs = 0;
+LIST_ENTRY tls_list = { &tls_list, &tls_list };
 
 }

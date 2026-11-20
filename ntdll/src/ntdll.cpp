@@ -30,10 +30,6 @@ static RTL_CRITICAL_SECTION peb_lock, loader_lock;
 static uint64_t tls_bitmap; // FIXME - should be RTL_BITMAP
 static bool initialized = false;
 
-static IMAGE_TLS_DIRECTORY64** tls_dirs = nullptr;
-static uint16_t num_tls_dirs = 0;
-static LIST_ENTRY tls_list = { &tls_list, &tls_list };
-
 extern "C" {
     void (*mn_handle_exec_info)(exec_info* info) = nullptr;
 }
@@ -350,12 +346,23 @@ void mn_start_thread(mn_image_info* ntdll_info, mn_image_info* img_info, CONTEXT
         }
 
         initialized = true;
+
+        InsertTailList(&tls_list, &NtCurrentTeb()->TlsLinks);
     } else {
-        status = init_tls_block();
-        if (!success(status)) {
-            print_stderr("init_tls_block returned {}\n", status);
-            NtTerminateProcess(NtCurrentProcess(), status);
-            unreachable();
+        {
+            mn_peb_lock lock1;
+            mn_loader_lock lock2;
+            lock_guard lg1(lock1);
+            lock_guard lg2(lock2);
+
+            status = init_tls_block();
+            if (!success(status)) {
+                print_stderr("init_tls_block returned {}\n", status);
+                NtTerminateProcess(NtCurrentProcess(), status);
+                unreachable();
+            }
+
+            InsertTailList(&tls_list, &NtCurrentTeb()->TlsLinks);
         }
 
         call_thread_attach();
@@ -364,13 +371,6 @@ void mn_start_thread(mn_image_info* ntdll_info, mn_image_info* img_info, CONTEXT
 #ifdef __aarch64__
     context->X18 = (uintptr_t)NtCurrentTeb();
 #endif
-
-    {
-        mn_peb_lock lock;
-        lock_guard lg(lock);
-
-        InsertTailList(&tls_list, &NtCurrentTeb()->TlsLinks);
-    }
 
     NtContinue(context, true);
 }

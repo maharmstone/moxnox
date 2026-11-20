@@ -394,6 +394,8 @@ static ldr_entry* add_ldr_entry(void* base, u16string_view full_name, u16string_
 
     InsertTailList(&ldr_data.InLoadOrderModuleList, &ldr.InLoadOrderLinks);
 
+    ldr.TlsIndex = 0xffff;
+
     {
         auto le = ldr_data.InMemoryOrderModuleList.Flink;
         bool done = false;
@@ -1459,6 +1461,88 @@ static void dll_entry_detach(LIST_ENTRY* last_init_order_entry) {
     }
 }
 
+static nt_status alloc_thread_tls_dynamic_mod(LDR_DATA_TABLE_ENTRY& ent) {
+    auto& dos_header = *(IMAGE_DOS_HEADER*)ent.DllBase;
+    auto& nt_header = *(IMAGE_NT_HEADERS*)((uint8_t*)ent.DllBase + dos_header.e_lfanew);
+    uintptr_t dir_addr;
+
+    if (nt_header.OptionalHeader32.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+        if (nt_header.OptionalHeader64.NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_TLS)
+            return nt_status::SUCCESS;
+
+        dir_addr = dos_header.e_lfanew + offsetof(IMAGE_NT_HEADERS, OptionalHeader64.DataDirectory);
+    } else {
+        if (nt_header.OptionalHeader32.NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_TLS)
+            return nt_status::SUCCESS;
+
+        dir_addr = dos_header.e_lfanew + offsetof(IMAGE_NT_HEADERS, OptionalHeader32.DataDirectory);
+    }
+
+    dir_addr += IMAGE_DIRECTORY_ENTRY_TLS * sizeof(IMAGE_DATA_DIRECTORY);
+
+    auto& data_dir = *(IMAGE_DATA_DIRECTORY*)((uint8_t*)ent.DllBase + dir_addr);
+
+    if (data_dir.VirtualAddress == 0 || data_dir.Size == 0)
+        return nt_status::SUCCESS;
+
+    // FIXME - IMAGE_TLS_DIRECTORY32 if 32-bit
+
+    if (data_dir.Size < sizeof(IMAGE_TLS_DIRECTORY64)) {
+        print_stderr("alloc_thread_tls_dynamic_mod: TLS directory was {} bytes, expected {}\n",
+                     data_dir.Size, sizeof(IMAGE_TLS_DIRECTORY64));
+        return nt_status::INVALID_IMAGE_FORMAT;
+    }
+
+    auto& dir = *(IMAGE_TLS_DIRECTORY64*)((uint8_t*)ent.DllBase + data_dir.VirtualAddress);
+
+    size_t size = dir.EndAddressOfRawData - dir.StartAddressOfRawData + dir.SizeOfZeroFill;
+
+    if (size == 0 && dir.AddressOfCallBacks == 0)
+        return nt_status::SUCCESS;
+
+    auto new_tls_dirs = (IMAGE_TLS_DIRECTORY64**)RtlAllocateHeap(GetProcessHeap(), 0,
+                                                                 sizeof(IMAGE_TLS_DIRECTORY64*) * (num_tls_dirs + 1));
+    if (!new_tls_dirs) {
+        print_stderr("RtlAllocateHeap failed\n");
+        return nt_status::INSUFFICIENT_RESOURCES;
+    }
+
+    memcpy(new_tls_dirs, tls_dirs, num_tls_dirs * sizeof(IMAGE_TLS_DIRECTORY64*));
+
+    new_tls_dirs[num_tls_dirs] = &dir;
+    ent.TlsIndex = num_tls_dirs;
+
+    for (auto le = tls_list.Flink; le != &tls_list; le = le->Flink) {
+        auto& teb = *CONTAINING_RECORD(le, TEB, TlsLinks);
+
+        auto ptr = (void**)malloc(sizeof(void*) * (num_tls_dirs + 1));
+        if (!ptr)
+            return nt_status::INSUFFICIENT_RESOURCES;
+
+        memcpy(ptr, teb.ThreadLocalStoragePointer, sizeof(void*) * num_tls_dirs);
+
+        auto& dir = *new_tls_dirs[ent.TlsIndex];
+        auto& p = ptr[ent.TlsIndex];
+
+        p = malloc(size);
+        if (!p)
+            return nt_status::INSUFFICIENT_RESOURCES;
+
+        memcpy(p, (void*)dir.StartAddressOfRawData,
+                dir.EndAddressOfRawData - dir.StartAddressOfRawData);
+        memset((uint8_t*)p + size - dir.SizeOfZeroFill, 0, dir.SizeOfZeroFill);
+
+        teb.ThreadLocalStoragePointer = ptr; // let it leak
+    }
+
+    *(uint16_t*)dir.AddressOfIndex = ent.TlsIndex;
+
+    tls_dirs = new_tls_dirs; // let it leak
+    num_tls_dirs++;
+
+    return nt_status::SUCCESS;
+}
+
 extern "C"
 nt_status LdrLoadDll(const char16_t* /*dll_path*/, uint32_t* /*dll_characteristics*/,
                      const UNICODE_STRING* dll_name, void** dll_handle) {
@@ -1471,8 +1555,10 @@ nt_status LdrLoadDll(const char16_t* /*dll_path*/, uint32_t* /*dll_characteristi
     // FIXME - dll_characteristics(?)
 
     {
-        mn_loader_lock lock;
-        lock_guard lg(lock);
+        mn_peb_lock lock1;
+        mn_loader_lock lock2;
+        lock_guard lg1(lock1);
+        lock_guard lg2(lock2);
 
         auto last_init_order_entry = ldr_data.InInitializationOrderModuleList.Blink;
 
@@ -1561,7 +1647,11 @@ nt_status LdrLoadDll(const char16_t* /*dll_path*/, uint32_t* /*dll_characteristi
             }
         }
 
-        // FIXME - do TLS
+        status = alloc_thread_tls_dynamic_mod(ent->ldr);
+        if (!success(status)) {
+            failure();
+            return status;
+        }
 
         status = dll_entry_attach(*de);
         if (!success(status)) {
