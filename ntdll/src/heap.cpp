@@ -28,7 +28,7 @@ struct free_block : alloc_header {
     list_entry le;
 };
 
-static constexpr size_t NUM_BINS = 76;
+static constexpr size_t NUM_BINS = 260;
 
 class subheap {
 public:
@@ -58,31 +58,15 @@ public:
 };
 
 static size_t get_bin_number(size_t size) {
-    if (size > 1024) {
+    if (size > 4096) {
         if (size > 32768)
-            return 75;
+            return 259;
         else if (size > 16384)
-            return 74;
+            return 258;
         else if (size > 8192)
-            return 73;
-        else if (size > 4096)
-            return 72;
-        else if (size > 3584)
-            return 71;
-        else if (size > 3072)
-            return 70;
-        else if (size > 2560)
-            return 69;
-        else if (size > 2048)
-            return 68;
-        else if (size > 1792)
-            return 67;
-        else if (size > 1536)
-            return 66;
-        else if (size > 1280)
-            return 65;
+            return 257;
         else
-            return 64;
+            return 256;
     }
 
     return (size - 1) / 16;
