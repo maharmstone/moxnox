@@ -30,6 +30,7 @@ export struct cpu_block {
     uintptr_t emergency_sp;
     uint64_t emergency_scratch[2];
     uint64_t gicc;
+    uint64_t cpu_gicr;
 #elifdef __x86_64__
     void* gdt;
     uint64_t kernel_cr3;

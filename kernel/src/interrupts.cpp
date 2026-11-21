@@ -50,6 +50,8 @@ export void free_msi_irq(uint16_t num);
 export template<bool no_lock>
 uint64_t init_interrupts_cpu(uint64_t mpidr);
 
+export uint64_t find_cpu_gicr(uint64_t mpidr);
+
 #elifdef __x86_64__
 
 using isr_func_type = bool (*)(void*);

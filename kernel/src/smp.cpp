@@ -27,6 +27,7 @@ import disable_interrupts;
 import cpu_block;
 import cmdline;
 import acpica;
+import bsod;
 
 using namespace std;
 
@@ -244,11 +245,12 @@ static void __attribute__((noreturn)) ap_startup() {
             : "x0"
         );
 
-        // FIXME - different for GICv4
-        auto cpu_gicr = gicr + (cb.cpu_no * 0x20000);
+        cb.cpu_gicr = find_cpu_gicr(cpu_ids[cb.cpu_no]);
+        if (!cb.cpu_gicr)
+            bsod_format("GICR not found for CPU {}", cb.cpu_no);
 
         // put all SGIs and PPIs in group 1
-        auto& GICR_IGROUPR0 = *(volatile uint32_t*)(cpu_gicr + 0x10080);
+        auto& GICR_IGROUPR0 = *(volatile uint32_t*)(cb.cpu_gicr + 0x10080);
         GICR_IGROUPR0 = 0xffffffff;
 
         enable_irq(HALT_SGI);

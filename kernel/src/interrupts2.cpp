@@ -387,10 +387,7 @@ void enable_irq(uint32_t number) {
 
         auto& cb = *get_cpu_block();
 
-        // FIXME - different for GICv4
-        auto cpu_gicr = gicr + (cb.cpu_no * 0x20000);
-
-        auto& GICR_ISENABLER0 = *(volatile uint32_t*)(cpu_gicr + 0x10100);
+        auto& GICR_ISENABLER0 = *(volatile uint32_t*)(cb.cpu_gicr + 0x10100);
         GICR_ISENABLER0 = (uint32_t)1 << number;
 
         enable_preempt();
@@ -1038,7 +1035,7 @@ static optional<uint64_t> find_msi_frame_address() {
     return msi_frame_pa;
 }
 
-static bool init_interrupts_global() {
+static bool init_interrupts_global(uint64_t mpidr) {
     __asm __volatile (
         "msr vbar_el1, %x[res]"
         :
@@ -1122,8 +1119,16 @@ static bool init_interrupts_global() {
 
         gicr = va;
 
+        auto& cb = *get_cpu_block();
+
+        cb.cpu_gicr = find_cpu_gicr(mpidr);
+        if (!cb.cpu_gicr) {
+            print("find_cpu_gicr failed\n");
+            return false;
+        }
+
         // put all SGIs and PPIs in group 1
-        auto& GICR_IGROUPR0 = *(volatile uint32_t*)(gicr + 0x10080);
+        auto& GICR_IGROUPR0 = *(volatile uint32_t*)(cb.cpu_gicr + 0x10080);
         GICR_IGROUPR0 = 0xffffffff;
 
         // enable group 1 interrupts
@@ -1184,20 +1189,42 @@ static bool init_interrupts_global() {
     return true;
 }
 
+uint64_t find_cpu_gicr(uint64_t mpidr) {
+    uint64_t mpidr2 = (mpidr & 0xffffff) | ((mpidr >> 8) & 0xff000000);
+    uint64_t cpu_gicr = gicr;
+
+    // FIXME - different for GICv4
+    // FIXME - in theory could have multiple GICR regions
+
+    while (true) {
+        auto& GICR_TYPER = *(volatile uint64_t*)(cpu_gicr + 0x8);
+
+        if (GICR_TYPER >> 32 == mpidr2)
+            return cpu_gicr;
+
+        if (GICR_TYPER & 0x10) // Last
+            break;
+
+        cpu_gicr += 0x20000;
+    }
+
+    return 0;
+}
+
 bool init_interrupts() {
     uint64_t mpidr;
 
-    if (!init_interrupts_global())
+    __asm __volatile (
+        "mrs %x[res], mpidr_el1"
+        : [res] "=r" (mpidr)
+    );
+
+    mpidr &= MPIDR_MASK;
+
+    if (!init_interrupts_global(mpidr))
         return false;
 
     if (gic_ver == 2) {
-        __asm __volatile (
-            "mrs %x[res], mpidr_el1"
-            : [res] "=r" (mpidr)
-        );
-
-        mpidr &= MPIDR_MASK;
-
         auto gicc = init_interrupts_cpu<true>(mpidr);
         if (!gicc)
             return false;
