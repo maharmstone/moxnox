@@ -1508,7 +1508,7 @@ static void send_proc_all_tlb_ipi(process& proc) {
             if (i == cb.cpu_no)
                 continue;
 
-            if (!(cpus & 1 << i))
+            if (!(cpus & (uint64_t)1 << i))
                 continue;
 
             send_all_tlb_ipi(i);
