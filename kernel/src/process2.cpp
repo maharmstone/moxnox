@@ -1465,7 +1465,7 @@ void send_page_tlb_ipi(process& proc, uint64_t va, uint64_t num_pages) {
             if (i == cb.cpu_no)
                 continue;
 
-            if (!(cpus & 1 << i))
+            if (!(cpus & (uint64_t)1 << i))
                 continue;
 
             send_tlb_ipi(i);
