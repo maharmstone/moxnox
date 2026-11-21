@@ -1141,6 +1141,7 @@ static bool init_interrupts_global(uint64_t mpidr) {
         enable_irq(HALT_SGI);
         enable_irq(TLB_SGI);
         enable_irq(ALL_TLB_SGI);
+        enable_irq(SPURIOUS_SGI);
     } else { // gic_ver == 2
         if (!nomsi) {
             auto msi_frame_pa = find_msi_frame_address();
@@ -2175,6 +2176,9 @@ void handle_irq(uint32_t number) {
 
         case ALL_TLB_SGI:
             all_tlb_isr();
+            break;
+
+        case SPURIOUS_SGI:
             break;
 
         default: {

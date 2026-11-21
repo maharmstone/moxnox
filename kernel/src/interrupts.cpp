@@ -34,6 +34,7 @@ export bool init_interrupts();
 export const uint8_t HALT_SGI = 0;
 export const uint8_t TLB_SGI = 1;
 export const uint8_t ALL_TLB_SGI = 2;
+export const uint8_t SPURIOUS_SGI = 3;
 
 export const uint64_t MPIDR_MASK = 0xff00ffffff;
 export uint64_t gicd, gicr;

@@ -5,6 +5,7 @@ module;
 #include <optional>
 #include <atomic>
 #include <mutex>
+#include <bit>
 #include <stddef.h>
 #include <poll.h>
 #include "assert.h"
@@ -31,8 +32,11 @@ import interrupts;
 import vfs;
 import object_ref;
 import trace;
+import smp;
 
-#ifdef __aarch64__
+#ifdef __x86_64__
+import apic;
+#elifdef __aarch64__
 import aarch64;
 #endif
 
@@ -51,6 +55,8 @@ extern "C" {
     ::thread* sync_lock_thread = nullptr;
 #endif
 }
+
+static atomic<uint64_t> sleeping_cpus = 0;
 
 static ::thread* pick_runnable_thread(::thread* current) {
     list_entry* le;
@@ -201,6 +207,8 @@ void scheduler() {
     release_sync_lock();
 
     do {
+        sleeping_cpus.fetch_or((uint64_t)1 << cb.cpu_no, memory_order::relaxed);
+
         acquire_sync_lock();
 
         cb.current_thread = pick_runnable_thread(cb.current_thread);
@@ -218,6 +226,7 @@ void scheduler() {
                 cb.current_thread->proc->running_cpus |= (uint64_t)1 << cb.cpu_no;
 
             active_cpus.fetch_or((uint64_t)1 << cb.cpu_no, memory_order::relaxed);
+            sleeping_cpus.fetch_and(~((uint64_t)1 << cb.cpu_no), memory_order::relaxed);
         }
 
         release_sync_lock();
@@ -281,6 +290,8 @@ void scheduler() {
         __asm __volatile("hlt");
 #endif
         disable_interrupts();
+
+        sleeping_cpus.fetch_and(~((uint64_t)1 << cb.cpu_no), memory_order::relaxed);
     } while (true);
 }
 
@@ -449,6 +460,59 @@ nt_status wait_for_object(object& obj, bool interruptible,
     return nt_status::SUCCESS;
 }
 
+#ifdef __x86_64__
+
+static void send_spurious_ipi(uint8_t cpu_no) {
+    auto icr2 = (volatile uint32_t*)&local_apic[0x310];
+
+    *icr2 = (*icr2 & 0x00ffffff) | ((uint32_t)cpu_ids[cpu_no] << 24);
+
+    auto icr1 = (volatile uint32_t*)&local_apic[0x300];
+
+    *icr1 = spurious_interrupt;
+
+    while (*icr1 & (1 << 12)) { } // wait to clear
+}
+
+#elifdef __aarch64__
+
+static void send_spurious_ipi(uint8_t cpu_no) {
+    auto& cb = *get_cpu_block();
+
+    if (cb.gicc) { // GICv2
+        auto& GICD_SGIR = *(volatile uint32_t*)(gicd + 0xf00);
+        ARM64_GICD_SGIR sgir;
+
+        sgir.value = 0;
+        sgir.TargetListFilter = 0; // send IPI to specified CPU
+        sgir.CPUTargetList = 1 << cpu_ids[cpu_no];
+        sgir.SGIINTID = SPURIOUS_SGI;
+
+        GICD_SGIR = sgir.value;
+    } else {
+        ARM64_ICC_SGI1R sgir;
+        ARM64_MPIDR mpidr;
+
+        mpidr.value = cpu_ids[cpu_no];
+
+        sgir.value = 0;
+        sgir.IRM = 0; // only specified CPU
+        sgir.INTID = SPURIOUS_SGI;
+        sgir.Aff3 = mpidr.Aff3;
+        sgir.Aff2 = mpidr.Aff2;
+        sgir.Aff1 = mpidr.Aff1;
+        sgir.TargetList = 1 << mpidr.Aff0;
+
+        __asm __volatile (
+            "msr icc_sgi1r_el1, %x[res]"
+            :
+            : [res] "r" (sgir.value)
+        );
+    }
+}
+
+#endif
+
 unsigned int wake_up_waiters(list_entry& waiters, wait_type_t wait_type) {
     unsigned int ret = 0;
 
@@ -512,6 +576,40 @@ unsigned int wake_up_waiters(list_entry& waiters, wait_type_t wait_type) {
         }
 
         ret++;
+    }
+
+    if (ret > 0) {
+        auto& cb = *get_cpu_block();
+        auto woken = ret;
+
+        while (woken > 0) {
+            uint64_t sc;
+
+            while (true) {
+                auto orig_sc = sleeping_cpus.load(memory_order::relaxed);
+
+                sc = orig_sc & ~((uint64_t)1 << cb.cpu_no);
+
+                if (sc == 0)
+                    break;
+
+                auto num = (uint8_t)countr_zero(sc);
+
+                if (!sleeping_cpus.compare_exchange_weak(orig_sc, orig_sc & ~((uint64_t)1 << num),
+                                                         memory_order::relaxed,
+                                                         memory_order::relaxed)) {
+                    continue;
+                }
+
+                send_spurious_ipi(num);
+                break;
+            }
+
+            if (sc == 0)
+                break;
+
+            woken--;
+        }
     }
 
     return ret;
