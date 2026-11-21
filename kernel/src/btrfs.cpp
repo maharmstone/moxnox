@@ -7401,22 +7401,12 @@ void btrfs_inode::last_handle_closed() {
 
 nt_status btrfs_inode::remove_orphan(bool no_orphan_item) {
     nt_status status;
-    uint64_t len;
-    uint32_t sectorsize = fs.sb->sectorsize;
 
     // needs trans_lock held
 
-    {
-        shared_lock lg(inode_lock);
-        len = ii.size;
-    }
-
-    if (len % sectorsize)
-        len += sectorsize - (len % sectorsize);
-
     // FIXME - do in multiple transactions if particularly large?
 
-    status = punch_hole(*this, 0, len);
+    status = punch_hole(*this, 0, 0xffffffffffffffff);
     if (!success(status)) {
         print("btrfs_inode::remove_orphan: punch_hole returned {}\n", status);
         return status;
