@@ -420,15 +420,12 @@ void startup(loader_block* lb) {
     if (!init_vablock())
         goto hang;
 
-#ifdef __aarch64__
+#ifdef __x86_64__
+    find_xsave_size();
+#endif
+
     if (!init_cpu_block(0))
         goto hang;
-#elifdef __x86_64__
-    find_xsave_size();
-
-    if (!init_cpu_block(current_cpu_id()))
-        goto hang;
-#endif
 
 #ifdef __x86_64__
     check_cpu_features();

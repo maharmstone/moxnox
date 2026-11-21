@@ -1335,7 +1335,7 @@ static void send_tlb_ipi(uint8_t cpu_no) {
 
     auto icr2 = (volatile uint32_t*)&local_apic[0x310];
 
-    *icr2 = (*icr2 & 0x00ffffff) | ((uint32_t)cpu_no << 24);
+    *icr2 = (*icr2 & 0x00ffffff) | ((uint32_t)cpu_ids[cpu_no] << 24);
 
     auto icr1 = (volatile uint32_t*)&local_apic[0x300];
 
@@ -1349,7 +1349,7 @@ static void send_all_tlb_ipi(uint8_t cpu_no) {
 
     auto icr2 = (volatile uint32_t*)&local_apic[0x310];
 
-    *icr2 = (*icr2 & 0x00ffffff) | ((uint32_t)cpu_no << 24);
+    *icr2 = (*icr2 & 0x00ffffff) | ((uint32_t)cpu_ids[cpu_no] << 24);
 
     auto icr1 = (volatile uint32_t*)&local_apic[0x300];
 

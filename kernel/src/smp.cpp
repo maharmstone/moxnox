@@ -65,10 +65,16 @@ extern "C" void init_syscalls();
 
 export unsigned int num_cpus;
 
-static atomic<unsigned int> ap_left;
+extern "C" {
+    atomic<unsigned int> ap_left;
+}
 
 #ifdef __x86_64__
-static void start_ap(uint8_t i) {
+static atomic<unsigned int> ap_index;
+#endif
+
+#ifdef __x86_64__
+static void start_ap(uint8_t apic_id) {
     // FIXME - should we be disabling interrupts here?
 
     auto error_status = (volatile uint32_t*)&local_apic[0x280];
@@ -78,7 +84,7 @@ static void start_ap(uint8_t i) {
     // send INIT IPI
 
     *error_status = 0;
-    *icr2 = (*icr2 & 0x00ffffff) | (uint32_t)(i << 24);
+    *icr2 = (*icr2 & 0x00ffffff) | (uint32_t)(apic_id << 24);
     *icr1 = (*icr1 & 0xfff00000) | 0xc500;
 
     // wait for delivery
@@ -89,7 +95,7 @@ static void start_ap(uint8_t i) {
 
     // deassert
 
-    *icr2 = (*icr2 & 0x00ffffff) | (uint32_t)(i << 24);
+    *icr2 = (*icr2 & 0x00ffffff) | (uint32_t)(apic_id << 24);
     *icr1 = (*icr1 & 0xfff00000) | 0x8500;
 
     // wait for delivery
@@ -104,7 +110,7 @@ static void start_ap(uint8_t i) {
 
     for (unsigned int j = 0; j < 2; j++) {
         *error_status = 0;
-        *icr2 = (*icr2 & 0x00ffffff) | (uint32_t)(i << 24);
+        *icr2 = (*icr2 & 0x00ffffff) | (uint32_t)(apic_id << 24);
         *icr1 = (*icr1 & 0xfff0f800) | 0x000600; // start at 0000:00000000
         udelay(200); // wait 200us
 
@@ -316,8 +322,10 @@ static void ap_startup() {
     *spurious_interrupt_reg = spurious_interrupt | 0x100;
 
     auto apic_id = current_cpu_id();
+    auto num = ap_index.fetch_add(1);
 
-    init_cpu_block(apic_id);
+    cpu_ids[num] = apic_id;
+    init_cpu_block(num);
 
     setup_ap_gdt(init_tss());
 
@@ -327,14 +335,11 @@ static void ap_startup() {
 
     init_lapic_timer(true);
 
-    auto num = ap_left.fetch_sub(1, memory_order_acq_rel);
-
-    cpu_ids[num_cpus - num] = apic_id;
-
     acquire_sync_lock();
 
     __asm __volatile ( // doesn't return
         "mov rsp, gs:%0\n"
+        "lock dec DWORD PTR [rip+ap_left]\n"
         "jmp scheduler\n"
         :
         : "i" (offsetof(cpu_block, scheduler_stack))
@@ -676,11 +681,13 @@ export bool init_smp() {
     );
 
     ap_left.store(ap_count, memory_order_release);
+    ap_index = 1;
 
     for (unsigned int i = 0; i < ap_count; i++) {
-        if (boot_info[i].id > 63)
+        if (i >= 63) {
             print("Ignoring high-numbered CPUs (FIXME)\n"); // FIXME
-        else {
+            ap_left--;
+        } else {
             print("CPU found\n");
 
             *ap_rsp = (uint64_t)((uint8_t*)phys_address(boot_info[i].stack_pa) + PAGE_SIZE - 0x20); // 0x20 for MS ABI
