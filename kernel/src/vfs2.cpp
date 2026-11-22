@@ -2571,7 +2571,9 @@ nt_status inode::set_posix_lock(uint64_t start, uint64_t length, bool write,
                 return nt_status::ALERTED;
             }
 
-            {
+            if (t.woken_by_apc) {
+                t.woken_by_apc = false;
+
                 lock_guard lock(t.apc_lock);
 
                 if (!is_list_empty(t.pending_apcs))

@@ -881,6 +881,7 @@ void thread::break_apc_waits() {
         }
 
         status = thread_status::runnable;
+        woken_by_apc = true;
     }
 }
 
@@ -1303,6 +1304,7 @@ static nt_status do_poll(span<const uint8_t> buffer) {
     t.wait_interruptible = true;
 
     t.woken_by_alert = false;
+    t.woken_by_apc = false;
 
     if (t.proc)
         t.proc->running_cpus &= ~((uint64_t)1 << cb.cpu_no);
@@ -1322,7 +1324,9 @@ static nt_status do_poll(span<const uint8_t> buffer) {
 
     yield(); // releases sync_lock
 
-    {
+    if (t.woken_by_apc) {
+        t.woken_by_apc = false;
+
         lock_guard lock(t.apc_lock);
 
         if (!is_list_empty(t.pending_apcs)) {
@@ -1644,6 +1648,7 @@ nt_status thread::wait_for_signal(span<const uint8_t> buffer) {
     }
 
     t.woken_by_alert = false;
+    t.woken_by_apc = false;
 
     yield();
 
@@ -1671,7 +1676,9 @@ nt_status thread::wait_for_signal(span<const uint8_t> buffer) {
         return nt_status::ALERTED;
     }
 
-    {
+    if (t.woken_by_apc) {
+        t.woken_by_apc = false;
+
         lock_guard lock(t.apc_lock);
 
         if (!is_list_empty(t.pending_apcs))

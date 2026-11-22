@@ -416,6 +416,7 @@ nt_status wait_for_object(object& obj, bool interruptible,
     }
 
     current_thread->woken_by_alert = false;
+    current_thread->woken_by_apc = false;
 
 #ifdef __aarch64__
     __asm __volatile (
@@ -447,7 +448,9 @@ nt_status wait_for_object(object& obj, bool interruptible,
         return nt_status::ALERTED;
     }
 
-    if (interruptible) {
+    if (interruptible && current_thread->woken_by_apc) {
+        current_thread->woken_by_apc = false;
+
         lock_guard lock(current_thread->apc_lock);
 
         if (!is_list_empty(current_thread->pending_apcs))
@@ -1054,10 +1057,13 @@ nt_status wait_for_objects(span<object*> objects, bool wait_any,
     }
 
     current_thread->woken_by_alert = false;
+    current_thread->woken_by_apc = false;
 
     yield(); // releases sync_lock
 
-    if (interruptible) {
+    if (interruptible && current_thread->woken_by_apc) {
+        current_thread->woken_by_apc = false;
+
         bool has_apcs;
 
         {
@@ -1225,6 +1231,7 @@ void set_current_thread_waiting(bool interruptible) {
     active_cpus.fetch_and(~((uint64_t)1 << cb.cpu_no), memory_order::relaxed);
 
     t->woken_by_alert = false;
+    t->woken_by_apc = false;
 
     yield();
 }
@@ -1327,6 +1334,7 @@ nt_status wait_no_object(bool interruptible, optional<uint64_t> timeout) {
     }
 
     current_thread->woken_by_alert = false;
+    current_thread->woken_by_apc = false;
 
 #ifdef __aarch64__
     __asm __volatile (
@@ -1358,7 +1366,9 @@ nt_status wait_no_object(bool interruptible, optional<uint64_t> timeout) {
         return nt_status::ALERTED;
     }
 
-    if (interruptible) {
+    if (interruptible && current_thread->woken_by_apc) {
+        current_thread->woken_by_apc = false;
+
         lock_guard lock(current_thread->apc_lock);
 
         if (!is_list_empty(current_thread->pending_apcs))

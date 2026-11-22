@@ -4201,6 +4201,7 @@ nt_status process::set_wait_pid(span<const uint8_t> buf) {
                 insert_tail_list(wait_child_waiters, t.wait_obj.wait_le);
 
                 t.woken_by_alert = false;
+                t.woken_by_apc = false;
 
                 set_current_thread_waiting(true);
 
@@ -4216,7 +4217,9 @@ nt_status process::set_wait_pid(span<const uint8_t> buf) {
                     return nt_status::ALERTED;
                 }
 
-                {
+                if (t.woken_by_apc) {
+                    t.woken_by_apc = false;
+
                     lock_guard lock(t.apc_lock);
 
                     if (!is_list_empty(t.pending_apcs))
