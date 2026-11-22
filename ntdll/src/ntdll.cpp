@@ -377,7 +377,12 @@ void mn_start_thread(mn_image_info* ntdll_info, mn_image_info* img_info, CONTEXT
 
 extern "C"
 void RtlExitUserProcess(uint32_t status) {
-    // FIXME - locks?
+    mn_peb_lock lock1;
+    mn_loader_lock lock2;
+    lock_guard lg1(lock1);
+    lock_guard lg2(lock2);
+
+    // FIXME - also take heap lock?
 
     // kill other threads
     NtTerminateProcess(0, (nt_status)status);
