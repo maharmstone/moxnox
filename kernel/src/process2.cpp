@@ -848,25 +848,44 @@ static bool set_page_protection(process& proc, uint64_t va, uint32_t num_pages,
     pt[3] = span((ARM64_HARDWARE_PTE*)phys_address(proc.ttbr0), 512);
 
     auto redo_level = [&](uint8_t level) -> bool {
-        if (!pt[level][index[level]].valid) {
-            uint64_t pa = allocate_folio(0, page_state::pte);
-            if (pa == 0)
-                return false;
+        ARM64_HARDWARE_PTE pte;
 
-            pt[level][index[level]].valid = 1;
-            pt[level][index[level]].table_entry = 1;
-            pt[level][index[level]].AP = ARM64_PTE_AP_EL0RW;
-            pt[level][index[level]].SH = 3; // inner shareable
-            pt[level][index[level]].AF = 1;
+        while (true) {
+            atomic_ref ar(pt[level][index[level]].value);
+
+            pte.value = ar.load(memory_order::acquire);
+
+            if (!pte.valid) {
+                uint64_t orig_val = pte.value;
+
+                uint64_t pa = allocate_folio(0, page_state::pte);
+                if (pa == 0)
+                    return false;
+
+                memset(phys_address(pa), 0, PAGE_SIZE);
+
+                pte.valid = 1;
+                pte.table_entry = 1;
+                pte.AP = ARM64_PTE_AP_EL0RW;
+                pte.SH = 3; // inner shareable
+                pte.AF = 1;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
-            pt[level][index[level]].pfn = pa >> PAGE_SHIFT;
+                pte.pfn = pa >> PAGE_SHIFT;
 #pragma GCC diagnostic pop
 
-            memset(phys_address(pa), 0, PAGE_SIZE);
+                if (!ar.compare_exchange_strong(orig_val, pte.value,
+                                                memory_order::release,
+                                                memory_order::relaxed)) {
+                    free_folio(pa);
+                    continue;
+                }
+            }
+
+            break;
         }
 
-        pt[level - 1] = span((ARM64_HARDWARE_PTE*)phys_address((uint64_t)((pt[level][index[level]].pfn) << PAGE_SHIFT)), 512);
+        pt[level - 1] = span((ARM64_HARDWARE_PTE*)phys_address((uint64_t)(pte.pfn << PAGE_SHIFT)), 512);
 
         return true;
     };
