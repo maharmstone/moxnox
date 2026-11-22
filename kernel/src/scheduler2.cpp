@@ -877,7 +877,14 @@ extern "C" NTSTATUS NtWaitForSingleObject(HANDLE object_handle, bool alertable,
         tm = -timeout->QuadPart;
     }
 
-    return wait_for_object(objrw.get(), alertable, tm);
+    while (true) {
+        auto status = wait_for_object(objrw.get(), true, tm);
+
+        if (!alertable && status == nt_status::ALERTED)
+            continue; // FIXME - adjust timeout
+
+        return status;
+    }
 }
 
 nt_status wait_for_objects(span<object*> objects, bool wait_any,
