@@ -2106,7 +2106,11 @@ static nt_status terminate_other_threads(nt_status exit_status) {
 
             {
                 lock_guard lock(p.threads_lock);
-                remove_entry_list(t->process_le);
+
+                if (!t->detached) {
+                    remove_entry_list(t->process_le);
+                    t->detached = true;
+                }
             }
 
             t->release();
@@ -2145,7 +2149,11 @@ static void do_terminate(process& p, nt_status exit_status) {
 
         {
             lock_guard lock(p.threads_lock);
-            remove_entry_list(t->process_le);
+
+            if (!t->detached) {
+                remove_entry_list(t->process_le);
+                t->detached = true;
+            }
         }
 
         t->release();

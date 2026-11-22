@@ -2140,7 +2140,11 @@ uint64_t maybe_yield_after_syscall(uint64_t syscall_ret) {
             lock_guard lock(t.proc->threads_lock);
 
             if (!t.proc->dying) {
-                remove_entry_list(t.process_le);
+                if (!t.detached) {
+                    remove_entry_list(t.process_le);
+                    t.detached = true;
+                }
+
                 terminate_proc = is_list_empty(t.proc->threads);
             }
         }
@@ -2209,7 +2213,11 @@ void maybe_yield_after_interrupt() {
             lock_guard lock(t.proc->threads_lock);
 
             if (!t.proc->dying) {
-                remove_entry_list(t.process_le);
+                if (!t.detached) {
+                    remove_entry_list(t.process_le);
+                    t.detached = true;
+                }
+
                 terminate_proc = is_list_empty(t.proc->threads);
             }
         }

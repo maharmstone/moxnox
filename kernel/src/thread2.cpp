@@ -76,7 +76,10 @@ void thread_died(thread& t, bool* last_thread, bool remove_from_proc) {
     if (t.proc && remove_from_proc) {
         lock_guard lock(t.proc->threads_lock);
 
-        remove_entry_list(t.process_le);
+        if (!t.detached) {
+            remove_entry_list(t.process_le);
+            t.detached = true;
+        }
 
         if (last_thread)
             *last_thread = is_list_empty(t.proc->threads);
