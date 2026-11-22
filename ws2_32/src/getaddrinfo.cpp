@@ -289,53 +289,64 @@ static void get_encoded_name(string_view name, uint8_t* buf) {
     *buf = 0;
 }
 
-static span<const uint8_t> get_dns_name(span<uint8_t>& ans, span<uint8_t> pack) {
-    span<uint8_t> sp;
+static string get_dns_name(span<uint8_t>& ans, span<uint8_t> pack,
+                           unsigned int hop = 0) {
+    string ret;
+    auto sp = ans;
 
-    if ((ans[0] & 0xc0) == 0xc0) { // name compression
-        if (ans.size() < sizeof(uint16_t))
-            return {};
-
-        auto val = (uint16_t)(byteswap(*(uint16_t*)ans.data()) & 0x3fff);
-
-        if (val > pack.size())
-            return {};
-
-        sp = span(pack.data() + val, pack.size() - val);
-        ans = span(ans.data() + sizeof(uint16_t), ans.size() - sizeof(uint16_t));
-    } else
-        sp = ans;
-
-    auto orig_sp = sp;
+    if (hop == 5) // avoid infinite loops
+        return "";
 
     while (true) {
         if (sp.empty())
-            return {};
+            return "";
 
-        auto len = sp[0];
-        sp = span(sp.data() + 1, sp.size() - 1);
+        if ((sp[0] & 0xc0) == 0xc0) { // compression
+            if (sp.size() < sizeof(uint16_t))
+                return "";
 
-        if (len == 0)
+            auto val = (uint16_t)(byteswap(*(uint16_t*)sp.data()) & 0x3fff);
+
+            if (val > pack.size())
+                return "";
+
+            auto sp2 = span(pack.data() + val, pack.size() - val);
+            auto ret2 = get_dns_name(sp2, pack, hop + 1);
+
+            if (ret2.empty())
+                return "";
+
+            ret.append(ret2);
+            sp = span(sp.data() + sizeof(uint16_t), sp.size() - sizeof(uint16_t));
+
             break;
+        } else {
+            auto len = (uint8_t)sp[0];
 
-        if (sp.size() < len)
-            return {};
+            if (sp.size() < (size_t)(len + 1))
+                return "";
 
-        sp = span(sp.data() + len, sp.size() - len);
+            ret.append(string_view((char*)sp.data(), 1 + len));
+            sp = span(sp.data() + 1 + len, sp.size() - 1 - len);
+
+            if (len == 0)
+                break;
+        }
     }
 
-    if (orig_sp.data() == ans.data())
+    if (hop == 0)
         ans = sp;
 
-    return span(orig_sp.data(), (size_t)(sp.data() - orig_sp.data()));
+    return ret;
 }
 
 static int parse_dns_response(span<uint8_t> sp, span<uint8_t> resp,
                               uint16_t num_answers, uint16_t type,
-                              span<char> name, addrinfo** res) {
+                              span<char> spname, addrinfo** res) {
     addrinfo* last_ai = nullptr;
     auto orig_sp = sp;
     unsigned int cname_count = 0;
+    string name{string_view(spname.data(), spname.size())};
 
     static const int MAX_CNAME_COUNT = 10;
 
@@ -375,7 +386,11 @@ static int parse_dns_response(span<uint8_t> sp, span<uint8_t> resp,
                 continue;
 
             if (rr.type == DNS_CNAME) {
-                name = span((char*)payload.data(), payload.size());
+                auto tmp = get_dns_name(payload, resp);
+                if (tmp.empty())
+                    continue;
+
+                swap(name, tmp);
                 found_cname = true;
                 break;
             }
