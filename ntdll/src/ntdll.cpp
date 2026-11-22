@@ -539,8 +539,24 @@ uint32_t RtlRandom(uint32_t* seed) {
     return (uint32_t)v;
 }
 
+static void clear_peb_lock_on_fork() {
+    auto& peb = *NtCurrentTeb()->ProcessEnvironmentBlock;
+
+    RtlDeleteCriticalSection(peb.FastPebLock);
+    RtlInitializeCriticalSection(peb.FastPebLock);
+}
+
+static void clear_loader_lock_on_fork() {
+    auto& peb = *NtCurrentTeb()->ProcessEnvironmentBlock;
+
+    RtlDeleteCriticalSection(peb.LoaderLock);
+    RtlInitializeCriticalSection(peb.LoaderLock);
+}
+
 extern "C"
 void mn_on_fork() {
+    clear_peb_lock_on_fork();
+    clear_loader_lock_on_fork();
     clear_heap_lock_on_fork();
     clear_alarm_on_fork();
 }

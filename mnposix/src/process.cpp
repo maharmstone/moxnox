@@ -321,6 +321,8 @@ pid_t fork() {
 
     RtlReleaseSRWLockShared(&atfork_lock);
 
+    RtlAcquirePebLock();
+    RtlAcquireLoaderLock();
     RtlLockHeap((void*)NtCurrentTeb()->ProcessEnvironmentBlock->ProcessHeap);
 
     status = NtSetInformationProcess(NtCurrentProcess(),
@@ -329,6 +331,8 @@ pid_t fork() {
 
     if (!success(status)) {
         RtlUnlockHeap((void*)NtCurrentTeb()->ProcessEnvironmentBlock->ProcessHeap);
+        RtlReleaseLoaderLock();
+        RtlReleasePebLock();
 
         RtlAcquireSRWLockShared(&atfork_lock);
 
@@ -354,6 +358,8 @@ pid_t fork() {
         }
     } else {
         RtlUnlockHeap((void*)NtCurrentTeb()->ProcessEnvironmentBlock->ProcessHeap);
+        RtlReleaseLoaderLock();
+        RtlReleasePebLock();
 
         RtlAcquireSRWLockShared(&atfork_lock);
 
