@@ -114,7 +114,14 @@ nt_status RtlEnterCriticalSection(RTL_CRITICAL_SECTION* critical_section) {
         return nt_status::SUCCESS;
     }
 
-    status = NtWaitForSingleObject(cs.LockSemaphore, false, nullptr);
+    while (true) {
+        status = NtWaitForSingleObject(cs.LockSemaphore, false, nullptr);
+        if (status == nt_status::USER_APC)
+            continue;
+
+        break;
+    }
+
     if (!success(status)) {
         print_stderr("NtWaitForSingleObject returned {}\n", status);
         return status;
