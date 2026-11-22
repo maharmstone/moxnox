@@ -2130,9 +2130,17 @@ static void do_terminate(process& p, nt_status exit_status) {
             t = (::thread*)((uint8_t*)p.threads.next - offsetof(::thread, process_le));
 
             t->exit_status = exit_status;
-            terminate_thread(*t, false);
+            t->acquire();
+        }
+
+        terminate_thread(*t, false);
+
+        {
+            lock_guard lock(p.threads_lock);
             remove_entry_list(t->process_le);
         }
+
+        t->release();
     }
 
     p.exit_status = exit_status;
