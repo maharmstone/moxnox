@@ -977,23 +977,42 @@ static bool set_page_protection(process& proc, uint64_t va, uint32_t num_pages,
     pt[3] = span((HARDWARE_PTE*)phys_address(proc.cr3), 512);
 
     auto redo_level = [&](uint8_t level) -> bool {
-        if (!pt[level][index[level]].p) {
-            uint64_t pa = allocate_folio(0, page_state::pte);
-            if (pa == 0)
-                return false;
+        HARDWARE_PTE pte;
+
+        while (true) {
+            atomic_ref ar(pt[level][index[level]].value);
+
+            pte.value = ar.load(memory_order::acquire);
+
+            if (!pte.p) {
+                uint64_t orig_val = pte.value;
+
+                uint64_t pa = allocate_folio(0, page_state::pte);
+                if (pa == 0)
+                    return false;
+
+                memset(phys_address(pa), 0, PAGE_SIZE);
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
-            pt[level][index[level]].pfn = pa >> PAGE_SHIFT;
+                pte.pfn = pa >> PAGE_SHIFT;
 #pragma GCC diagnostic pop
-            pt[level][index[level]].p = 1;
-            pt[level][index[level]].w = 1;
-            pt[level][index[level]].u = 1;
+                pte.p = 1;
+                pte.w = 1;
+                pte.u = 1;
 
-            memset(phys_address(pa), 0, PAGE_SIZE);
+                if (!ar.compare_exchange_strong(orig_val, pte.value,
+                                                memory_order::release,
+                                                memory_order::relaxed)) {
+                    free_folio(pa);
+                    continue;
+                }
+            }
+
+            break;
         }
 
-        pt[level - 1] = span((HARDWARE_PTE*)phys_address((uint64_t)((pt[level][index[level]].pfn) << PAGE_SHIFT)), 512);
+        pt[level - 1] = span((HARDWARE_PTE*)phys_address((uint64_t)(pte.pfn << PAGE_SHIFT)), 512);
 
         return true;
     };

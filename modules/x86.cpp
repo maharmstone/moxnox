@@ -30,24 +30,27 @@ export const uint64_t XCR0_OPMASK = 1 << 5;
 export const uint64_t XCR0_ZMM_HI256 = 1 << 6;
 export const uint64_t XCR0_HI16_ZMM = 1 << 7;
 
-export struct HARDWARE_PTE {
-    uint64_t p : 1;
-    uint64_t w : 1;
-    uint64_t u : 1;
-    uint64_t pwt : 1;
-    uint64_t pcd : 1;
-    uint64_t a : 1;
-    uint64_t d : 1;
-    uint64_t ps : 1;
-    uint64_t g : 1;
-    uint64_t allow_write : 1; // custom
-    uint64_t cow : 1; // custom
-    uint64_t reserved : 1; // custom
-    uint64_t pfn : 40;
-    uint64_t : 6;
-    uint64_t owned : 1; // custom
-    uint64_t protection_key : 4;
-    uint64_t xd : 1;
+export union HARDWARE_PTE {
+    struct {
+        uint64_t p : 1;
+        uint64_t w : 1;
+        uint64_t u : 1;
+        uint64_t pwt : 1;
+        uint64_t pcd : 1;
+        uint64_t a : 1;
+        uint64_t d : 1;
+        uint64_t ps : 1;
+        uint64_t g : 1;
+        uint64_t allow_write : 1; // custom
+        uint64_t cow : 1; // custom
+        uint64_t reserved : 1; // custom
+        uint64_t pfn : 40;
+        uint64_t : 6;
+        uint64_t owned : 1; // custom
+        uint64_t protection_key : 4;
+        uint64_t xd : 1;
+    };
+    uint64_t value;
 };
 
 static_assert(sizeof(HARDWARE_PTE) == sizeof(uint64_t));
