@@ -1190,14 +1190,19 @@ extern "C" NTSTATUS NtWaitForMultipleObjects(uint32_t object_count, HANDLE* obje
         objs[i] = &objrw.get();
     }
 
-    auto ret = wait_for_objects(span(objs.data(), object_count), wait_any,
-                                alertable, t);
+    while (true) {
+        auto ret = wait_for_objects(span(objs.data(), object_count), wait_any,
+                                    true, t);
 
-    for (unsigned int i = 0; i < object_count; i++) {
-        object_release(*objs[i]);
+        if (!alertable && ret == nt_status::ALERTED)
+            continue; // FIXME - adjust timeout
+
+        for (unsigned int i = 0; i < object_count; i++) {
+            object_release(*objs[i]);
+        }
+
+        return ret;
     }
-
-    return ret;
 }
 
 void set_current_thread_waiting(bool interruptible) {
