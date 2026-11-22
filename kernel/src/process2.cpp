@@ -2099,9 +2099,17 @@ static nt_status terminate_other_threads(nt_status exit_status) {
                 }
 
                 t->exit_status = exit_status;
-                terminate_thread(*t, false);
+                t->acquire();
+            }
+
+            terminate_thread(*t, false);
+
+            {
+                lock_guard lock(p.threads_lock);
                 remove_entry_list(t->process_le);
             }
+
+            t->release();
         }
     }
 
