@@ -15,7 +15,6 @@ set(SRC_FILES src/ws2_32.def
 add_library(ws2_32 SHARED ${SRC_FILES})
 
 target_compile_options(ws2_32 PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
-target_link_options(ws2_32 PRIVATE -nostartfiles -nostdlib)
 
 target_link_libraries(ws2_32 PRIVATE unique_handle errno print ipv4 timepage)
 target_link_libraries(ws2_32 PRIVATE moxnox)

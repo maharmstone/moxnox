@@ -601,9 +601,3 @@ struct protoent* getprotobyname(const char* name) {
 
     return nullptr;
 }
-
-extern "C"
-int DllMainCRTStartup(HANDLE /*hinstDLL*/, uint32_t /*dwReason*/,
-                      void* /*lpvReserved*/) {
-    return 1;
-}
