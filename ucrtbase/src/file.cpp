@@ -506,7 +506,7 @@ FILE* _fopen(const char* pathname, const char* mode) {
 }
 
 extern "C"
-size_t __fread_nolock(void* ptr, size_t size, size_t n, FILE* file) {
+size_t _fread_nolock(void* ptr, size_t size, size_t n, FILE* file) {
     auto& f = *reinterpret_cast<_FILE*>(file);
     IO_STATUS_BLOCK iosb;
     size_t bytes = size * n, read = 0;
@@ -632,7 +632,7 @@ size_t __fread_nolock(void* ptr, size_t size, size_t n, FILE* file) {
 extern "C"
 size_t _fread(void* ptr, size_t size, size_t n, FILE* file) {
     __lock_file(file);
-    auto ret = __fread_nolock(ptr, size, n, file);
+    auto ret = _fread_nolock(ptr, size, n, file);
     __unlock_file(file);
 
     return ret;
@@ -992,7 +992,7 @@ int __fgetc_nolock(FILE* file) {
         return (int)c;
     }
 
-    auto ret = __fread_nolock(&c, 1, 1, file);
+    auto ret = _fread_nolock(&c, 1, 1, file);
     if (ret == 0)
         return EOF;
 

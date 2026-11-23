@@ -33,7 +33,7 @@ fgets = _fgets
 fseek = _fseek
 ftell = _ftell
 remove = _remove
-_fread_nolock = __fread_nolock
+_fread_nolock
 _fgetc_nolock = __fgetc_nolock
 _fseeki64_nolock = __fseeki64_nolock
 _fseeki64 = __fseeki64
