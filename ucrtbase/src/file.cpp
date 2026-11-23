@@ -106,7 +106,7 @@ struct fd {
 extern "C" void (*mn_handle_exec_info)(exec_info* info) __declspec(dllimport);
 
 static void handle_exec_info(exec_info* info);
-extern "C" size_t __fwrite_nolock(const void* ptr, size_t size, size_t n, FILE* file);
+extern "C" size_t _fwrite_nolock(const void* ptr, size_t size, size_t n, FILE* file);
 extern "C" int _fflush_nolock(FILE* file);
 extern "C" int __isatty(int fd);
 
@@ -194,7 +194,7 @@ extern "C"
 int __fputc_nolock(int c, FILE* file) {
     auto v = (uint8_t)c;
 
-    auto ret = __fwrite_nolock(&v, 1, 1, file);
+    auto ret = _fwrite_nolock(&v, 1, 1, file);
 
     if (ret == 0)
         return EOF;
@@ -647,7 +647,7 @@ size_t _fread(void* ptr, size_t size, size_t n, FILE* file) {
 }
 
 extern "C"
-size_t __fwrite_nolock(const void* ptr, size_t size, size_t n, FILE* file) {
+size_t _fwrite_nolock(const void* ptr, size_t size, size_t n, FILE* file) {
     auto& f = *reinterpret_cast<_FILE*>(file);
     auto bytes = size * n;
 
@@ -793,7 +793,7 @@ size_t __fwrite_nolock(const void* ptr, size_t size, size_t n, FILE* file) {
 extern "C"
 size_t fwrite(const void* ptr, size_t size, size_t n, FILE* file) {
     __lock_file(file);
-    auto ret = __fwrite_nolock(ptr, size, n, file);
+    auto ret = _fwrite_nolock(ptr, size, n, file);
     __unlock_file(file);
 
     return ret;
@@ -957,7 +957,7 @@ int fputs(const char* s, FILE* file) {
     auto len = strlen(s);
 
     __lock_file(file);
-    auto ret = __fwrite_nolock(s, 1, len, file);
+    auto ret = _fwrite_nolock(s, 1, len, file);
     __unlock_file(file);
 
     if (ret != len)
@@ -973,14 +973,14 @@ int puts(const char* s) {
     const char c = '\n';
 
     __lock_file(f);
-    auto ret = __fwrite_nolock(s, 1, len, f);
+    auto ret = _fwrite_nolock(s, 1, len, f);
 
     if (ret != len) {
         __unlock_file(f);
         return EOF;
     }
 
-    ret = __fwrite_nolock(&c, 1, 1, f);
+    ret = _fwrite_nolock(&c, 1, 1, f);
     __unlock_file(f);
 
     if (ret != len)
@@ -3714,7 +3714,7 @@ wint_t fputwc(wchar_t wc, FILE* file) {
         s[2] = (char)(0x80 | ((cp >> 6) & 0x3f));
         s[3] = (char)(0x80 | (cp & 0x3f));
 
-        auto ret = __fwrite_nolock(s, 1, 4, file);
+        auto ret = _fwrite_nolock(s, 1, 4, file);
         if (ret != 4) {
             f.error = true;
             __unlock_file(file);
@@ -3743,7 +3743,7 @@ wint_t fputwc(wchar_t wc, FILE* file) {
         s[0] = (char)(0xc0 | (wc >> 6));
         s[1] = (char)(0x80 | (wc & 0x3f));
 
-        auto ret = __fwrite_nolock(s, 1, 2, file);
+        auto ret = _fwrite_nolock(s, 1, 2, file);
         if (ret != 2) {
             f.error = true;
             __unlock_file(file);
@@ -3758,7 +3758,7 @@ wint_t fputwc(wchar_t wc, FILE* file) {
         s[1] = (char)(0x80 | ((wc >> 6) & 0x3f));
         s[2] = (char)(0x80 | (wc & 0x3f));
 
-        auto ret = __fwrite_nolock(s, 1, 3, file);
+        auto ret = _fwrite_nolock(s, 1, 3, file);
         if (ret != 3) {
             f.error = true;
             __unlock_file(file);

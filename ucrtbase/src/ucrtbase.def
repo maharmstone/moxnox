@@ -15,7 +15,7 @@ _errno = __errno
 fread = _fread
 fwrite
 fclose = _fclose
-_fwrite_nolock = __fwrite_nolock
+_fwrite_nolock
 fputs
 puts
 localeconv = _localeconv
