@@ -724,16 +724,9 @@ size_t _fwrite_nolock(const void* ptr, size_t size, size_t n, FILE* file) {
                 auto sp = span(f.buffer.data, to_flush);
 
                 while (!sp.empty()) {
-                    while (true) {
-                        status = NtWriteFile(f.h, 0, nullptr, nullptr, &iosb,
-                                             sp.data(), (uint32_t)sp.size(),
-                                             nullptr, nullptr);
-                        if (status == nt_status::USER_APC)
-                            continue;
-
-                        break;
-                    }
-
+                    status = NtWriteFile(f.h, 0, nullptr, nullptr, &iosb,
+                                         sp.data(), (uint32_t)sp.size(),
+                                         nullptr, nullptr);
                     if (!success(status)) {
                         *__errno() = nt_status_to_errno(status);
                         f.error = true;
@@ -768,23 +761,19 @@ size_t _fwrite_nolock(const void* ptr, size_t size, size_t n, FILE* file) {
                 return written / size;
         }
 
-        while (true) {
+        while (bytes > 0) {
             status = NtWriteFile(f.h, 0, nullptr, nullptr, &iosb, ptr,
                                  (uint32_t)bytes, nullptr, nullptr);
-            if (status == nt_status::USER_APC)
-                continue;
+            if (!success(status)) {
+                *__errno() = nt_status_to_errno(status);
+                f.error = true;
+                return 0;
+            }
 
-            break;
-        }
-
-        if (!success(status)) {
-            *__errno() = nt_status_to_errno(status);
-            f.error = true;
-            return 0;
-        }
-
-        if (success(status))
+            ptr = (uint8_t*)ptr + iosb.Information;
+            bytes -= iosb.Information;
             written += iosb.Information;
+        }
 
         return written / size;
     }
