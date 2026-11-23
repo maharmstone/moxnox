@@ -6,6 +6,7 @@
 #include <array>
 #include <optional>
 #include <algorithm>
+#include <mutex>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -31,7 +32,6 @@ import timepage;
 import harfbuzz;
 import freetype;
 import emoji;
-import kernelbase;
 import moxnox_ioctls;
 
 using namespace std;
@@ -196,18 +196,6 @@ static uint32_t bg_colour_index = 0, fg_colour_index = 7;
 static bool bg_bright = false, fg_bright = false, bold = false, italic = false;
 static uint32_t bg_colour = DEFAULT_BG_COLOUR, fg_colour = DEFAULT_FG_COLOUR;
 static bool reverse_video = false;
-
-void* operator new(size_t count) {
-    return malloc(count);
-}
-
-void operator delete(void* ptr) noexcept {
-    free(ptr);
-}
-
-void operator delete(void* ptr, size_t) noexcept {
-    free(ptr);
-}
 
 void do_print(string_view s) {
     auto teb = NtCurrentTeb();
@@ -1992,27 +1980,369 @@ static void recv_data_fb(string_view s) {
     }
 }
 
-static void handle_ctrl_alt_delete(HANDLE client_handle) {
-    STARTUPINFOW si;
-    PROCESS_INFORMATION pi;
+static constexpr uint32_t bytes_to_pages(size_t bytes) {
+    return (uint32_t)((bytes + PAGE_SIZE - 1) / PAGE_SIZE);
+}
 
-    memset(&si, 0, sizeof(si));
-    si.cb = sizeof(si);
-    memset(&pi, 0, sizeof(pi));
+static size_t calc_environment_size(const char16_t* env) {
+    size_t ret = 0;
 
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput = client_handle;
-    si.hStdOutput = client_handle;
-    si.hStdError = client_handle;
+    while (*env) {
+        auto sv = u16string_view(env);
 
-    if (!CreateProcessW(u"/bin/reboot.exe", nullptr, nullptr, nullptr, false,
-                        0, nullptr, nullptr, &si, &pi)) {
-        print_stderr("failed to run reboot.exe\n");
-        return;
+        ret += sv.size() * sizeof(char16_t);
+        ret += sizeof(char16_t);
+
+        env += sv.size() + 1;
     }
 
-    NtClose(pi.hProcess);
-    NtClose(pi.hThread);
+    ret += sizeof(char16_t);
+
+    return ret;
+}
+
+static nt_status create_process(u16string_view exe, u16string_view cmdline,
+                                const char16_t* environment, optional<HANDLE> orig_stdin,
+                                optional<HANDLE> orig_stdout, optional<HANDLE> orig_stderr,
+                                bool create_suspended, optional<u16string_view> curdir,
+                                unique_handle& proc, unique_handle& thread) {
+    HANDLE h, stdinh = 0, stdouth, stderrh, curdirh = 0;
+    unique_handle file, sect, curdiruh;
+    OBJECT_ATTRIBUTES oa;
+    UNICODE_STRING us;
+    IO_STATUS_BLOCK iosb;
+    SECTION_IMAGE_INFORMATION sii;
+    PROCESS_BASIC_INFORMATION pbi;
+    RTL_USER_PROCESS_PARAMETERS params;
+    PEB newpeb;
+    INITIAL_TEB initial_teb;
+    CONTEXT context;
+    CLIENT_ID client_id;
+    nt_status status;
+    auto teb = NtCurrentTeb();
+    auto peb = teb->ProcessEnvironmentBlock;
+
+    // open file
+
+    memset(&oa, 0, sizeof(oa));
+    oa.Length = sizeof(OBJECT_ATTRIBUTES);
+    oa.ObjectName = &us;
+    oa.RootDirectory = peb->ProcessParameters->CurrentDirectory.Handle;
+
+    us.Length = us.MaximumLength = (uint16_t)(exe.size() * sizeof(char16_t));
+    us.Buffer = (char16_t*)exe.data();
+
+    status = NtOpenFile(&h, FILE_READ_DATA, &oa, &iosb, 0,
+                        FILE_NON_DIRECTORY_FILE);
+    if (!success(status))
+        return status;
+
+    file.reset(h);
+
+    // create section
+
+    status = NtCreateSection(&h, 0, nullptr, nullptr, PAGE_READONLY, SEC_IMAGE,
+                             file.get());
+    if (!success(status))
+        return status;
+
+    sect.reset(h);
+
+    status = NtQuerySection(sect.get(), SECTION_INFORMATION_CLASS::ImageInformation,
+                            &sii, sizeof(SECTION_IMAGE_INFORMATION), nullptr);
+    if (!success(status))
+        return status;
+
+    // create process
+
+    status = NtCreateProcess(&h, MAXIMUM_ALLOWED, nullptr, NtCurrentProcess(),
+                             false, sect.get(), 0, 0);
+    if (!success(status))
+        return status;
+
+    proc.reset(h);
+
+    // duplicate handles
+
+    if (!orig_stdin.has_value())
+        orig_stdin = peb->ProcessParameters->StandardInput;
+
+    if (!orig_stdout.has_value())
+        orig_stdout = peb->ProcessParameters->StandardOutput;
+
+    if (!orig_stderr.has_value())
+        orig_stderr = peb->ProcessParameters->StandardError;
+
+    status = NtDuplicateObject(NtCurrentProcess(), *orig_stdin,
+                               proc.get(), &stdinh, FILE_READ_DATA, 0,
+                               DUPLICATE_SAME_ATTRIBUTES);
+    if (!success(status))
+        return status;
+
+    status = NtDuplicateObject(NtCurrentProcess(), *orig_stdout,
+                               proc.get(), &stdouth, FILE_WRITE_DATA, 0,
+                               DUPLICATE_SAME_ATTRIBUTES);
+    if (!success(status))
+        return status;
+
+    status = NtDuplicateObject(NtCurrentProcess(), *orig_stderr,
+                               proc.get(), &stderrh, FILE_WRITE_DATA, 0,
+                               DUPLICATE_SAME_ATTRIBUTES);
+    if (!success(status))
+        return status;
+
+    if (curdir.has_value()) {
+        us.Length = us.MaximumLength = (uint16_t)(curdir->size() * sizeof(char16_t));
+        us.Buffer = (char16_t*)curdir->data();
+
+        status = NtCreateFile(&h, FILE_TRAVERSE, &oa, &iosb, nullptr,
+                              FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN,
+                              FILE_DIRECTORY_FILE, nullptr, 0);
+        if (!success(status))
+            return status;
+
+        curdiruh.reset(h);
+
+        status = NtDuplicateObject(NtCurrentProcess(), curdiruh.get(),
+                                   proc.get(), &curdirh, 0, 0,
+                                   DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS);
+        if (!success(status))
+            return status;
+    } else {
+        status = NtDuplicateObject(NtCurrentProcess(), peb->ProcessParameters->CurrentDirectory.Handle,
+                                   proc.get(), &curdirh, 0, 0,
+                                   DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS);
+        if (!success(status))
+            return status;
+    }
+
+    // take copy of PEB
+
+    status = NtQueryInformationProcess(proc.get(), PROCESS_INFORMATION_CLASS::BasicInformation,
+                                       &pbi, sizeof(pbi), nullptr);
+    if (!success(status))
+        return status;
+
+    status = NtReadVirtualMemory(proc.get(), pbi.PebBaseAddress, &newpeb,
+                                 sizeof(PEB), nullptr);
+    if (!success(status))
+        return status;
+
+    // take copy of ProcessParameters
+
+    status = NtReadVirtualMemory(proc.get(), newpeb.ProcessParameters, &params,
+                                 sizeof(params), nullptr);
+    if (!success(status))
+        return status;
+
+    // change handles and set params
+
+    params.StandardInput = stdinh;
+    params.StandardOutput = stdouth;
+    params.StandardError = stderrh;
+    params.CurrentDirectory.Handle = curdirh;
+    params.StartingX = 0;
+    params.StartingY = 0;
+    params.CountX = 0;
+    params.CountY = 0;
+    params.CountCharsX = 0;
+    params.CountCharsY = 0;
+    params.FillAttribute = 0;
+    params.WindowFlags = 0;
+    params.ShowWindowFlags = 0;
+
+    if (curdir.has_value()) {
+        FILE_NAME_INFORMATION fni;
+
+        status = NtQueryInformationFile(curdiruh.get(), &iosb, &fni, sizeof(fni),
+                                        FILE_INFORMATION_CLASS::NameInformation);
+        if (!success(status) && status != nt_status::BUFFER_OVERFLOW)
+            return status;
+
+        size_t len = offsetof(FILE_NAME_INFORMATION, FileName) + fni.FileNameLength;
+
+        unique_ptr<uint8_t[]> buf;
+
+        buf.reset(new uint8_t[len]);
+        if (!buf) {
+            print_stderr("new failed\n");
+            return nt_status::INSUFFICIENT_RESOURCES;
+        }
+
+        auto& fni2 = *(FILE_NAME_INFORMATION*)buf.get();
+
+        status = NtQueryInformationFile(curdiruh.get(), &iosb, &fni2, (uint32_t)len,
+                                        FILE_INFORMATION_CLASS::NameInformation);
+        if (!success(status))
+            return status;
+
+        auto sv = u16string_view(fni2.FileName, fni2.FileNameLength / sizeof(char16_t));
+
+        static const u16string_view prefix = u"C:";
+
+        for (size_t i = 0; i < sv.size(); i++) {
+            if (fni2.FileName[i] == u'/')
+                fni2.FileName[i] = u'\\';
+        }
+
+        status = NtWriteVirtualMemory(proc.get(), params.CurrentDirectory.DosPath.Buffer,
+                                      prefix.data(), (uint32_t)(prefix.size() * sizeof(char16_t)),
+                                      nullptr);
+        if (!success(status))
+            return status;
+
+        status = NtWriteVirtualMemory(proc.get(), params.CurrentDirectory.DosPath.Buffer + prefix.size(),
+                                      fni2.FileName,
+                                      (uint32_t)min(sv.size() * sizeof(char16_t), (size_t)params.CurrentDirectory.DosPath.MaximumLength - (prefix.size() * sizeof(char16_t))),
+                                      nullptr);
+        if (!success(status))
+            return status;
+
+        params.CurrentDirectory.DosPath.Length = min(params.CurrentDirectory.DosPath.MaximumLength, (uint16_t)((prefix.size() * sizeof(char16_t)) + fni2.FileNameLength));
+    } else {
+        mn_peb_lock lock;
+        lock_guard lg(lock);
+
+        // copy current directory string
+
+        params.CurrentDirectory.DosPath.Length = min(params.CurrentDirectory.DosPath.MaximumLength,
+                                                     peb->ProcessParameters->CurrentDirectory.DosPath.Length);
+
+        status = NtWriteVirtualMemory(proc.get(), params.CurrentDirectory.DosPath.Buffer,
+                                      peb->ProcessParameters->CurrentDirectory.DosPath.Buffer,
+                                      params.CurrentDirectory.DosPath.Length, nullptr);
+        if (!success(status))
+            return status;
+    }
+
+    // allocate misc block
+
+    size_t misc_block_size = (cmdline.size() + 1) * sizeof(char16_t);
+    unique_ptr<uint8_t[]> misc_block;
+    void* proc_misc_block = nullptr;
+
+    {
+        mn_peb_lock lock;
+        lock_guard lg(lock);
+
+        size_t environment_size;
+
+        if (environment)
+            environment_size = calc_environment_size(environment);
+        else
+            environment_size = peb->ProcessParameters->EnvironmentSize;
+
+        misc_block_size += environment_size;
+
+        misc_block.reset(new uint8_t[misc_block_size]);
+        if (!misc_block) {
+            print_stderr("new failed\n");
+            return nt_status::INSUFFICIENT_RESOURCES;
+        }
+
+        // allocate misc block in process
+
+        size_t proc_misc_block_size = bytes_to_pages(misc_block_size) << PAGE_SHIFT;
+
+        status = NtAllocateVirtualMemory(proc.get(), &proc_misc_block, 0,
+                                         &proc_misc_block_size,
+                                         MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (!success(status))
+            return status;
+
+        // copy cmdline
+
+        auto ptr = misc_block.get();
+
+        memcpy(misc_block.get(), cmdline.data(), cmdline.size() * sizeof(char16_t));
+        ptr += cmdline.size() * sizeof(char16_t);
+
+        *ptr = 0;
+        ptr++;
+
+        params.CommandLine.Length = (uint16_t)(cmdline.size() * sizeof(char16_t));
+        params.CommandLine.MaximumLength = (uint16_t)((cmdline.size() + 1) * sizeof(char16_t));
+        params.CommandLine.Buffer = (char16_t*)proc_misc_block;
+
+        if (environment)
+            memcpy(ptr, environment, environment_size);
+        else {
+            memcpy(ptr, peb->ProcessParameters->Environment,
+                   peb->ProcessParameters->EnvironmentSize);
+        }
+
+        params.Environment = (uint8_t*)proc_misc_block + (ptr - misc_block.get());
+        params.EnvironmentSize = environment_size;
+    }
+
+    // copy misc block
+
+    status = NtWriteVirtualMemory(proc.get(), proc_misc_block, misc_block.get(),
+                                  (uint32_t)misc_block_size, nullptr);
+    if (!success(status))
+        return status;
+
+    // write ProcessParameters back
+
+    status = NtWriteVirtualMemory(proc.get(), newpeb.ProcessParameters, &params,
+                                  sizeof(params), nullptr);
+    if (!success(status))
+        return status;
+
+    // create thread
+
+    memset(&initial_teb, 0, sizeof(initial_teb));
+
+    void* stack = nullptr;
+    auto stack_size = max((size_t)0x100000, sii.MaximumStackSize);
+
+    status = NtAllocateVirtualMemory(proc.get(), &stack, 0, &stack_size,
+                                     MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (!success(status))
+        return status;
+
+    initial_teb.OldStackBase = nullptr;
+    initial_teb.OldStackLimit = nullptr;
+    initial_teb.StackBase = (uint8_t*)stack + stack_size;
+    initial_teb.StackLimit = (uint8_t*)stack + stack_size;
+    initial_teb.StackAllocationBase = stack;
+
+    memset(&context, 0, sizeof(context));
+#ifdef __aarch64__
+    context.Pc = (uintptr_t)sii.TransferAddress;
+    context.Sp = (uintptr_t)initial_teb.StackBase - 0x10;
+#elifdef __x86_64__
+    context.Rip = (uintptr_t)sii.TransferAddress;
+    context.Rsp = (uintptr_t)initial_teb.StackBase - 0x28; // 0x20 bytes for MS ABI, 0x8 for return pointer
+    context.EFlags = 0x200;
+#endif
+    context.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS;
+
+    status = NtCreateThread(&h, THREAD_ALL_ACCESS, nullptr, proc.get(),
+                            &client_id, &context, &initial_teb, true);
+    if (!success(status))
+        return status;
+
+    thread.reset(h);
+
+    if (!create_suspended) {
+        status = NtResumeThread(thread.get(), nullptr);
+        if (!success(status))
+            return status;
+    }
+
+    return nt_status::SUCCESS;
+}
+
+static void handle_ctrl_alt_delete(HANDLE client_handle) {
+    nt_status status;
+    unique_handle proc, thread;
+
+    status = create_process(u"/bin/reboot.exe", u"reboot.exe", nullptr,
+                            client_handle, client_handle, client_handle,
+                            false, nullopt, proc, thread);
+    if (!success(status))
+        print_stderr("create_process returned {} for reboot.exe\n", status);
 }
 
 static string_view get_os_version() {
@@ -2180,49 +2510,32 @@ static void run_shell(const char16_t* exe, void (*recv_func)(string_view),
     flush_func();
 
     auto do_run_shell = [&exe, &proc, &client_handle]() -> bool {
-        STARTUPINFOW si;
-        PROCESS_INFORMATION pi;
-        char16_t* u16home = nullptr;
+        unique_ptr<char16_t[]> u16home;
+        size_t u16homelen;
+        unique_handle thread;
         nt_status status;
 
         auto home = getenv("HOME");
         if (home && home[0]) {
-            auto len = utf8_to_utf16_len(home);
+            u16homelen = utf8_to_utf16_len(home);
 
-            u16home = (char16_t*)malloc((len + 1) * sizeof(char16_t));
+            u16home.reset(new char16_t[u16homelen]);
             if (!u16home) {
-                print_stderr("malloc failed\n");
+                print_stderr("new failed\n");
                 return false;
             }
 
-            utf8_to_utf16(span(u16home, len), home);
-            u16home[len] = 0;
+            utf8_to_utf16(span(u16home.get(), u16homelen), home);
         }
 
-        memset(&si, 0, sizeof(si));
-        si.cb = sizeof(si);
-        memset(&pi, 0, sizeof(pi));
-
-        si.dwFlags = STARTF_USESTDHANDLES;
-        si.hStdInput = client_handle.get();
-        si.hStdOutput = client_handle.get();
-        si.hStdError = client_handle.get();
-
-        if (!CreateProcessW(exe, nullptr, nullptr, nullptr, false, CREATE_SUSPENDED,
-                            nullptr, u16home, &si, &pi)) {
-            print_stderr("CreateProcessW failed (error {})\n", GetLastError());
-
-            if (u16home)
-                free(u16home);
-
+        status = create_process(exe, exe, nullptr, client_handle.get(),
+                                client_handle.get(), client_handle.get(), true,
+                                u16home ? u16string_view(u16home.get(), u16homelen) : optional<u16string_view>{nullopt},
+                                proc, thread);
+        if (!success(status)) {
+            print_stderr("create_process returned {}\n", status);
             return false;
         }
-
-        if (u16home)
-            free(u16home);
-
-        proc.reset(pi.hProcess);
-        unique_handle thread{pi.hThread};
 
         status = NtSetInformationProcess(proc.get(), PROCESS_INFORMATION_CLASS::MoxnoxNewSession,
                                          nullptr, 0);
@@ -2591,49 +2904,32 @@ static int do_serial_console(const char16_t* exe) {
     serial_print(welcome_message2);
 
     auto do_run_shell = [&proc, &client_handle, &exe]() -> bool {
-        STARTUPINFOW si;
-        PROCESS_INFORMATION pi;
-        char16_t* u16home = nullptr;
+        unique_ptr<char16_t[]> u16home;
+        size_t u16homelen;
+        unique_handle thread;
         nt_status status;
 
         auto home = getenv("HOME");
         if (home && home[0]) {
-            auto len = utf8_to_utf16_len(home);
+            u16homelen = utf8_to_utf16_len(home);
 
-            u16home = (char16_t*)malloc((len + 1) * sizeof(char16_t));
+            u16home.reset(new char16_t[u16homelen]);
             if (!u16home) {
-                print_stderr("malloc failed\n");
-                return 1;
+                print_stderr("new failed\n");
+                return false;
             }
 
-            utf8_to_utf16(span(u16home, len), home);
-            u16home[len] = 0;
+            utf8_to_utf16(span(u16home.get(), u16homelen), home);
         }
 
-        memset(&si, 0, sizeof(si));
-        si.cb = sizeof(si);
-        memset(&pi, 0, sizeof(pi));
-
-        si.dwFlags = STARTF_USESTDHANDLES;
-        si.hStdInput = client_handle.get();
-        si.hStdOutput = client_handle.get();
-        si.hStdError = client_handle.get();
-
-        if (!CreateProcessW(exe, nullptr, nullptr, nullptr, false, CREATE_SUSPENDED,
-                            nullptr, u16home, &si, &pi)) {
-            print_stderr("CreateProcessW failed (error {})\n", GetLastError());
-
-            if (u16home)
-                free(u16home);
-
+        status = create_process(exe, exe, nullptr, client_handle.get(),
+                                client_handle.get(), client_handle.get(), true,
+                                u16home ? u16string_view(u16home.get(), u16homelen) : optional<u16string_view>{nullopt},
+                                proc, thread);
+        if (!success(status)) {
+            print_stderr("create_process returned {}\n", status);
             return false;
         }
-
-        if (u16home)
-            free(u16home);
-
-        proc.reset(pi.hProcess);
-        unique_handle thread{pi.hThread};
 
         status = NtSetInformationProcess(proc.get(), PROCESS_INFORMATION_CLASS::MoxnoxNewSession,
                                          nullptr, 0);
