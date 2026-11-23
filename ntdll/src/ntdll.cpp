@@ -50,9 +50,7 @@ void do_print(string_view s) {
                                   nullptr, nullptr, &iosb, s.data(),
                                   (uint32_t)s.size(), nullptr, nullptr);
 
-        if (status == nt_status::USER_APC)
-            continue;
-        else if (!success(status) || iosb.Information == s.size())
+        if (!success(status) || iosb.Information == s.size())
             return;
 
         s = string_view(s.data() + iosb.Information, s.size() - iosb.Information);
