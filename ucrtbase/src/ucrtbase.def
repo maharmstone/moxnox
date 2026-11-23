@@ -136,7 +136,7 @@ getchar
 _isatty = __isatty
 _get_osfhandle = __get_osfhandle
 _write = __write
-_read = __read
+_read
 setlocale = _setlocale
 _stricmp = __stricmp
 _access = __access

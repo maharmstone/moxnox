@@ -1860,7 +1860,7 @@ int __write(int fd, const void* buffer, unsigned int count) {
 }
 
 extern "C"
-int __read(int fd, void* buffer, size_t count) {
+int _read(int fd, void* buffer, size_t count) {
     IO_STATUS_BLOCK iosb;
 
     auto h = (HANDLE)__get_osfhandle(fd);
