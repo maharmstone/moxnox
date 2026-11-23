@@ -230,7 +230,7 @@ extern "C"
 ssize_t recvmsg(int s, msghdr* msg, int flags) {
     IO_STATUS_BLOCK iosb;
     MOXNOX_SOCKET_RECVMSG params;
-    size_t recv_bytes, fromlen;
+    size_t recv_bytes = 0, fromlen;
     size_t num_handles, orig_num_handles;
     HANDLE* handles = nullptr;
 
@@ -260,6 +260,7 @@ ssize_t recvmsg(int s, msghdr* msg, int flags) {
     }
 
     orig_num_handles = num_handles;
+    num_handles = 0;
 
     fromlen = msg->msg_namelen;
 
@@ -268,22 +269,33 @@ ssize_t recvmsg(int s, msghdr* msg, int flags) {
     params.flags = flags & ~MSG_NOSIGNAL;
     params.from = msg->msg_name;
     params.fromlen = &fromlen;
-    params.recv_bytes = &recv_bytes;
-    params.num_handles = &num_handles;
-    params.handles = handles;
 
     auto h = _get_osfhandle((int)s);
     if (h == -1)
         return -1;
 
     while (true) {
+        size_t num_handles2 = orig_num_handles - num_handles;
+        size_t recv_bytes2;
+
+        params.num_handles = &num_handles2;
+        params.handles = handles + num_handles;
+        params.recv_bytes = &recv_bytes2;
+
         auto sig_count = mn_handled_nonrestartable_signal_count();
 
         auto status = NtDeviceIoControlFile((HANDLE)h, 0, nullptr, nullptr, &iosb,
                                             IOCTL_MOXNOX_SOCKET_RECVMSG, &params,
                                             (uint32_t)sizeof(params), nullptr, 0);
+        if (success(status)) {
+            recv_bytes += recv_bytes2;
+            num_handles += num_handles2;
+        }
 
         if (status == nt_status::USER_APC) {
+            if (recv_bytes > 0)
+                break;
+
             if (mn_handled_nonrestartable_signal_count() != sig_count) {
                 *_errno() = EINTR;
 
