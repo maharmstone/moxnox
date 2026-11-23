@@ -1419,6 +1419,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
 extern "C"
 ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
     IO_STATUS_BLOCK iosb;
+    ssize_t written_bytes = 0;
     LARGE_INTEGER off;
 
     auto h = (HANDLE)_get_osfhandle(fd);
@@ -1433,7 +1434,13 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         auto status = NtWriteFile(h, 0, nullptr, nullptr, &iosb, buf,
                                   (uint32_t)count, &off, nullptr);
 
+        if (success(status))
+            written_bytes += iosb.Information;
+
         if (status == nt_status::USER_APC) {
+            if (written_bytes > 0)
+                return written_bytes;
+
             if (mn_handled_nonrestartable_signal_count() != sig_count) {
                 *_errno() = EINTR;
                 return -1;
@@ -1450,7 +1457,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         break;
     }
 
-    return (int)iosb.Information;
+    return written_bytes;
 }
 
 extern "C"
