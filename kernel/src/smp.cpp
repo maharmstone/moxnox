@@ -690,8 +690,6 @@ export bool init_smp() {
             print("Ignoring high-numbered CPUs (FIXME)\n"); // FIXME
             ap_left--;
         } else {
-            print("CPU found\n");
-
             *ap_rsp = (uint64_t)((uint8_t*)phys_address(boot_info[i].stack_pa) + PAGE_SIZE - 0x20); // 0x20 for MS ABI
 
             start_ap(boot_info[i].id);

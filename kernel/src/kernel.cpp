@@ -275,6 +275,11 @@ void main_thread(void* ctx) {
         cpu_ids[0] = bsp_id;
     }
 
+    if (num_cpus == 1)
+        print("1 CPU core found\n");
+    else
+        print("{} CPU cores found\n", num_cpus);
+
     protect_kernel_pages();
 
     if (!create_dev_null())
