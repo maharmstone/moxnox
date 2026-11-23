@@ -1826,7 +1826,7 @@ int __isatty(int fd) {
 }
 
 extern "C"
-int __write(int fd, const void* buffer, unsigned int count) {
+int _write(int fd, const void* buffer, unsigned int count) {
     IO_STATUS_BLOCK iosb;
 
     auto h = (HANDLE)__get_osfhandle(fd);

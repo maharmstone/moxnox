@@ -135,7 +135,7 @@ _utime64 = __utime64
 getchar
 _isatty = __isatty
 _get_osfhandle = __get_osfhandle
-_write = __write
+_write
 _read
 setlocale = _setlocale
 _stricmp = __stricmp
