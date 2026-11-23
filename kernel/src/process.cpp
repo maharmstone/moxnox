@@ -280,7 +280,7 @@ export nt_status pin_iovecs_for_reading(process& proc,
                                         span<const iovec> vecs,
                                         optional<rangelock_req>& rlr,
                                         span<const uint8_t>*& spans,
-                                        size_t& num_spans);
+                                        size_t& num_spans, uint64_t offset = 0);
 export void send_tracepoint_ipi();
 export void print_protect(uint32_t protect);
 export void set_pending_signal3(process& proc, int sig, object_ref& victim);

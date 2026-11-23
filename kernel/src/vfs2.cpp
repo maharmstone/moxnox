@@ -1862,6 +1862,7 @@ static nt_status file_readv(file& f, span<const uint8_t> inbuf,
 static nt_status file_writev(file& f, span<const uint8_t> inbuf,
                              span<uint8_t> outbuf, uintptr_t& written) {
     nt_status status;
+    uint64_t vec_offset = 0;
     auto& t = *get_current_thread();
 
     if (inbuf.size() < sizeof(iovec))
@@ -1873,56 +1874,73 @@ static nt_status file_writev(file& f, span<const uint8_t> inbuf,
     auto vec = span((iovec*)inbuf.data(), inbuf.size() / sizeof(iovec));
     auto& written_bytes = *(uint64_t*)outbuf.data();
 
-    optional<rangelock_req> rlr;
-    span<const uint8_t>* spans = nullptr;
-    size_t num_spans = 0;
-
     for (auto& v : vec) {
         if (v.iov_len > 0 && (!is_userspace_address((uintptr_t)v.iov_base) || !is_userspace_address((uintptr_t)v.iov_base + v.iov_len - 1)))
             return nt_status::ACCESS_VIOLATION;
     }
 
-    status = pin_iovecs_for_reading(*t.proc, vec, rlr, spans, num_spans);
-    if (!success(status))
-        return status;
+    written_bytes = 0;
 
-    status = f.write(span(spans, num_spans), written_bytes);
+    while (true) {
+        uint64_t written_bytes2;
+        optional<rangelock_req> rlr;
+        span<const uint8_t>* spans = nullptr;
+        size_t num_spans = 0;
 
-    rlr.reset();
+        status = pin_iovecs_for_reading(*t.proc, vec, rlr, spans, num_spans,
+                                        vec_offset);
+        if (!success(status))
+            return status;
 
-    auto spans_size = sizeof(span<const uint8_t>) * num_spans;
-    if (spans_size > PAGE_SIZE)
-        vfree(spans, spans_size);
-    else if (spans_size > 0)
-        free(spans);
+        status = f.write(span(spans, num_spans), written_bytes2);
 
-    if (status == nt_status::PIPE_BROKEN) {
-        auto mask = ((sigset_t)1 << (SIGPIPE - 1));
+        rlr.reset();
 
-        {
-            sync_lock sl;
-            lock_guard lock(sl);
+        auto spans_size = sizeof(span<const uint8_t>) * num_spans;
+        if (spans_size > PAGE_SIZE)
+            vfree(spans, spans_size);
+        else if (spans_size > 0)
+            free(spans);
 
-            if (t.blocked_signals & mask)
-                t.pending_signals |= mask;
-            else {
-                auto p = new pending_apc;
+        if (success(status))
+            written_bytes += written_bytes2;
 
-                if (p) { // if we OOM, just drop the signal
-                    p->routine = (PS_APC_ROUTINE)(t.proc->ntdll_addr + mn_posix_signal);
-                    p->arg1 = (uintptr_t)SIGPIPE;
-                    p->arg2 = 0;
-                    p->arg3 = 0;
+        if (status == nt_status::PIPE_BROKEN) {
+            auto mask = ((sigset_t)1 << (SIGPIPE - 1));
 
-                    {
-                        lock_guard lock(t.apc_lock);
+            {
+                sync_lock sl;
+                lock_guard lock(sl);
 
-                        insert_tail_list(t.pending_apcs, p->le);
+                if (t.blocked_signals & mask)
+                    t.pending_signals |= mask;
+                else {
+                    auto p = new pending_apc;
+
+                    if (p) { // if we OOM, just drop the signal
+                        p->routine = (PS_APC_ROUTINE)(t.proc->ntdll_addr + mn_posix_signal);
+                        p->arg1 = (uintptr_t)SIGPIPE;
+                        p->arg2 = 0;
+                        p->arg3 = 0;
+
+                        {
+                            lock_guard lock(t.apc_lock);
+
+                            insert_tail_list(t.pending_apcs, p->le);
+                        }
                     }
                 }
             }
         }
+
+        if (status != nt_status::ALERTED)
+            break;
+
+        vec_offset += written_bytes2;
     }
+
+    if (!success(status) && written_bytes != 0)
+        status = nt_status::SUCCESS;
 
     if (!success(status) || status == nt_status::USER_APC)
         return status;
