@@ -1799,6 +1799,7 @@ NTSTATUS file::write(span<const span<const uint8_t>> v, uint64_t offset,
 static nt_status file_readv(file& f, span<const uint8_t> inbuf,
                             span<uint8_t> outbuf, uintptr_t& written) {
     nt_status status;
+    uint64_t vec_offset = 0;
     auto& t = *get_current_thread();
 
     if (inbuf.size() < sizeof(iovec))
@@ -1810,28 +1811,45 @@ static nt_status file_readv(file& f, span<const uint8_t> inbuf,
     auto vec = span((iovec*)inbuf.data(), inbuf.size() / sizeof(iovec));
     auto& read_bytes = *(uint64_t*)outbuf.data();
 
-    optional<rangelock_req> rlr;
-    span<uint8_t>* spans = nullptr;
-    size_t num_spans = 0;
-
     for (auto& v : vec) {
         if (v.iov_len > 0 && (!is_userspace_address((uintptr_t)v.iov_base) || !is_userspace_address((uintptr_t)v.iov_base + v.iov_len - 1)))
             return nt_status::ACCESS_VIOLATION;
     }
 
-    status = pin_iovecs_for_writing(*t.proc, vec, rlr, spans, num_spans);
-    if (!success(status))
-        return status;
+    read_bytes = 0;
 
-    status = f.read(span(spans, num_spans), read_bytes);
+    while (true) {
+        uint64_t read_bytes2;
+        optional<rangelock_req> rlr;
+        span<uint8_t>* spans = nullptr;
+        size_t num_spans = 0;
 
-    rlr.reset();
+        status = pin_iovecs_for_writing(*t.proc, vec, rlr, spans, num_spans,
+                                        vec_offset);
+        if (!success(status))
+            return status;
 
-    auto spans_size = sizeof(span<uint8_t>) * num_spans;
-    if (spans_size > PAGE_SIZE)
-        vfree(spans, spans_size);
-    else if (spans_size > 0)
-        free(spans);
+        status = f.read(span(spans, num_spans), read_bytes2);
+
+        rlr.reset();
+
+        auto spans_size = sizeof(span<uint8_t>) * num_spans;
+        if (spans_size > PAGE_SIZE)
+            vfree(spans, spans_size);
+        else if (spans_size > 0)
+            free(spans);
+
+        if (success(status))
+            read_bytes += read_bytes2;
+
+        if (status != nt_status::ALERTED)
+            break;
+
+        vec_offset += read_bytes2;
+    }
+
+    if (!success(status) && read_bytes != 0)
+        status = nt_status::SUCCESS;
 
     if (!success(status) || status == nt_status::USER_APC)
         return status;

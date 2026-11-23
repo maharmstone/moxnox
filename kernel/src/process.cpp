@@ -275,7 +275,7 @@ export nt_status pin_iovecs_for_writing(process& proc,
                                         span<const iovec> vecs,
                                         optional<rangelock_req>& rlr,
                                         span<uint8_t>*& spans,
-                                        size_t& num_spans);
+                                        size_t& num_spans, uint64_t offset = 0);
 export nt_status pin_iovecs_for_reading(process& proc,
                                         span<const iovec> vecs,
                                         optional<rangelock_req>& rlr,

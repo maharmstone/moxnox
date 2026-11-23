@@ -6958,25 +6958,36 @@ static nt_status pin_userspace_buffers_for_read_and_write(process& proc,
 
 nt_status pin_iovecs_for_writing(process& proc, span<const iovec> vecs,
                                  optional<rangelock_req>& rlr,
-                                 span<uint8_t>*& spans, size_t& num_spans) {
+                                 span<uint8_t>*& spans, size_t& num_spans,
+                                 uint64_t offset) {
     nt_status status;
     uintptr_t vec_start = 0xffffffffffffffff, vec_end = 0;
     bool empty = true;
 
+    uint64_t offset2 = offset;
     for (auto& v : vecs) {
         if (v.iov_len == 0)
             continue;
 
-        auto addr = (uintptr_t)v.iov_base & ~(PAGE_SIZE - 1);
-        auto size = (((uintptr_t)v.iov_base + v.iov_len + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - addr;
+        if (offset2 >= v.iov_len) {
+            offset2 -= v.iov_len;
+            continue;
+        }
+
+        auto base = (uintptr_t)v.iov_base + offset2;
+        auto len = v.iov_len - offset2;
+
+        auto addr = base & ~(PAGE_SIZE - 1);
+        auto size = ((base + len + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - addr;
 
         status = make_userspace_range_writable(proc, addr, size);
         if (!success(status))
             return status;
 
-        vec_start = min(vec_start, (uintptr_t)v.iov_base);
-        vec_end = max(vec_end, (uintptr_t)v.iov_base + v.iov_len);
+        vec_start = min(vec_start, base);
+        vec_end = max(vec_end, base + len);
         empty = false;
+        offset2 = 0;
     }
 
     if (empty)
@@ -6996,15 +7007,23 @@ nt_status pin_iovecs_for_writing(process& proc, span<const iovec> vecs,
 
         num_spans = 0;
 
+        offset2 = offset;
         for (auto& v : vecs) {
             if (v.iov_len == 0)
                 continue;
 
-            auto addr = (uintptr_t)v.iov_base & ~(PAGE_SIZE - 1);
-            auto size = (((uintptr_t)v.iov_base + v.iov_len + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - addr;
+            if (offset2 >= v.iov_len) {
+                offset2 -= v.iov_len;
+                continue;
+            }
 
-            size_t shift_start = (uintptr_t)v.iov_base & (PAGE_SIZE - 1);
-            size_t shift_end = (PAGE_SIZE - (((uintptr_t)v.iov_base + v.iov_len) & (PAGE_SIZE - 1))) & (PAGE_SIZE - 1);
+            auto base = (uintptr_t)v.iov_base + offset2;
+            auto len = v.iov_len - offset2;
+            auto addr = base & ~(PAGE_SIZE - 1);
+            auto size = ((base + len + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - addr;
+
+            size_t shift_start = base & (PAGE_SIZE - 1);
+            size_t shift_end = (PAGE_SIZE - ((base + len) & (PAGE_SIZE - 1))) & (PAGE_SIZE - 1);
 
             for (size_t i = 0; i < size >> PAGE_SHIFT; i++) {
                 auto va = addr + (i << PAGE_SHIFT);
@@ -7087,6 +7106,8 @@ nt_status pin_iovecs_for_writing(process& proc, span<const iovec> vecs,
 
             if (again)
                 break;
+
+            offset2 = 0;
         }
 
         if (again)
@@ -7104,16 +7125,25 @@ nt_status pin_iovecs_for_writing(process& proc, span<const iovec> vecs,
             return nt_status::INSUFFICIENT_RESOURCES;
         }
 
+        offset2 = offset;
+
         size_t idx = 0;
         for (auto& v : vecs) {
             if (v.iov_len == 0)
                 continue;
 
-            auto addr = (uintptr_t)v.iov_base & ~(PAGE_SIZE - 1);
-            auto size = (((uintptr_t)v.iov_base + v.iov_len + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - addr;
+            if (offset2 >= v.iov_len) {
+                offset2 -= v.iov_len;
+                continue;
+            }
 
-            size_t shift_start = (uintptr_t)v.iov_base & (PAGE_SIZE - 1);
-            size_t shift_end = (PAGE_SIZE - (((uintptr_t)v.iov_base + v.iov_len) & (PAGE_SIZE - 1))) & (PAGE_SIZE - 1);
+            auto base = (uintptr_t)v.iov_base + offset2;
+            auto vlen = v.iov_len - offset2;
+            auto addr = base & ~(PAGE_SIZE - 1);
+            auto size = ((base + vlen + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - addr;
+
+            size_t shift_start = base & (PAGE_SIZE - 1);
+            size_t shift_end = (PAGE_SIZE - ((base + vlen) & (PAGE_SIZE - 1))) & (PAGE_SIZE - 1);
 
             for (size_t i = 0; i < size >> PAGE_SHIFT; i++) {
                 auto pte = find_pte(proc, addr + (i << PAGE_SHIFT));
@@ -7143,6 +7173,8 @@ nt_status pin_iovecs_for_writing(process& proc, span<const iovec> vecs,
                     idx++;
                 }
             }
+
+            offset2 = 0;
         }
 
         break;
