@@ -3328,6 +3328,7 @@ nt_status socket::do_recvmsg(span<const uint8_t> inbuf, bool nonblock) {
 
 nt_status socket::do_sendmsg(span<const uint8_t> inbuf, bool nonblock) {
     nt_status status;
+    uint64_t vec_offset = 0;
     uint32_t read_bytes;
 
     auto& t = *get_current_thread();
@@ -3346,7 +3347,7 @@ nt_status socket::do_sendmsg(span<const uint8_t> inbuf, bool nonblock) {
         return nt_status::INVALID_PARAMETER;
 
     sockaddr_storage to;
-    size_t sent_bytes;
+    size_t sent_bytes = 0;
 
     if ((params.tolen == 0 && params.to) || (params.tolen != 0 && !params.to))
         return nt_status::INVALID_PARAMETER;
@@ -3392,10 +3393,6 @@ nt_status socket::do_sendmsg(span<const uint8_t> inbuf, bool nonblock) {
         }
     }
 
-    optional<rangelock_req> rlr;
-    span<const uint8_t>* spans = nullptr;
-    size_t num_spans = 0;
-
     for (size_t i = 0; i < params.vec_count; i++) {
         auto& v = usvec[i];
 
@@ -3405,45 +3402,70 @@ nt_status socket::do_sendmsg(span<const uint8_t> inbuf, bool nonblock) {
         }
     }
 
-    if (usvec) {
-        status = pin_iovecs_for_reading(*t.proc, span(usvec, params.vec_count), rlr,
-                                        spans, num_spans);
-        if (!success(status)) {
-            free(usvec);
-            return status;
+    auto handles = span(params.handles, params.num_handles);
+
+    while (true) {
+        uint64_t sent_bytes2;
+        optional<rangelock_req> rlr;
+        span<const uint8_t>* spans = nullptr;
+        size_t num_spans = 0;
+
+        if (usvec) {
+            status = pin_iovecs_for_reading(*t.proc, span(usvec, params.vec_count),
+                                            rlr, spans, num_spans, vec_offset);
+            if (!success(status)) {
+                free(usvec);
+                return status;
+            }
         }
 
+        if (nonblock) {
+            status = this->sendto_nonblock(span(spans, num_spans), params.flags,
+                                           params.to ? (sockaddr*)&to : nullptr,
+                                           (int)params.tolen, sent_bytes2,
+                                           handles);
+        } else {
+            status = this->sendto(span(spans, num_spans), params.flags,
+                                  params.to ? (sockaddr*)&to : nullptr,
+                                  (int)params.tolen, sent_bytes2, handles);
+        }
+
+        rlr.reset();
+
+        auto spans_size = sizeof(span<const uint8_t>) * num_spans;
+        if (spans_size > PAGE_SIZE)
+            vfree(spans, spans_size);
+        else if (spans_size > 0)
+            free(spans);
+
+        if (success(status))
+            sent_bytes += sent_bytes2;
+
+        if (status != nt_status::ALERTED)
+            break;
+
+        vec_offset += sent_bytes2;
+
+        if (sent_bytes2 != 0)
+            handles = span<HANDLE>();
+    }
+
+    if (usvec)
         free(usvec);
+
+    if (!success(status)) {
+        if (sent_bytes != 0)
+            status = nt_status::SUCCESS;
+        else
+            return status;
     }
 
-    if (nonblock) {
-        status = this->sendto_nonblock(span(spans, num_spans), params.flags,
-                                       params.to ? (sockaddr*)&to : nullptr,
-                                       (int)params.tolen, sent_bytes,
-                                       span(params.handles, params.num_handles));
-    } else {
-        status = this->sendto(span(spans, num_spans), params.flags,
-                              params.to ? (sockaddr*)&to : nullptr, (int)params.tolen,
-                              sent_bytes, span(params.handles, params.num_handles));
-    }
+    auto status2 = t.proc->write_vm(params.sent_bytes, &sent_bytes, sizeof(size_t),
+                                    nullptr);
+    if (!success(status2))
+        return status2;
 
-    rlr.reset();
-
-    auto spans_size = sizeof(span<const uint8_t>) * num_spans;
-    if (spans_size > PAGE_SIZE)
-        vfree(spans, spans_size);
-    else if (spans_size > 0)
-        free(spans);
-
-    if (!success(status) || status == nt_status::USER_APC)
-        return status;
-
-    status = t.proc->write_vm(params.sent_bytes, &sent_bytes, sizeof(size_t),
-                              nullptr);
-    if (!success(status))
-        return status;
-
-    return nt_status::SUCCESS;
+    return status;
 }
 
 nt_status socket::do_bind(span<const uint8_t> inbuf) {
