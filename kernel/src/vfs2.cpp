@@ -1848,15 +1848,16 @@ static nt_status file_readv(file& f, span<const uint8_t> inbuf,
         vec_offset += read_bytes2;
     }
 
-    if (!success(status) && read_bytes != 0)
-        status = nt_status::SUCCESS;
-
-    if (!success(status) || status == nt_status::USER_APC)
-        return status;
+    if (!success(status)) {
+        if (read_bytes != 0)
+            status = nt_status::SUCCESS;
+        else
+            return status;
+    }
 
     written = sizeof(uint64_t);
 
-    return nt_status::SUCCESS;
+    return status;
 }
 
 static nt_status file_writev(file& f, span<const uint8_t> inbuf,
