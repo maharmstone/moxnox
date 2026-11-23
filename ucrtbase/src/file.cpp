@@ -1828,6 +1828,7 @@ int __isatty(int fd) {
 extern "C"
 int _write(int fd, const void* buffer, unsigned int count) {
     IO_STATUS_BLOCK iosb;
+    size_t written_bytes = 0;
 
     auto h = (HANDLE)__get_osfhandle(fd);
     if ((intptr_t)h < 0)
@@ -1837,9 +1838,14 @@ int _write(int fd, const void* buffer, unsigned int count) {
         auto sig_count = mn_handled_nonrestartable_signal_count();
 
         auto status = NtWriteFile(h, 0, nullptr, nullptr, &iosb, buffer,
-                                count, nullptr, nullptr);
+                                  count, nullptr, nullptr);
+        if (success(status))
+            written_bytes += iosb.Information;
 
         if (status == nt_status::USER_APC) {
+            if (written_bytes > 0)
+                return (int)written_bytes;
+
             if (mn_handled_nonrestartable_signal_count() != sig_count) {
                 *__errno() = EINTR;
                 return -1;
@@ -1856,7 +1862,7 @@ int _write(int fd, const void* buffer, unsigned int count) {
         break;
     }
 
-    return (int)iosb.Information;
+    return (int)written_bytes;
 }
 
 extern "C"
