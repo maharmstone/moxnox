@@ -563,23 +563,30 @@ size_t _fread_nolock(void* ptr, size_t size, size_t n, FILE* file) {
         while (true) {
             status = NtReadFile(f.h, 0, nullptr, nullptr, &iosb, sp.data(),
                                 (uint32_t)sp.size(), nullptr, nullptr);
-            if (status == nt_status::USER_APC)
-                continue;
 
-            break;
-        }
+            if (status == nt_status::USER_APC) {
+                read_bytes += iosb.Information;
 
-        if (status != nt_status::END_OF_FILE && status != nt_status::PIPE_DISCONNECTED) {
-            if (!success(status)) {
-                if (read == 0) {
-                    *__errno() = nt_status_to_errno(status);
-                    f.error = true;
-                }
-
-                return read / size;
+                if (iosb.Information == 0)
+                    continue;
+                else
+                    break;
             }
 
-            read_bytes = iosb.Information;
+            if (status != nt_status::END_OF_FILE && status != nt_status::PIPE_DISCONNECTED) {
+                if (!success(status)) {
+                    if (read == 0) {
+                        *__errno() = nt_status_to_errno(status);
+                        f.error = true;
+                    }
+
+                    return read / size;
+                }
+
+                read_bytes += iosb.Information;
+            }
+
+            break;
         }
 
         f.buffer.read_bytes = read_bytes;
@@ -600,9 +607,7 @@ size_t _fread_nolock(void* ptr, size_t size, size_t n, FILE* file) {
     while (true) {
         status = NtReadFile(f.h, 0, nullptr, nullptr, &iosb, ptr, (uint32_t)bytes,
                             nullptr, nullptr);
-        if (status == nt_status::USER_APC)
-            continue;
-        else if (!success(status))
+        if (!success(status))
             break;
 
         read += iosb.Information;
@@ -611,6 +616,9 @@ size_t _fread_nolock(void* ptr, size_t size, size_t n, FILE* file) {
 
         if (bytes == 0)
             break;
+
+        if (status == nt_status::USER_APC)
+            continue;
 
         if (iosb.Information == 0) {
             f.eof = true;
