@@ -309,16 +309,6 @@ target_sources(loaderblock PUBLIC FILE_SET CXX_MODULES FILES modules/loaderblock
 target_compile_options(loaderblock PRIVATE ${KERNEL_CFLAGS})
 target_link_libraries(loaderblock gnu-efi format_kernel)
 
-add_library(kernelbase_mod STATIC)
-target_sources(kernelbase_mod PUBLIC FILE_SET CXX_MODULES FILES modules/kernelbase.cpp)
-target_compile_options(kernelbase_mod PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
-target_link_libraries(kernelbase_mod nt ntdll_mod)
-
-add_library(kernelbase_mod_nobuiltin STATIC)
-target_sources(kernelbase_mod_nobuiltin PUBLIC FILE_SET CXX_MODULES FILES modules/kernelbase.cpp)
-target_compile_options(kernelbase_mod_nobuiltin PRIVATE -fno-builtin -fno-exceptions ${USERSPACE_CFLAGS})
-target_link_libraries(kernelbase_mod_nobuiltin nt_nobuiltin ntdll_mod_nobuiltin)
-
 add_library(ucrtbase_mod STATIC)
 target_link_libraries(ucrtbase_mod PUBLIC ucrtbase_static)
 target_sources(ucrtbase_mod PUBLIC FILE_SET CXX_MODULES FILES modules/ucrtbase.cpp)
@@ -485,7 +475,6 @@ add_subdirectory(kernel)
 add_subdirectory(ntdll)
 add_subdirectory(init)
 add_subdirectory(libmoxnox)
-add_subdirectory(kernelbase)
 add_subdirectory(mnposix)
 add_subdirectory(ucrtbase)
 add_subdirectory(usercon)
@@ -544,7 +533,6 @@ add_moxnox_deps(${CMAKE_SOURCE_DIR})
 
 set(MOXNOX_CORE_LIBRARIES
     ${CMAKE_BINARY_DIR}/libmoxnox/libiphlpapi.a
-    ${CMAKE_BINARY_DIR}/libmoxnox/libkernelbase.a
     $<TARGET_FILE:mingw32>
     $<TARGET_FILE:mingwex>
     ${CMAKE_BINARY_DIR}/libmoxnox/libmnposix.a

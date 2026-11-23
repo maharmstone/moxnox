@@ -1,6 +1,5 @@
 CREATE libmoxnox.a
 ADDLIB libntdll.a
-ADDLIB libkernelbase.a
 ADDLIB libucrtbase.a
 ADDLIB libws2_32.a
 ADDLIB libiphlpapi.a

@@ -284,7 +284,7 @@ else()
     set(UCRTBASE_ALIAS_FLAGS "-Wl,--defsym,_errno=__errno -Wl,--defsym,strerror=__strerror -Wl,--defsym,_lock_file=__lock_file -Wl,--defsym,_unlock_file=__unlock_file -Wl,--defsym,fputc=_fputc -Wl,--defsym,localeconv=_localeconv -Wl,--defsym,mbrtowc=_mbrtowc -Wl,--defsym,wcrtomb=_wcrtomb -Wl,--defsym,getc=_fgetc -Wl,--defsym,ungetc=_ungetc -Wl,--defsym,mbrlen=_mbrlen")
 endif()
 
-set(CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> -shared -o <TARGET> -Wl,--out-implib,<TARGET_IMPLIB> -Wl,--major-image-version,<TARGET_VERSION_MAJOR>,--minor-image-version,<TARGET_VERSION_MINOR> <OBJECTS> <LINK_LIBRARIES> ${LIBSTDCXX} -lmingw32 ports/mingw-w64/libucrtbase_static.a ${LIBEH} ${LIBGCC} -lmingw32 ${LIBSTDCXX} -lmingw32 ports/mingw-w64/libucrtbase_static.a ${LIBEH} ${LIBGCC} -lmingw32 ports/mingw-w64/libmingwex.a ports/mingw-w64/libucrtbase_static.a libmoxnox/libkernelbase.a libmoxnox/libntdll.a ${UCRTBASE_ALIAS_FLAGS} ${CMAKE_CURRENT_BINARY_DIR}/libmnposix.a")
+set(CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> -shared -o <TARGET> -Wl,--out-implib,<TARGET_IMPLIB> -Wl,--major-image-version,<TARGET_VERSION_MAJOR>,--minor-image-version,<TARGET_VERSION_MINOR> <OBJECTS> <LINK_LIBRARIES> ${LIBSTDCXX} -lmingw32 ports/mingw-w64/libucrtbase_static.a ${LIBEH} ${LIBGCC} -lmingw32 ${LIBSTDCXX} -lmingw32 ports/mingw-w64/libucrtbase_static.a ${LIBEH} ${LIBGCC} -lmingw32 ports/mingw-w64/libmingwex.a ports/mingw-w64/libucrtbase_static.a libmoxnox/libntdll.a ${UCRTBASE_ALIAS_FLAGS} ${CMAKE_CURRENT_BINARY_DIR}/libmnposix.a")
 
 add_library(ucrtbase SHARED ${SRC_FILES})
 target_sources(ucrtbase PUBLIC FILE_SET CXX_MODULES FILES
@@ -307,7 +307,7 @@ target_link_libraries(ucrtbase PRIVATE
     moxnox_ioctls_nobuiltin
     exec_nobuiltin
 )
-target_link_libraries(ucrtbase PRIVATE nt_nobuiltin ucrtbase_mod_nobuiltin kernelbase_mod_nobuiltin)
+target_link_libraries(ucrtbase PRIVATE nt_nobuiltin ucrtbase_mod_nobuiltin)
 target_link_libraries(ucrtbase PRIVATE -Wl,--whole-archive musl -Wl,--no-whole-archive)
 target_link_libraries(ucrtbase PRIVATE -Wl,--whole-archive mingwex2 -Wl,--no-whole-archive)
 

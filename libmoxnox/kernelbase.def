@@ -1,4 +1,0 @@
-LIBRARY "kernelbase.dll"
-EXPORTS
-GetLastError
-CreateProcessW
