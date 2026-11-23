@@ -3151,7 +3151,8 @@ raw_socket<FAMILY>::~raw_socket() {
 }
 
 nt_status socket::do_recvmsg(span<const uint8_t> inbuf, bool nonblock) {
-    nt_status status;
+    nt_status status, status2;
+    uint64_t vec_offset = 0;
     uint32_t read_bytes;
 
     auto& t = *get_current_thread();
@@ -3163,7 +3164,7 @@ nt_status socket::do_recvmsg(span<const uint8_t> inbuf, bool nonblock) {
 
     auto& params = *(MOXNOX_SOCKET_RECVMSG*)inbuf.data();
 
-    size_t recv_bytes;
+    size_t recv_bytes = 0;
     size_t fromlen = 0, orig_fromlen = 0;
     size_t num_handles = 0;
 
@@ -3220,14 +3221,6 @@ nt_status socket::do_recvmsg(span<const uint8_t> inbuf, bool nonblock) {
         }
     }
 
-    optional<rangelock_req> rlr;
-    span<uint8_t>* spans = nullptr;
-    size_t num_spans = 0;
-    sockaddr_storage from;
-    span<HANDLE> handles;
-    HANDLE* hbuf = nullptr;
-    size_t received_handles = 0;
-
     for (size_t i = 0; i < params.vec_count; i++) {
         auto& v = usvec[i];
 
@@ -3237,16 +3230,11 @@ nt_status socket::do_recvmsg(span<const uint8_t> inbuf, bool nonblock) {
         }
     }
 
-    if (usvec) {
-        status = pin_iovecs_for_writing(*t.proc, span(usvec, params.vec_count),
-                                        rlr, spans, num_spans);
-        if (!success(status)) {
-            free(usvec);
-            return status;
-        }
-
-        free(usvec);
-    }
+    sockaddr_storage from;
+    span<HANDLE> handles;
+    HANDLE* hbuf = nullptr;
+    size_t received_handles = 0;
+    uint64_t recv_bytes2;
 
     if (num_handles > 0) {
         hbuf = (HANDLE*)malloc(sizeof(HANDLE) * num_handles);
@@ -3258,39 +3246,73 @@ nt_status socket::do_recvmsg(span<const uint8_t> inbuf, bool nonblock) {
         handles = span(hbuf, num_handles);
     }
 
-    if (nonblock) {
-        status = this->recvfrom_nonblock(span(spans, num_spans),
-                                         params.flags, &from,
-                                         fromlen != 0 ? &fromlen : nullptr,
-                                         recv_bytes, handles, received_handles);
-    } else {
-        status = this->recvfrom(span(spans, num_spans), params.flags,
-                                &from, fromlen != 0 ? &fromlen : nullptr,
-                                recv_bytes, handles, received_handles);
+    while (true) {
+        optional<rangelock_req> rlr;
+        span<uint8_t>* spans = nullptr;
+        size_t num_spans = 0, received_handles2 = 0;
+
+        if (usvec) {
+            status = pin_iovecs_for_writing(*t.proc, span(usvec, params.vec_count),
+                                            rlr, spans, num_spans, vec_offset);
+            if (!success(status)) {
+                free(usvec);
+                return status;
+            }
+        }
+
+        if (nonblock) {
+            status = this->recvfrom_nonblock(span(spans, num_spans),
+                                             params.flags, &from,
+                                             fromlen != 0 ? &fromlen : nullptr,
+                                             recv_bytes2, handles, received_handles2);
+        } else {
+            status = this->recvfrom(span(spans, num_spans), params.flags,
+                                    &from, fromlen != 0 ? &fromlen : nullptr,
+                                    recv_bytes2, handles, received_handles2);
+        }
+
+        rlr.reset();
+
+        auto spans_size = sizeof(span<uint8_t>) * num_spans;
+        if (spans_size > PAGE_SIZE)
+            vfree(spans, spans_size);
+        else if (spans_size > 0)
+            free(spans);
+
+        if (success(status)) {
+            recv_bytes += recv_bytes2;
+            received_handles += received_handles2;
+
+            if (params.flags & MSG_PEEK && recv_bytes2 > 0) {
+                status = nt_status::SUCCESS;
+                break;
+            }
+        }
+
+        if (status != nt_status::ALERTED)
+            break;
+
+        vec_offset += recv_bytes2;
+        handles = handles.subspan(received_handles2);
     }
 
-    rlr.reset();
+    if (usvec)
+        free(usvec);
 
-    auto spans_size = sizeof(span<uint8_t>) * num_spans;
-    if (spans_size > PAGE_SIZE)
-        vfree(spans, spans_size);
-    else if (spans_size > 0)
-        free(spans);
-
-    if (!success(status) || status == nt_status::USER_APC) {
-        if (hbuf)
-            free(hbuf);
-
-        return status;
+    if (!success(status)) {
+        if (recv_bytes != 0)
+            status = nt_status::SUCCESS;
+        else
+            return status;
     }
 
     if (received_handles > 0) {
-        status = t.proc->write_vm(params.handles, hbuf,
-                                  (uint32_t)(min(num_handles, received_handles) * sizeof(HANDLE)),
-                                  nullptr);
-        if (!success(status)) {
+        status2 = t.proc->write_vm(params.handles, hbuf,
+                                   (uint32_t)(min(num_handles, received_handles) * sizeof(HANDLE)),
+                                   nullptr);
+        if (!success(status2)) {
             free(hbuf);
-            return status;
+            return status2;
         }
     }
 
@@ -3298,32 +3320,32 @@ nt_status socket::do_recvmsg(span<const uint8_t> inbuf, bool nonblock) {
         free(hbuf);
 
     if (params.num_handles) {
-        status = t.proc->write_vm(params.num_handles, &received_handles,
-                                  sizeof(received_handles), nullptr);
-        if (!success(status))
-            return status;
+        status2 = t.proc->write_vm(params.num_handles, &received_handles,
+                                   sizeof(received_handles), nullptr);
+        if (!success(status2))
+            return status2;
     }
 
     if (params.from && fromlen != 0) {
-        status = t.proc->write_vm(params.from, &from,
-                                  (uint32_t)min(orig_fromlen, fromlen), nullptr);
-        if (!success(status))
-            return status;
+        status2 = t.proc->write_vm(params.from, &from,
+                                   (uint32_t)min(orig_fromlen, fromlen), nullptr);
+        if (!success(status2))
+            return status2;
     }
 
     if (params.fromlen) {
-        status = t.proc->write_vm(params.fromlen, &fromlen, (uint32_t)sizeof(size_t),
+        status2 = t.proc->write_vm(params.fromlen, &fromlen, (uint32_t)sizeof(size_t),
                                   nullptr);
-        if (!success(status))
-            return status;
+        if (!success(status2))
+            return status2;
     }
 
-    status = t.proc->write_vm(params.recv_bytes, &recv_bytes, sizeof(size_t),
+    status2 = t.proc->write_vm(params.recv_bytes, &recv_bytes, sizeof(size_t),
                               nullptr);
-    if (!success(status))
-        return status;
+    if (!success(status2))
+        return status2;
 
-    return nt_status::SUCCESS;
+    return status;
 }
 
 nt_status socket::do_sendmsg(span<const uint8_t> inbuf, bool nonblock) {
