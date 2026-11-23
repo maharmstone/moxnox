@@ -495,14 +495,14 @@ export bool init_smp() {
         if (h.Type == ACPI_MADT_TYPE_GENERIC_INTERRUPT) {
             auto& ent = *(ACPI_MADT_GENERIC_INTERRUPT*)data.data();
 
-            if ((ent.ArmMpidr & MPIDR_MASK) != bsp_id)
+            if ((ent.ArmMpidr & MPIDR_MASK) != bsp_id && ent.Flags & ACPI_MADT_ENABLED)
                 ap_count++;
         }
 #elifdef __x86_64__
         if (h.Type == ACPI_MADT_TYPE_LOCAL_APIC && h.Length >= sizeof(ACPI_MADT_LOCAL_APIC)) {
             auto& ent = *(ACPI_MADT_LOCAL_APIC*)data.data();
 
-            if (ent.Id != bsp_id && ent.LapicFlags & (ACPI_MADT_ENABLED | ACPI_MADT_ONLINE_CAPABLE))
+            if (ent.Id != bsp_id && ent.LapicFlags & ACPI_MADT_ENABLED)
                 ap_count++;
         }
 #endif
@@ -535,7 +535,7 @@ export bool init_smp() {
             if (h.Type == ACPI_MADT_TYPE_GENERIC_INTERRUPT) {
                 auto& ent = *(ACPI_MADT_GENERIC_INTERRUPT*)data.data();
 
-                if ((ent.ArmMpidr & MPIDR_MASK) != bsp_id) {
+                if ((ent.ArmMpidr & MPIDR_MASK) != bsp_id && ent.Flags & ACPI_MADT_ENABLED) {
                     cpu_ids[i] = ent.ArmMpidr & MPIDR_MASK;
                     i++;
                 }
@@ -632,7 +632,7 @@ export bool init_smp() {
             if (h.Type == ACPI_MADT_TYPE_LOCAL_APIC && h.Length >= sizeof(ACPI_MADT_LOCAL_APIC)) {
                 auto& ent = *(ACPI_MADT_LOCAL_APIC*)data.data();
 
-                if (ent.Id != bsp_id && ent.LapicFlags & (ACPI_MADT_ENABLED | ACPI_MADT_ONLINE_CAPABLE)) {
+                if (ent.Id != bsp_id && ent.LapicFlags & ACPI_MADT_ENABLED) {
                     boot_info[i].id = ent.Id;
 
                     boot_info[i].stack_pa = allocate_page();
