@@ -1373,6 +1373,7 @@ int unlinkat(int dirfd, const char* path, int flags) {
 extern "C"
 ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
     IO_STATUS_BLOCK iosb;
+    ssize_t read_bytes = 0;
     LARGE_INTEGER off;
 
     auto h = (HANDLE)_get_osfhandle(fd);
@@ -1387,7 +1388,13 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
         auto status = NtReadFile(h, 0, nullptr, nullptr, &iosb, buf,
                                 (uint32_t)count, &off, nullptr);
 
+        if (success(status))
+            read_bytes += iosb.Information;
+
         if (status == nt_status::USER_APC) {
+            if (read_bytes > 0)
+                return read_bytes;
+
             if (mn_handled_nonrestartable_signal_count() != sig_count) {
                 *_errno() = EINTR;
                 return -1;
@@ -1397,7 +1404,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
         }
 
         if (status == nt_status::END_OF_FILE || status == nt_status::PIPE_DISCONNECTED)
-            return 0;
+            return read_bytes;
         else if (!success(status)) {
             *_errno() = nt_status_to_errno(status);
             return -1;
@@ -1406,7 +1413,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
         break;
     }
 
-    return (int)iosb.Information;
+    return read_bytes;
 }
 
 extern "C"
