@@ -2140,6 +2140,7 @@ int mknod(const char* path, mode_t mode, dev_t dev) {
 extern "C"
 ssize_t readv(int fd, const iovec* iov, int iovcnt) {
     IO_STATUS_BLOCK iosb;
+    ssize_t read_bytes = 0;
     uint64_t bytes;
 
     if (iovcnt <= 0) {
@@ -2158,7 +2159,13 @@ ssize_t readv(int fd, const iovec* iov, int iovcnt) {
                                             IOCTL_MOXNOX_FILE_READV, iov,
                                             (uint32_t)sizeof(iovec) * iovcnt, &bytes,
                                             sizeof(bytes));
+        if (success(status))
+            read_bytes += bytes;
+
         if (status == nt_status::USER_APC) {
+            if (read_bytes > 0)
+                return read_bytes;
+
             if (mn_handled_nonrestartable_signal_count() != sig_count) {
                 *_errno() = EINTR;
                 return -1;
@@ -2168,7 +2175,7 @@ ssize_t readv(int fd, const iovec* iov, int iovcnt) {
         }
 
         if (status == nt_status::END_OF_FILE || status == nt_status::PIPE_DISCONNECTED)
-            return 0;
+            return read_bytes;
         else if (!success(status)) {
             *_errno() = nt_status_to_errno(status);
             return -1;
@@ -2177,7 +2184,7 @@ ssize_t readv(int fd, const iovec* iov, int iovcnt) {
         break;
     }
 
-    return (ssize_t)bytes;
+    return read_bytes;
 }
 
 extern "C"
