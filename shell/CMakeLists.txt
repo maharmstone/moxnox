@@ -470,16 +470,16 @@ install(TARGETS ping DESTINATION ${CMAKE_INSTALL_PREFIX}/bin COMPONENT core)
 
 ###
 
-add_executable(telnetd src/telnetd.cpp)
-
-target_compile_options(telnetd PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
-target_link_libraries(telnetd moxnox print errno unique_handle unicode pe)
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_options(telnetd PUBLIC -mcrtdll=ucrtbase)
-endif()
-
-install(TARGETS telnetd DESTINATION ${CMAKE_INSTALL_PREFIX}/bin COMPONENT core)
+# add_executable(telnetd src/telnetd.cpp)
+#
+# target_compile_options(telnetd PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
+# target_link_libraries(telnetd moxnox print errno unique_handle unicode pe)
+#
+# if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+#     target_link_options(telnetd PUBLIC -mcrtdll=ucrtbase)
+# endif()
+#
+# install(TARGETS telnetd DESTINATION ${CMAKE_INSTALL_PREFIX}/bin COMPONENT core)
 
 ###
 
