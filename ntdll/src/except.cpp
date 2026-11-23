@@ -14,7 +14,6 @@ import dwarf;
 import print;
 import unicode;
 import pe;
-import kernelbase;
 import ntdll;
 import ntdll_private;
 import crt;

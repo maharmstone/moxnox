@@ -46,7 +46,6 @@ target_link_libraries(ntdll PRIVATE
     nt_nobuiltin
     ntdll_mod_nobuiltin
     pe_nobuiltin
-    kernelbase_mod_nobuiltin
     crt
     # pagesize
     timepage_nobuiltin
