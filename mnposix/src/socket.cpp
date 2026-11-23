@@ -92,7 +92,7 @@ extern "C"
 ssize_t sendmsg(int s, const msghdr* msg, int flags) {
     IO_STATUS_BLOCK iosb;
     MOXNOX_SOCKET_SENDMSG params, *p;
-    size_t sent_bytes, num_fds = 0;
+    size_t sent_bytes = 0, num_fds = 0;
 
     if (!msg) {
         *_errno() = EINVAL;
@@ -177,17 +177,25 @@ ssize_t sendmsg(int s, const msghdr* msg, int flags) {
     p->flags = flags & ~MSG_NOSIGNAL;
     p->to = msg->msg_name;
     p->tolen = msg->msg_namelen;
-    p->sent_bytes = &sent_bytes;
 
     while (true) {
+        size_t sent_bytes2;
+
+        p->sent_bytes = &sent_bytes2;
+
         auto sig_count = mn_handled_nonrestartable_signal_count();
 
         auto status = NtDeviceIoControlFile((HANDLE)h, 0, nullptr, nullptr, &iosb,
                                             IOCTL_MOXNOX_SOCKET_SENDMSG, p,
                                             (uint32_t)(offsetof(MOXNOX_SOCKET_SENDMSG, handles) + (num_fds * sizeof(HANDLE))),
                                             nullptr, 0);
+        if (success(status))
+            sent_bytes += sent_bytes2;
 
         if (status == nt_status::USER_APC) {
+            if (sent_bytes > 0)
+                break;
+
             if (mn_handled_nonrestartable_signal_count() != sig_count) {
                 *_errno() = EINTR;
 
