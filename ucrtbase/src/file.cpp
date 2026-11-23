@@ -852,27 +852,20 @@ int _fflush_nolock(FILE* file) {
             while (!sp.empty()) {
                 IO_STATUS_BLOCK iosb;
 
-                while (true) {
-                    auto status = NtWriteFile(f.h, 0, nullptr, nullptr, &iosb,
-                                              sp.data(), (uint32_t)sp.size(),
-                                              nullptr, nullptr);
-                    if (status == nt_status::USER_APC)
-                        continue;
+                auto status = NtWriteFile(f.h, 0, nullptr, nullptr, &iosb,
+                                          sp.data(), (uint32_t)sp.size(),
+                                          nullptr, nullptr);
+                if (!success(status)) {
+                    *__errno() = nt_status_to_errno(status);
+                    f.error = true;
 
-                    if (!success(status)) {
-                        *__errno() = nt_status_to_errno(status);
-                        f.error = true;
-
-                        if (buffer_written > 0) {
-                            memmove(f.buffer.data, f.buffer.data + buffer_written,
-                                    f.buffer.filled - buffer_written);
-                            f.buffer.filled -= buffer_written;
-                        }
-
-                        return EOF;
+                    if (buffer_written > 0) {
+                        memmove(f.buffer.data, f.buffer.data + buffer_written,
+                                f.buffer.filled - buffer_written);
+                        f.buffer.filled -= buffer_written;
                     }
 
-                    break;
+                    return EOF;
                 }
 
                 if (iosb.Information == sp.size())
