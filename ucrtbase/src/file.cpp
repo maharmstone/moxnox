@@ -1862,6 +1862,7 @@ int __write(int fd, const void* buffer, unsigned int count) {
 extern "C"
 int _read(int fd, void* buffer, size_t count) {
     IO_STATUS_BLOCK iosb;
+    size_t read_bytes = 0;
 
     auto h = (HANDLE)__get_osfhandle(fd);
     if ((intptr_t)h < 0)
@@ -1872,8 +1873,13 @@ int _read(int fd, void* buffer, size_t count) {
 
         auto status = NtReadFile(h, 0, nullptr, nullptr, &iosb, buffer,
                                 (uint32_t)count, nullptr, nullptr);
+        if (success(status))
+            read_bytes += iosb.Information;
 
         if (status == nt_status::USER_APC) {
+            if (read_bytes > 0)
+                return (int)read_bytes;
+
             if (mn_handled_nonrestartable_signal_count() != sig_count) {
                 *__errno() = EINTR;
                 return -1;
@@ -1883,7 +1889,7 @@ int _read(int fd, void* buffer, size_t count) {
         }
 
         if (status == nt_status::END_OF_FILE || status == nt_status::PIPE_DISCONNECTED)
-            return 0;
+            return (int)read_bytes;
         else if (!success(status)) {
             *__errno() = nt_status_to_errno(status);
             return -1;
@@ -1892,7 +1898,7 @@ int _read(int fd, void* buffer, size_t count) {
         break;
     }
 
-    return (int)iosb.Information;
+    return (int)read_bytes;
 }
 
 extern "C"
