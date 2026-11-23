@@ -2190,6 +2190,7 @@ ssize_t readv(int fd, const iovec* iov, int iovcnt) {
 extern "C"
 ssize_t writev(int fd, const iovec* iov, int iovcnt) {
     IO_STATUS_BLOCK iosb;
+    ssize_t written_bytes = 0;
     uint64_t bytes;
 
     if (iovcnt <= 0) {
@@ -2208,7 +2209,13 @@ ssize_t writev(int fd, const iovec* iov, int iovcnt) {
                                             IOCTL_MOXNOX_FILE_WRITEV, iov,
                                             (uint32_t)sizeof(iovec) * iovcnt, &bytes,
                                             sizeof(bytes));
+        if (success(status))
+            written_bytes += bytes;
+
         if (status == nt_status::USER_APC) {
+            if (written_bytes > 0)
+                return written_bytes;
+
             if (mn_handled_nonrestartable_signal_count() != sig_count) {
                 *_errno() = EINTR;
                 return -1;
@@ -2225,7 +2232,7 @@ ssize_t writev(int fd, const iovec* iov, int iovcnt) {
         break;
     }
 
-    return (ssize_t)bytes;
+    return written_bytes;
 }
 
 static char mktemp_char(unsigned int i) {
