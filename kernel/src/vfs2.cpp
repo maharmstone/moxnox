@@ -1940,15 +1940,16 @@ static nt_status file_writev(file& f, span<const uint8_t> inbuf,
         vec_offset += written_bytes2;
     }
 
-    if (!success(status) && written_bytes != 0)
-        status = nt_status::SUCCESS;
-
-    if (!success(status) || status == nt_status::USER_APC)
-        return status;
+    if (!success(status)) {
+        if (written_bytes != 0)
+            status = nt_status::SUCCESS;
+        else
+            return status;
+    }
 
     written = sizeof(uint64_t);
 
-    return nt_status::SUCCESS;
+    return status;
 }
 
 nt_status file::ioctl(uint32_t code, span<const uint8_t> inbuf,
