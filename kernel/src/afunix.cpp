@@ -89,6 +89,7 @@ public:
     bool bind_done = false;
     object_ref bound_inode;
     list_entry bound_le;
+    unique_ptr<char[]> bind_name;
     object_ref accept_queue_not_full_event;
     unsigned int listen_backlog;
     unix_socket_state state = unix_socket_state::closed;
@@ -631,6 +632,17 @@ nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
     if (!curdirf.dentry)
         return nt_status::INVALID_PARAMETER;
 
+    unique_ptr<char[]> name;
+
+    name.reset(new char[path.size() + 1]);
+    if (!name) {
+        print("new failed\n");
+        return nt_status::INSUFFICIENT_RESOURCES;
+    }
+
+    memcpy(name.get(), path.data(), path.size());
+    name[path.size()] = 0;
+
     {
         lock_guard lock(state_lock);
 
@@ -650,6 +662,7 @@ nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
             drw->get().release();
 
         bound_inode.swap(obj);
+        bind_name.swap(name);
         bind_done = true;
 
         {
@@ -988,10 +1001,32 @@ nt_status unix_socket::accept(HANDLE& sock, void* us_addr, int& addrlen) {
     }
 }
 
-nt_status unix_socket::getsockname(span<uint8_t>, size_t&) {
-    print("FIXME - unix_socket::getsockname\n");
+nt_status unix_socket::getsockname(span<uint8_t> buf, size_t& len) {
+    if (buf.size() < offsetof(sockaddr_un, sun_path))
+        return nt_status::BUFFER_TOO_SMALL;
 
-    return nt_status::NOT_IMPLEMENTED;
+    auto& addr = *(sockaddr_un*)buf.data();
+
+    addr.sun_family = AF_UNIX;
+
+    {
+        lock_guard lock(state_lock);
+
+        if (!bind_name || bind_name[0] == 0) {
+            len = offsetof(sockaddr_un, sun_path);
+            return nt_status::SUCCESS;
+        }
+
+        auto namelen = strlen(bind_name.get());
+
+        if (buf.size() < offsetof(sockaddr_un, sun_path) + namelen + 1)
+            return nt_status::BUFFER_TOO_SMALL;
+
+        memcpy(addr.sun_path, bind_name.get(), namelen + 1);
+        len = offsetof(sockaddr_un, sun_path) + namelen + 1;
+    }
+
+    return nt_status::SUCCESS;
 }
 
 nt_status unix_socket::getpeername(span<uint8_t> /*buf*/, size_t& /*len*/) {
