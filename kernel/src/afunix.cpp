@@ -24,6 +24,9 @@ import rwsem;
 
 using namespace std;
 
+static spinlock bound_sockets_lock;
+static list_entry bound_sockets = { &bound_sockets, &bound_sockets };
+
 class unix_socket : public socket {
 public:
     unix_socket();
@@ -78,6 +81,7 @@ public:
     rwsem bind_lock;
     bool bind_done = false;
     object_ref bound_inode;
+    list_entry le;
 
     uint8_t buf[PAGE_SIZE];
     size_t buf_unread = 0;
@@ -505,6 +509,15 @@ void unix_socket::last_handle_closed() {
             release();
         }
     }
+
+    {
+        lock_guard lock(bind_lock);
+
+        if (bind_done) {
+            lock_guard lock2(bound_sockets_lock);
+            remove_entry_list(le);
+        }
+    }
 }
 
 nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
@@ -589,6 +602,11 @@ nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
 
         bound_inode.swap(obj);
         bind_done = true;
+
+        {
+            lock_guard lock2(bound_sockets_lock);
+            insert_tail_list(bound_sockets, le);
+        }
     }
 
     return nt_status::SUCCESS;
