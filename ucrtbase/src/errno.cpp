@@ -179,6 +179,158 @@ errno_t strerror_s(char* buffer, size_t size, int errnum) {
             sv = "Invalid or incomplete multibyte or wide character";
             break;
 
+        case EADDRINUSE:
+            sv = "Address already in use";
+            break;
+
+        case EADDRNOTAVAIL:
+            sv = "Cannot assign requested address";
+            break;
+
+        case EAFNOSUPPORT:
+            sv = "Address family not supported by protocol";
+            break;
+
+        case EALREADY:
+            sv = "Operation already in progress";
+            break;
+
+        case EBADMSG:
+            sv = "Bad message";
+            break;
+
+        case ECANCELED:
+            sv = "Operation cancelled";
+            break;
+
+        case ECONNABORTED:
+            sv = "Software caused connection abort";
+            break;
+
+        case ECONNREFUSED:
+            sv = "Connection refused";
+            break;
+
+        case ECONNRESET:
+            sv = "Connection reset by peer";
+            break;
+
+        case EDESTADDRREQ:
+            sv = "Destination address required";
+            break;
+
+        case EHOSTUNREACH:
+            sv = "No route to host";
+            break;
+
+        case EIDRM:
+            sv = "Identifier removed";
+            break;
+
+        case EINPROGRESS:
+            sv = "Operation now in progress";
+            break;
+
+        case EISCONN:
+            sv = "Transport endpoint is already connected";
+            break;
+
+        case ELOOP:
+            sv = "Too many levels of symbolic links";
+            break;
+
+        case EMSGSIZE:
+            sv = "Message too long";
+            break;
+
+        case ENETDOWN:
+            sv = "Network is down";
+            break;
+
+        case ENETRESET:
+            sv = "Network dropped connection on reset";
+            break;
+
+        case ENETUNREACH:
+            sv = "Network is unreachable";
+            break;
+
+        case ENOBUFS:
+            sv = "No buffer space available";
+            break;
+
+        case ENOLINK:
+            sv = "Link has been severed";
+            break;
+
+        case ENOMSG:
+            sv = "No message of desired type";
+            break;
+
+        case ENOPROTOOPT:
+            sv = "Protocol not available";
+            break;
+
+        case ENOTCONN:
+            sv = "Transport endpoint is not connected";
+            break;
+
+        case ENOTRECOVERABLE:
+            sv = "State not recoverable";
+            break;
+
+        case ENOTSOCK:
+            sv = "Socket operation on non-socket";
+            break;
+
+        case ENOTSUP:
+            sv = "Not supported";
+            break;
+
+        case EOPNOTSUPP:
+            sv = "Operation not supported";
+            break;
+
+        case EOVERFLOW:
+            sv = "Value too large for defined data type";
+            break;
+
+        case EOWNERDEAD:
+            sv = "Owner died";
+            break;
+
+        case EPROTO:
+            sv = "Protocol error";
+            break;
+
+        case EPROTONOSUPPORT:
+            sv = "Protocol not supported";
+            break;
+
+        case EPROTOTYPE:
+            sv = "Protocol wrong type for socket";
+            break;
+
+        case ETIMEDOUT:
+            sv = "Connection timed out";
+            break;
+
+        case ETXTBSY:
+            sv = "Text file busy";
+            break;
+
+        case EWOULDBLOCK:
+            sv = "Operation would block";
+            break;
+
+        case ESTALE:
+            sv = "Stale file handle";
+            break;
+
+        case EDQUOT:
+            sv = "Disk quota exceeded";
+            break;
+
         default:
             sv = "Unknown error";
             break;
