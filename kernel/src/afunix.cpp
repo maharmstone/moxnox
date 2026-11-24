@@ -89,13 +89,14 @@ public:
     bool bind_done = false;
     object_ref bound_inode;
     list_entry bound_le;
-    object_ref accept_queue_event;
+    object_ref accept_queue_not_full_event;
     unsigned int listen_backlog;
     unix_socket_state state = unix_socket_state::closed;
     list_entry accept_le;
     spinlock accept_queue_lock;
     list_entry accept_queue = { &accept_queue, &accept_queue };
     unix_socket* server = nullptr;
+    bool accept_done = false;
 
     uint8_t buf[PAGE_SIZE];
     size_t buf_unread = 0;
@@ -547,12 +548,21 @@ void unix_socket::last_handle_closed() {
         }
 
         if (state == unix_socket_state::awaiting_accept) {
+            bool ignore;
+
             {
                 lock_guard lock2(server->accept_queue_lock);
-                remove_entry_list(accept_le);
+
+                ignore = accept_done;
+
+                if (!ignore)
+                    remove_entry_list(accept_le);
             }
 
-            server->release();
+            if (!ignore) {
+                release();
+                server->release();
+            }
         }
 
         state = unix_socket_state::closed;
@@ -762,7 +772,7 @@ nt_status unix_socket::connect(const sockaddr* addr, size_t addrlen) {
     }
 
     while (true) {
-        status = wait_for_object(serv.accept_queue_event.get(), true);
+        status = wait_for_object(serv.accept_queue_not_full_event.get(), true);
 
         if (status == nt_status::ALERTED)
             continue;
@@ -784,6 +794,9 @@ nt_status unix_socket::connect(const sockaddr* addr, size_t addrlen) {
                     if (serv.listen_backlog == 0)
                         continue;
 
+                    acquire();
+
+                    serv.listen_backlog--;
                     insert_tail_list(serv.accept_queue, accept_le);
                 }
             }
@@ -791,9 +804,28 @@ nt_status unix_socket::connect(const sockaddr* addr, size_t addrlen) {
             state = unix_socket_state::awaiting_accept;
             server = &serv;
             serv.acquire();
-
-            break;
         }
+
+        {
+            sync_lock sl;
+            lock_guard lock(sl);
+
+            if (!serv.signalled && !is_list_empty(serv.accept_queue)) {
+                serv.signalled = true;
+                wake_up_waiters(serv.waiters, WAIT_TYPE_READING);
+            }
+
+            auto& ev = static_cast<event&>(serv.accept_queue_not_full_event.get());
+
+            {
+                lock_guard lock2(serv.accept_queue_lock);
+
+                if (serv.listen_backlog == 0 && ev.signalled)
+                    ev.signalled = false;
+            }
+        }
+
+        break;
     }
 
     return nt_status::SUCCESS;
@@ -823,16 +855,137 @@ nt_status unix_socket::listen(int backlog) {
         listen_backlog = (unsigned int)backlog;
         state = unix_socket_state::listening;
 
-        swap(accept_queue_event, ev);
+        swap(accept_queue_not_full_event, ev);
     }
 
     return nt_status::SUCCESS;
 }
 
-nt_status unix_socket::accept(HANDLE& /*sock*/, void* /*addr*/, int& /*addrlen*/) {
-    print("FIXME - unix_socket::accept\n");
+nt_status unix_socket::accept(HANDLE& sock, void* us_addr, int& addrlen) {
+    nt_status status;
 
-    return nt_status::NOT_IMPLEMENTED;
+    if (addrlen < 0 || (us_addr && (size_t)addrlen < sizeof(sa_family_t)))
+        return nt_status::INVALID_PARAMETER;
+
+    auto& t = *get_current_thread();
+    if (!t.proc)
+        return nt_status::INTERNAL_ERROR;
+
+    {
+        lock_guard lock(state_lock);
+
+        if (state != unix_socket_state::listening)
+            return nt_status::INVALID_PARAMETER;
+    }
+
+    auto newsock = new unix_socket;
+    if (!newsock) {
+        print("new failed\n");
+        return nt_status::INSUFFICIENT_RESOURCES;
+    }
+
+    object_ref ref1{*newsock};
+
+    unix_socket* c;
+
+    while (true) {
+        status = wait_for_object(*this, true);
+
+        if (status == nt_status::ALERTED)
+            continue;
+        else if (!success(status) || status == nt_status::USER_APC)
+            return status;
+
+        {
+            sync_lock sl;
+            lock_guard lock1(sl);
+            lock_guard lock2(accept_queue_lock);
+
+            if (is_list_empty(accept_queue))
+                continue;
+
+            auto& s = *(::unix_socket*)((uint8_t*)accept_queue.next - offsetof(::unix_socket, accept_le));
+
+            remove_entry_list(s.accept_le);
+            s.accept_done = true;
+
+            c = &s;
+
+            if (is_list_empty(accept_queue))
+                this->signalled = false;
+
+            listen_backlog++;
+
+            auto& ev = static_cast<event&>(accept_queue_not_full_event.get());
+
+            if (!ev.signalled) {
+                ev.signalled = true;
+                wake_up_waiters(ev.waiters, WAIT_TYPE_READING);
+            }
+        }
+
+        auto f = new file(*newsock, 0, 0);
+        if (!f) {
+            print("new failed\n");
+            c->release();
+            return nt_status::INSUFFICIENT_RESOURCES;
+        }
+
+        object_ref ref2{*f};
+
+        newsock->other_end = c;
+        newsock->first = true;
+        newsock->state = unix_socket_state::connected;
+
+        newsock->acquire();
+
+        unix_socket* old_server = nullptr;
+
+        bool gone = false;
+
+        {
+            lock_guard lock(c->state_lock);
+
+            if (c->state != unix_socket_state::awaiting_accept)
+                gone = true;
+            else {
+                c->other_end = newsock;
+                c->first = false;
+                c->state = unix_socket_state::connected;
+            }
+
+            swap(c->server, old_server);
+        }
+
+        if (old_server)
+            old_server->release();
+
+        if (gone) {
+            newsock->other_end = nullptr;
+            newsock->state = unix_socket_state::closed;
+            newsock->release();
+            c->release();
+            continue;
+        }
+
+        // FIXME - us_addr
+
+        status = t.proc->add_handle(*f, FILE_READ_DATA | FILE_WRITE_DATA,
+                                    true, sock);
+        if (!success(status)) {
+            newsock->other_end = nullptr;
+            newsock->state = unix_socket_state::closed;
+            newsock->release();
+
+            c->other_end = nullptr;
+            c->state = unix_socket_state::closed;
+            c->release();
+
+            return status;
+        }
+
+        return nt_status::SUCCESS;
+    }
 }
 
 nt_status unix_socket::getsockname(span<uint8_t>, size_t&) {
