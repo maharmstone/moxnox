@@ -20,6 +20,7 @@ import visit;
 import thread;
 import handle;
 import vfs;
+import rwsem;
 
 using namespace std;
 
@@ -74,6 +75,9 @@ public:
     bool first;
     event not_full_event{false};
     list_entry sent_fds = { &sent_fds, &sent_fds };
+    rwsem bind_lock;
+    bool bind_done = false;
+    object_ref bound_inode;
 
     uint8_t buf[PAGE_SIZE];
     size_t buf_unread = 0;
@@ -565,19 +569,27 @@ nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
     if (!curdirf.dentry)
         return nt_status::INVALID_PARAMETER;
 
-    // create inode
+    {
+        lock_guard lock(bind_lock);
 
-    status = open_inode(path, *curdirf.dentry, obj, drw, FILE_CREATE,
-                        FILE_NON_DIRECTORY_FILE, create_result, false, true);
-    if (status == nt_status::OBJECT_NAME_COLLISION)
-        return nt_status::ADDRESS_ALREADY_ASSOCIATED;
-    else if (!success(status))
-        return status;
+        if (bind_done)
+            return nt_status::INVALID_PARAMETER;
 
-    if (drw)
-        drw->get().release();
+        // create inode
 
-    // FIXME - record as bound
+        status = open_inode(path, *curdirf.dentry, obj, drw, FILE_CREATE,
+                            FILE_NON_DIRECTORY_FILE, create_result, false, true);
+        if (status == nt_status::OBJECT_NAME_COLLISION)
+            return nt_status::ADDRESS_ALREADY_ASSOCIATED;
+        else if (!success(status))
+            return status;
+
+        if (drw)
+            drw->get().release();
+
+        bound_inode.swap(obj);
+        bind_done = true;
+    }
 
     return nt_status::SUCCESS;
 }
