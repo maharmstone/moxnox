@@ -4,7 +4,10 @@ module;
 #include <span>
 #include <mutex>
 #include <algorithm>
+#include <optional>
+#include <string_view>
 #include <stdint.h>
+#include <sys/un.h>
 
 module net;
 
@@ -16,6 +19,7 @@ import event;
 import visit;
 import thread;
 import handle;
+import vfs;
 
 using namespace std;
 
@@ -499,10 +503,83 @@ void unix_socket::last_handle_closed() {
     }
 }
 
-nt_status unix_socket::bind(const sockaddr* /*addr*/, size_t /*addrlen*/) {
-    print("FIXME - unix_socket::bind\n");
+nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
+    auto& t = *get_current_thread();
+    nt_status status;
+    object_ref obj;
+    unsigned int create_result;
+    optional<reference_wrapper<dentry>> drw;
+    uintptr_t us_proc_params;
+    uint32_t read_bytes;
+    HANDLE curdir;
 
-    return nt_status::NOT_IMPLEMENTED;
+    if (!t.proc)
+        return nt_status::INTERNAL_ERROR;
+
+    auto& proc = *t.proc;
+
+    // parse addr
+
+    if (addr->sa_family != AF_UNIX)
+        return nt_status::INVALID_PARAMETER;
+
+    if (addrlen < offsetof(sockaddr_un, sun_path))
+        return nt_status::INVALID_PARAMETER;
+
+    auto& un = *(sockaddr_un*)addr;
+
+    string_view path(un.sun_path, min(addrlen, sizeof(sockaddr_un)) - offsetof(sockaddr_un, sun_path));
+
+    if (auto zero = path.find('\0'); zero != string_view::npos)
+        path = string_view(path.data(), zero);
+
+    // get current directory
+
+    status = proc.read_vm((uint8_t*)proc.peb + offsetof(PEB, ProcessParameters),
+                          &us_proc_params, sizeof(us_proc_params), &read_bytes);
+    if (!success(status))
+        return status;
+
+    if (read_bytes != sizeof(us_proc_params))
+        return nt_status::NO_MEMORY;
+
+    status = proc.read_vm((uint8_t*)us_proc_params + offsetof(RTL_USER_PROCESS_PARAMETERS, CurrentDirectory.Handle),
+                          &curdir, sizeof(HANDLE), &read_bytes);
+
+    if (!success(status))
+        return status;
+
+    if (read_bytes != sizeof(HANDLE))
+        return nt_status::NO_MEMORY;
+
+    auto curdirobj = deref_handle(curdir);
+
+    if (!curdirobj)
+        return nt_status::INVALID_HANDLE;
+
+    if (curdirobj.get().type != object_type::file)
+        return nt_status::OBJECT_TYPE_MISMATCH;
+
+    auto& curdirf = static_cast<file&>(curdirobj.get());
+
+    if (!curdirf.dentry)
+        return nt_status::INVALID_PARAMETER;
+
+    // create inode
+
+    status = open_inode(path, *curdirf.dentry, obj, drw, FILE_CREATE,
+                        FILE_NON_DIRECTORY_FILE, create_result, false, true);
+    if (status == nt_status::OBJECT_NAME_COLLISION)
+        return nt_status::ADDRESS_ALREADY_ASSOCIATED;
+    else if (!success(status))
+        return status;
+
+    if (drw)
+        drw->get().release();
+
+    // FIXME - record as bound
+
+    return nt_status::SUCCESS;
 }
 
 nt_status unix_socket::connect(const sockaddr* /*addr*/, size_t /*addrlen*/) {

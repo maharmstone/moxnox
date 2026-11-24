@@ -478,7 +478,8 @@ void search_dentry_cache(dentry& dir, string_view name,
 static nt_status open_inode2(string_view& fn, dentry& root_dir,
                              object_ref& obj_ref, optional<reference_wrapper<dentry>>& dentry,
                              uint32_t create_disposition, uint32_t create_options,
-                             unsigned int& create_result, bool parent) {
+                             unsigned int& create_result, bool parent,
+                             bool socket) {
     bool root = false;
 
     while (!fn.empty() && fn.front() == '/') {
@@ -582,7 +583,7 @@ static nt_status open_inode2(string_view& fn, dentry& root_dir,
                     optional<reference_wrapper<inode>> inorw;
 
                     status = dir.inode->create_child(name, create_options,
-                                                     inorw);
+                                                     inorw, socket);
                     if (success(status)) {
                         create_result = FILE_CREATED;
 
@@ -680,7 +681,7 @@ static nt_status open_inode2(string_view& fn, dentry& root_dir,
 nt_status open_inode(string_view fn, dentry& root_dir,
                      object_ref& obj_ref, optional<reference_wrapper<dentry>>& dentry,
                      uint32_t create_disposition, uint32_t create_options,
-                     unsigned int& create_result, bool parent) {
+                     unsigned int& create_result, bool parent, bool socket) {
     struct rdb_buf {
         REPARSE_DATA_BUFFER header;
         char16_t buffer[PATH_MAX - 1];
@@ -698,7 +699,7 @@ nt_status open_inode(string_view fn, dentry& root_dir,
 
     for (unsigned int i = 0; i < MAX_SYMLINK_LOOPS; i++) {
         status = open_inode2(fn, rwd, obj_ref, dentry, create_disposition,
-                             create_options, create_result, parent);
+                             create_options, create_result, parent, socket);
         if (status != nt_status::REPARSE) {
             rwd.get().release();
             return status;

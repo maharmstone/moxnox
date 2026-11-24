@@ -123,7 +123,8 @@ public:
 
     virtual nt_status open_child(string_view name, object_ref& obj) = 0;
     virtual nt_status create_child(string_view name, uint32_t create_options,
-                                   optional<reference_wrapper<::inode>>& obj) = 0;
+                                   optional<reference_wrapper<::inode>>& obj,
+                                   bool socket) = 0;
     virtual nt_status query_directory(span<uint8_t> buf, FILE_INFORMATION_CLASS file_information_class,
                                       uint64_t& index) = 0;
     virtual nt_status set_information(span<const uint8_t> buffer, dentry& dentry,
@@ -296,7 +297,8 @@ export bool mount_root();
 export nt_status open_inode(string_view fn, dentry& dir,
                             object_ref& obj_ref, optional<reference_wrapper<dentry>>& dentry,
                             uint32_t create_disposition, uint32_t create_options,
-                            unsigned int& create_result, bool parent);
+                            unsigned int& create_result, bool parent,
+                            bool socket = false);
 export nt_status flush_filesystems(bool make_readonly);
 export nt_status get_dentry_path(dentry& dr, char*& path, size_t& path_len);
 export void search_dentry_cache(dentry& dir, string_view name,

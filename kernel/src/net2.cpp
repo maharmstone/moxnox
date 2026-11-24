@@ -3491,7 +3491,7 @@ nt_status socket::do_sendmsg(span<const uint8_t> inbuf, bool nonblock) {
 }
 
 nt_status socket::do_bind(span<const uint8_t> inbuf) {
-    if (inbuf.size() < sizeof(sockaddr))
+    if (inbuf.size() < sizeof(sa_family_t))
         return nt_status::BUFFER_TOO_SMALL;
 
     return this->bind((sockaddr*)inbuf.data(), inbuf.size());

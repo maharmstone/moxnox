@@ -44,7 +44,7 @@ public:
 
     nt_status open_child(string_view name, object_ref& obj) override;
     nt_status create_child(string_view name, uint32_t create_options,
-                           optional<reference_wrapper<inode>>& obj) override;
+                           optional<reference_wrapper<inode>>& obj, bool socket) override;
     NTSTATUS query_directory(span<uint8_t> buf, FILE_INFORMATION_CLASS file_information_class,
                              uint64_t& index) override;
     NTSTATUS set_information(span<const uint8_t> buffer, dentry& dentry,
@@ -183,19 +183,30 @@ static bool validate_name(string_view name) {
 }
 
 nt_status tmpfs_inode::create_child(string_view name, uint32_t create_options,
-                                    optional<reference_wrapper<::inode>>& obj) {
+                                    optional<reference_wrapper<::inode>>& obj,
+                                    bool socket) {
     if (fs.readonly)
         return nt_status::MEDIA_WRITE_PROTECTED;
 
     if (!validate_name(name))
         return nt_status::OBJECT_NAME_INVALID;
 
-    bool is_dir = create_options & FILE_DIRECTORY_FILE;
+    ::inode_type type;
+    uint32_t mode;
 
-    auto new_ino = new tmpfs_inode(static_cast<tmpfs_filesystem&>(fs),
-                                   is_dir ? inode_type::directory : inode_type::file,
-                                   is_dir ? (S_IFDIR | 0755) : (S_IFREG | 0644),
-                                   0, 0);
+    if (socket) {
+        type = inode_type::socket;
+        mode = S_IFSOCK | 0777;
+    } else if (create_options & FILE_DIRECTORY_FILE) {
+        type = inode_type::directory;
+        mode = S_IFDIR | 0755;
+    } else {
+        type = inode_type::file;
+        mode = S_IFREG | 0644;
+    }
+
+    auto new_ino = new tmpfs_inode(static_cast<tmpfs_filesystem&>(fs), type,
+                                   mode, 0, 0);
     if (!new_ino)
         return nt_status::INSUFFICIENT_RESOURCES;
 

@@ -49,7 +49,7 @@ public:
 
     nt_status open_child(string_view name, object_ref& obj) override;
     nt_status create_child(string_view name, uint32_t create_options,
-                           optional<reference_wrapper<inode>>& obj) override;
+                           optional<reference_wrapper<inode>>& obj, bool socket) override;
     nt_status query_directory(span<uint8_t> buf, FILE_INFORMATION_CLASS file_information_class,
                              uint64_t& index) override;
     nt_status query_directory_inode(string_view name, span<uint8_t> buf,
@@ -167,7 +167,8 @@ nt_status devfs_inode::open_child(string_view name, object_ref& obj) {
 }
 
 nt_status devfs_inode::create_child(string_view /*name*/, uint32_t /*create_options*/,
-                                    optional<reference_wrapper<inode>>& /*obj*/) {
+                                    optional<reference_wrapper<inode>>& /*obj*/,
+                                    bool /*socket*/) {
     print("FIXME - devfs_inode::create_child\n");
 
     // FIXME

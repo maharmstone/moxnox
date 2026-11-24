@@ -155,7 +155,7 @@ public:
 
     nt_status open_child(string_view name, object_ref& obj) override;
     nt_status create_child(string_view name, uint32_t create_options,
-                           optional<reference_wrapper<inode>>& obj) override;
+                           optional<reference_wrapper<inode>>& obj, bool socket) override;
     NTSTATUS query_directory(span<uint8_t> buf, FILE_INFORMATION_CLASS file_information_class,
                              uint64_t& index) override;
     nt_status query_directory_inode(string_view name, span<uint8_t> buf,
@@ -3833,7 +3833,8 @@ static nt_status add_inode_ref(btrfs_filesystem& fs, root& r, string_view name,
 };
 
 nt_status btrfs_inode::create_child(string_view name, uint32_t create_options,
-                                    optional<reference_wrapper<::inode>>& obj) {
+                                    optional<reference_wrapper<::inode>>& obj,
+                                    bool socket) {
     nt_status status;
     btrfs_inode_item child_ii;
     btrfs_path p(fs.sb->nodesize);
@@ -3874,7 +3875,9 @@ nt_status btrfs_inode::create_child(string_view name, uint32_t create_options,
         child_ii.gid = 0; // FIXME
 
         // FIXME - do we inherit mode from parent?
-        if (is_dir)
+        if (socket)
+            child_ii.mode = S_IFSOCK | 0777;
+        else if (is_dir)
             child_ii.mode = S_IFDIR | 0755;
         else
             child_ii.mode = S_IFREG | 0644;
@@ -3893,10 +3896,16 @@ nt_status btrfs_inode::create_child(string_view name, uint32_t create_options,
         // create DIR_ITEM and DIR_INDEX in parent
 
         uint64_t index;
+        btrfs_inode_type type;
 
-        status = add_dir_item(fs, *r, *this, name, new_inode,
-                              is_dir ? btrfs_inode_type::directory : btrfs_inode_type::file,
-                              index);
+        if (socket)
+            type = btrfs_inode_type::socket;
+        else if (is_dir)
+            type = btrfs_inode_type::directory;
+        else
+            type = btrfs_inode_type::file;
+
+        status = add_dir_item(fs, *r, *this, name, new_inode, type, index);
         if (!success(status)) {
             print("add_dir_item returned {}\n", status);
             return status;
@@ -3935,8 +3944,7 @@ nt_status btrfs_inode::create_child(string_view name, uint32_t create_options,
 
         // create btrfs_inode object and return
 
-        auto bi = new btrfs_inode(fs, r->id, new_inode,
-                                  is_dir ? btrfs_inode_type::directory : btrfs_inode_type::file);
+        auto bi = new btrfs_inode(fs, r->id, new_inode, type);
         if (!bi) {
             print("new failed\n");
             return nt_status::INSUFFICIENT_RESOURCES;
