@@ -27,6 +27,13 @@ using namespace std;
 static spinlock bound_sockets_lock;
 static list_entry bound_sockets = { &bound_sockets, &bound_sockets };
 
+enum class unix_socket_state {
+    closed,
+    connected,
+    listening,
+    awaiting_accept,
+};
+
 class unix_socket : public socket {
 public:
     unix_socket();
@@ -78,10 +85,17 @@ public:
     bool first;
     event not_full_event{false};
     list_entry sent_fds = { &sent_fds, &sent_fds };
-    rwsem bind_lock;
+    rwsem state_lock;
     bool bind_done = false;
     object_ref bound_inode;
-    list_entry le;
+    list_entry bound_le;
+    object_ref accept_queue_event;
+    unsigned int listen_backlog;
+    unix_socket_state state = unix_socket_state::closed;
+    list_entry accept_le;
+    spinlock accept_queue_lock;
+    list_entry accept_queue = { &accept_queue, &accept_queue };
+    unix_socket* server = nullptr;
 
     uint8_t buf[PAGE_SIZE];
     size_t buf_unread = 0;
@@ -142,6 +156,13 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
 
     if (flags != 0)
         return nt_status::INVALID_PARAMETER;
+
+    {
+        lock_guard lock(state_lock);
+
+        if (state != unix_socket_state::connected)
+            return nt_status::CONNECTION_DISCONNECTED;
+    }
 
     // FIXME - from and fromlen?
 
@@ -288,6 +309,13 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
 
     if (flags != 0)
         return nt_status::INVALID_PARAMETER;
+
+    {
+        lock_guard lock(state_lock);
+
+        if (state != unix_socket_state::connected)
+            return nt_status::CONNECTION_DISCONNECTED;
+    }
 
     size_t vec_size = get_vec_size(v);
 
@@ -511,12 +539,23 @@ void unix_socket::last_handle_closed() {
     }
 
     {
-        lock_guard lock(bind_lock);
+        lock_guard lock(state_lock);
 
         if (bind_done) {
             lock_guard lock2(bound_sockets_lock);
-            remove_entry_list(le);
+            remove_entry_list(bound_le);
         }
+
+        if (state == unix_socket_state::awaiting_accept) {
+            {
+                lock_guard lock2(server->accept_queue_lock);
+                remove_entry_list(accept_le);
+            }
+
+            server->release();
+        }
+
+        state = unix_socket_state::closed;
     }
 }
 
@@ -583,7 +622,7 @@ nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
         return nt_status::INVALID_PARAMETER;
 
     {
-        lock_guard lock(bind_lock);
+        lock_guard lock(state_lock);
 
         if (bind_done)
             return nt_status::INVALID_PARAMETER;
@@ -605,7 +644,7 @@ nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
 
         {
             lock_guard lock2(bound_sockets_lock);
-            insert_tail_list(bound_sockets, le);
+            insert_tail_list(bound_sockets, bound_le);
         }
     }
 
@@ -700,7 +739,7 @@ nt_status unix_socket::connect(const sockaddr* addr, size_t addrlen) {
         lock_guard lock(bound_sockets_lock);
 
         for (auto le = bound_sockets.next; le != &bound_sockets; le = le->next) {
-            auto& s = containing_record<unix_socket>(le);
+            auto& s = *(::unix_socket*)((uint8_t*)le - offsetof(::unix_socket, bound_le));
 
             if (s.bind_done && s.bound_inode && &s.bound_inode.get() == &ino) {
                 s.acquire();
@@ -713,15 +752,81 @@ nt_status unix_socket::connect(const sockaddr* addr, size_t addrlen) {
     if (!sock)
         return nt_status::CONNECTION_REFUSED;
 
-    // FIXME - all the rest of it
+    auto& serv = static_cast<unix_socket&>(sock.get());
+
+    {
+        lock_guard lock(serv.state_lock);
+
+        if (serv.state != unix_socket_state::listening)
+            return nt_status::CONNECTION_REFUSED;
+    }
+
+    while (true) {
+        status = wait_for_object(serv.accept_queue_event.get(), true);
+
+        if (status == nt_status::ALERTED)
+            continue;
+        else if (!success(status) || status == nt_status::USER_APC)
+            return status;
+
+        {
+            lock_guard lock1(state_lock);
+
+            {
+                lock_guard lock2(serv.state_lock);
+
+                if (serv.state != unix_socket_state::listening)
+                    return nt_status::CONNECTION_REFUSED;
+
+                {
+                    lock_guard lock3(serv.accept_queue_lock);
+
+                    if (serv.listen_backlog == 0)
+                        continue;
+
+                    insert_tail_list(serv.accept_queue, accept_le);
+                }
+            }
+
+            state = unix_socket_state::awaiting_accept;
+            server = &serv;
+            serv.acquire();
+
+            break;
+        }
+    }
 
     return nt_status::SUCCESS;
 }
 
-nt_status unix_socket::listen(int /*backlog*/) {
-    print("FIXME - unix_socket::listen\n");
+nt_status unix_socket::listen(int backlog) {
+    if (backlog < 0)
+        return nt_status::INVALID_PARAMETER;
 
-    return nt_status::NOT_IMPLEMENTED;
+    if (backlog == 0)
+        backlog = 1;
+
+    auto ev = create_event(false);
+    if (!ev) {
+        print("create_event failed\n");
+        return nt_status::INSUFFICIENT_RESOURCES;
+    }
+
+    static_cast<event&>(ev.get()).signalled = true;
+
+    {
+        lock_guard lock(state_lock);
+
+        if (state != unix_socket_state::closed || !bind_done)
+            return nt_status::INVALID_PARAMETER;
+
+        listen_backlog = (unsigned int)backlog;
+        state = unix_socket_state::listening;
+
+        swap(accept_queue_event, ev);
+    }
+
+    return nt_status::SUCCESS;
 }
 
 nt_status unix_socket::accept(HANDLE& /*sock*/, void* /*addr*/, int& /*addrlen*/) {
@@ -770,9 +875,11 @@ nt_status create_unix_socket_pair(int type, object_ref& ref1, object_ref& ref2) 
 
     s1->other_end = s2;
     s1->first = true;
+    s1->state = unix_socket_state::connected;
 
     s2->other_end = s1;
     s2->first = false;
+    s2->state = unix_socket_state::connected;
 
     s1->acquire();
     s2->acquire();
