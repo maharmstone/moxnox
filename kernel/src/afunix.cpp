@@ -937,9 +937,22 @@ nt_status unix_socket::accept(HANDLE& sock, void* us_addr, int& addrlen) {
             }
         }
 
+        unix_socket* old_server = nullptr;
+
         auto f = new file(*newsock, 0, 0);
         if (!f) {
             print("new failed\n");
+
+            {
+                lock_guard lock(c->state_lock);
+
+                c->state = unix_socket_state::closed;
+                swap(old_server, c->server);
+            }
+
+            if (old_server)
+                old_server->release();
+
             c->release();
             return nt_status::INSUFFICIENT_RESOURCES;
         }
@@ -953,6 +966,17 @@ nt_status unix_socket::accept(HANDLE& sock, void* us_addr, int& addrlen) {
             name.reset(new char[namelen + 1]);
             if (!name) {
                 print("new failed\n");
+
+                {
+                    lock_guard lock(c->state_lock);
+
+                    c->state = unix_socket_state::closed;
+                    swap(old_server, c->server);
+                }
+
+                if (old_server)
+                    old_server->release();
+
                 c->release();
                 return nt_status::INSUFFICIENT_RESOURCES;
             }
@@ -966,8 +990,6 @@ nt_status unix_socket::accept(HANDLE& sock, void* us_addr, int& addrlen) {
         newsock->state = unix_socket_state::connected;
 
         newsock->acquire();
-
-        unix_socket* old_server = nullptr;
 
         bool gone = false;
 
