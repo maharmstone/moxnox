@@ -572,6 +572,9 @@ static int dns_lookup2(int sock, const ipv6_address& server,
             ret = EAI_AGAIN;
             break;
         } else if (ret < 0) {
+            if (*_errno() == EINTR)
+                continue;
+
             print_stderr("poll failed (errno {})\n", errno_to_string_view(*_errno()));
             ret = EAI_SYSTEM;
             break;
