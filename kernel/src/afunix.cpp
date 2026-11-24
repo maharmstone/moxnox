@@ -946,6 +946,21 @@ nt_status unix_socket::accept(HANDLE& sock, void* us_addr, int& addrlen) {
 
         object_ref ref2{*f};
 
+        if (bind_name) {
+            auto namelen = strlen(bind_name.get());
+            unique_ptr<char[]> name;
+
+            name.reset(new char[namelen + 1]);
+            if (!name) {
+                print("new failed\n");
+                c->release();
+                return nt_status::INSUFFICIENT_RESOURCES;
+            }
+
+            memcpy(name.get(), bind_name.get(), namelen + 1);
+            swap(newsock->bind_name, name);
+        }
+
         newsock->other_end = c;
         newsock->first = true;
         newsock->state = unix_socket_state::connected;
