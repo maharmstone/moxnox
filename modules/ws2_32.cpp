@@ -67,40 +67,7 @@ export using ::inet_pton;
 constexpr uint16_t _AF_UNSPEC = AF_UNSPEC;
 constexpr uint16_t _AF_UNIX = AF_UNIX;
 constexpr uint16_t _AF_INET = AF_INET;
-constexpr uint16_t _AF_IMPLINK = AF_IMPLINK;
-constexpr uint16_t _AF_PUP = AF_PUP;
-constexpr uint16_t _AF_CHAOS = AF_CHAOS;
-constexpr uint16_t _AF_IPX = AF_IPX;
-constexpr uint16_t _AF_NS = AF_NS;
-constexpr uint16_t _AF_ISO = AF_ISO;
-constexpr uint16_t _AF_OSI = AF_OSI;
-constexpr uint16_t _AF_ECMA = AF_ECMA;
-constexpr uint16_t _AF_DATAKIT = AF_DATAKIT;
-constexpr uint16_t _AF_CCITT = AF_CCITT;
-constexpr uint16_t _AF_SNA = AF_SNA;
-constexpr uint16_t _AF_DECnet = AF_DECnet;
-constexpr uint16_t _AF_DLI = AF_DLI;
-constexpr uint16_t _AF_LAT = AF_LAT;
-constexpr uint16_t _AF_HYLINK = AF_HYLINK;
-constexpr uint16_t _AF_APPLETALK = AF_APPLETALK;
-constexpr uint16_t _AF_NETBIOS = AF_NETBIOS;
-constexpr uint16_t _AF_VOICEVIEW = AF_VOICEVIEW;
-constexpr uint16_t _AF_FIREFOX = AF_FIREFOX;
-constexpr uint16_t _AF_UNKNOWN1 = AF_UNKNOWN1;
-constexpr uint16_t _AF_BAN = AF_BAN;
-constexpr uint16_t _AF_ATM = AF_ATM;
 constexpr uint16_t _AF_INET6 = AF_INET6;
-constexpr uint16_t _AF_CLUSTER = AF_CLUSTER;
-constexpr uint16_t _AF_12844 = AF_12844;
-constexpr uint16_t _AF_IRDA = AF_IRDA;
-constexpr uint16_t _AF_NETDES = AF_NETDES;
-constexpr uint16_t _AF_TCNPROCESS = AF_TCNPROCESS;
-constexpr uint16_t _AF_TCNMESSAGE = AF_TCNMESSAGE;
-constexpr uint16_t _AF_ICLFXBM = AF_ICLFXBM;
-constexpr uint16_t _AF_BTH = AF_BTH;
-constexpr uint16_t _AF_LINK = AF_LINK;
-constexpr uint16_t _AF_HYPERV = AF_HYPERV;
-constexpr uint16_t _AF_MAX = AF_MAX;
 
 constexpr int _SOCK_STREAM = SOCK_STREAM;
 constexpr int _SOCK_DGRAM = SOCK_DGRAM;
@@ -251,78 +218,12 @@ using SOCKET = int;
 #undef AF_UNSPEC
 #undef AF_UNIX
 #undef AF_INET
-#undef AF_IMPLINK
-#undef AF_PUP
-#undef AF_CHAOS
-#undef AF_IPX
-#undef AF_NS
-#undef AF_ISO
-#undef AF_OSI
-#undef AF_ECMA
-#undef AF_DATAKIT
-#undef AF_CCITT
-#undef AF_SNA
-#undef AF_DECnet
-#undef AF_DLI
-#undef AF_LAT
-#undef AF_HYLINK
-#undef AF_APPLETALK
-#undef AF_NETBIOS
-#undef AF_VOICEVIEW
-#undef AF_FIREFOX
-#undef AF_UNKNOWN1
-#undef AF_BAN
-#undef AF_ATM
 #undef AF_INET6
-#undef AF_CLUSTER
-#undef AF_12844
-#undef AF_IRDA
-#undef AF_NETDES
-#undef AF_TCNPROCESS
-#undef AF_TCNMESSAGE
-#undef AF_ICLFXBM
-#undef AF_BTH
-#undef AF_LINK
-#undef AF_HYPERV
-#undef AF_MAX
 
 constexpr uint16_t AF_UNSPEC = _AF_UNSPEC;
 constexpr uint16_t AF_UNIX = _AF_UNIX;
 constexpr uint16_t AF_INET = _AF_INET;
-constexpr uint16_t AF_IMPLINK = _AF_IMPLINK;
-constexpr uint16_t AF_PUP = _AF_PUP;
-constexpr uint16_t AF_CHAOS = _AF_CHAOS;
-constexpr uint16_t AF_IPX = _AF_IPX;
-constexpr uint16_t AF_NS = _AF_NS;
-constexpr uint16_t AF_ISO = _AF_ISO;
-constexpr uint16_t AF_OSI = _AF_OSI;
-constexpr uint16_t AF_ECMA = _AF_ECMA;
-constexpr uint16_t AF_DATAKIT = _AF_DATAKIT;
-constexpr uint16_t AF_CCITT = _AF_CCITT;
-constexpr uint16_t AF_SNA = _AF_SNA;
-constexpr uint16_t AF_DECnet = _AF_DECnet;
-constexpr uint16_t AF_DLI = _AF_DLI;
-constexpr uint16_t AF_LAT = _AF_LAT;
-constexpr uint16_t AF_HYLINK = _AF_HYLINK;
-constexpr uint16_t AF_APPLETALK = _AF_APPLETALK;
-constexpr uint16_t AF_NETBIOS = _AF_NETBIOS;
-constexpr uint16_t AF_VOICEVIEW = _AF_VOICEVIEW;
-constexpr uint16_t AF_FIREFOX = _AF_FIREFOX;
-constexpr uint16_t AF_UNKNOWN1 = _AF_UNKNOWN1;
-constexpr uint16_t AF_BAN = _AF_BAN;
-constexpr uint16_t AF_ATM = _AF_ATM;
 constexpr uint16_t AF_INET6 = _AF_INET6;
-constexpr uint16_t AF_CLUSTER = _AF_CLUSTER;
-constexpr uint16_t AF_12844 = _AF_12844;
-constexpr uint16_t AF_IRDA = _AF_IRDA;
-constexpr uint16_t AF_NETDES = _AF_NETDES;
-constexpr uint16_t AF_TCNPROCESS = _AF_TCNPROCESS;
-constexpr uint16_t AF_TCNMESSAGE = _AF_TCNMESSAGE;
-constexpr uint16_t AF_ICLFXBM = _AF_ICLFXBM;
-constexpr uint16_t AF_BTH = _AF_BTH;
-constexpr uint16_t AF_LINK = _AF_LINK;
-constexpr uint16_t AF_HYPERV = _AF_HYPERV;
-constexpr uint16_t AF_MAX = _AF_MAX;
 
 #undef SOCK_STREAM
 #undef SOCK_DGRAM
