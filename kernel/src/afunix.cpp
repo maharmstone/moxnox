@@ -1753,35 +1753,48 @@ nt_status unix_socket<TYPE>::shutdown(int how) {
 }
 
 nt_status create_unix_socket_pair(int type, object_ref& ref1, object_ref& ref2) {
-    if (type != SOCK_STREAM) // FIXME - support SOCK_DGRAM too
-        return nt_status::INVALID_PARAMETER;
+    auto func = [&ref1, &ref2]<unix_socket_type TYPE>() -> nt_status{
+        auto s1 = new unix_socket<TYPE>;
+        if (!s1) {
+            print("new failed\n");
+            return nt_status::INSUFFICIENT_RESOURCES;
+        }
 
-    auto s1 = new unix_socket<unix_socket_type::stream>;
-    if (!s1) {
-        print("new failed\n");
-        return nt_status::INSUFFICIENT_RESOURCES;
+        ref1 = object_ref{*s1};
+
+        auto s2 = new unix_socket<TYPE>;
+        if (!s2) {
+            print("new failed\n");
+            return nt_status::INSUFFICIENT_RESOURCES;
+        }
+
+        ref2 = object_ref{*s2};
+
+        s1->other_end = s2;
+        s1->first = true;
+        s1->state = unix_socket_state::connected;
+
+        s2->other_end = s1;
+        s2->first = false;
+        s2->state = unix_socket_state::connected;
+
+        s1->acquire();
+        s2->acquire();
+
+        return nt_status::SUCCESS;
+    };
+
+    switch (type) {
+        case SOCK_STREAM:
+            return func.operator()<unix_socket_type::stream>();
+
+        case SOCK_DGRAM:
+            return func.operator()<unix_socket_type::dgram>();
+
+        case SOCK_SEQPACKET:
+            return func.operator()<unix_socket_type::seqpacket>();
+
+        default:
+            return nt_status::INVALID_PARAMETER;
     }
-
-    ref1 = object_ref{*s1};
-
-    auto s2 = new unix_socket<unix_socket_type::stream>;
-    if (!s2) {
-        print("new failed\n");
-        return nt_status::INSUFFICIENT_RESOURCES;
-    }
-
-    ref2 = object_ref{*s2};
-
-    s1->other_end = s2;
-    s1->first = true;
-    s1->state = unix_socket_state::connected;
-
-    s2->other_end = s1;
-    s2->first = false;
-    s2->state = unix_socket_state::connected;
-
-    s1->acquire();
-    s2->acquire();
-
-    return nt_status::SUCCESS;
 }
