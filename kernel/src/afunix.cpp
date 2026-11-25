@@ -953,7 +953,13 @@ nt_status unix_socket::do_accept(HANDLE& sock, void* us_addr, int& addrlen) {
     unix_socket* c;
 
     while (true) {
-        status = wait_for_object(*this, true);
+        if constexpr (NONBLOCK) {
+            status = wait_for_object(*this, true, 0);
+
+            if (status == nt_status::TIMEOUT)
+                return nt_status::CANT_WAIT;
+        } else
+            status = wait_for_object(*this, true);
 
         if (status == nt_status::ALERTED)
             continue;
