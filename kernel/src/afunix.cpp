@@ -847,7 +847,13 @@ nt_status unix_socket::do_connect(const sockaddr* addr, size_t addrlen) {
     }
 
     while (true) {
-        status = wait_for_object(serv.accept_queue_not_full_event.get(), true);
+        if constexpr (NONBLOCK) {
+            status = wait_for_object(serv.accept_queue_not_full_event.get(),
+                                     true, 0);
+            if (status == nt_status::TIMEOUT)
+                return nt_status::CANT_WAIT;
+        } else
+            status = wait_for_object(serv.accept_queue_not_full_event.get(), true);
 
         if (status == nt_status::ALERTED)
             continue;
