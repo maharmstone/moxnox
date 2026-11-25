@@ -21,6 +21,7 @@ import thread;
 import handle;
 import vfs;
 import rwsem;
+import process;
 
 using namespace std;
 
@@ -575,13 +576,94 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
     return nt_status::SUCCESS;
 }
 
+static nt_status open_socket(process& proc, string_view path, object_ref& sock) {
+    nt_status status;
+    optional<reference_wrapper<dentry>> drw;
+    uintptr_t us_proc_params;
+    uint32_t read_bytes;
+    HANDLE curdir;
+    object_ref obj;
+    unsigned int create_result;
+
+    // get current directory
+
+    status = proc.read_vm((uint8_t*)proc.peb + offsetof(PEB, ProcessParameters),
+                        &us_proc_params, sizeof(us_proc_params), &read_bytes);
+    if (!success(status))
+        return status;
+
+    if (read_bytes != sizeof(us_proc_params))
+        return nt_status::NO_MEMORY;
+
+    status = proc.read_vm((uint8_t*)us_proc_params + offsetof(RTL_USER_PROCESS_PARAMETERS, CurrentDirectory.Handle),
+                        &curdir, sizeof(HANDLE), &read_bytes);
+
+    if (!success(status))
+        return status;
+
+    if (read_bytes != sizeof(HANDLE))
+        return nt_status::NO_MEMORY;
+
+    auto curdirobj = deref_handle(curdir);
+
+    if (!curdirobj)
+        return nt_status::INVALID_HANDLE;
+
+    if (curdirobj.get().type != object_type::file)
+        return nt_status::OBJECT_TYPE_MISMATCH;
+
+    auto& curdirf = static_cast<file&>(curdirobj.get());
+
+    if (!curdirf.dentry)
+        return nt_status::INVALID_PARAMETER;
+
+    // open socket inode
+
+    status = open_inode(path, *curdirf.dentry, obj, drw, FILE_OPEN,
+                        FILE_NON_DIRECTORY_FILE, create_result, false);
+    if (!success(status))
+        return status;
+
+    if (drw)
+        drw->get().release();
+
+    // FIXME - check permissions
+
+    if (obj.get().type != object_type::inode)
+        return nt_status::CONNECTION_REFUSED;
+
+    auto& ino = static_cast<inode&>(obj.get());
+
+    if (ino.inode_type != inode_type::socket)
+        return nt_status::CONNECTION_REFUSED;
+
+    {
+        lock_guard lock(bound_sockets_lock);
+
+        for (auto le = bound_sockets.next; le != &bound_sockets; le = le->next) {
+            auto& s = *(base_unix_socket*)((uint8_t*)le - offsetof(base_unix_socket, bound_le));
+
+            if (s.bind_done && s.bound_inode && &s.bound_inode.get() == &ino) {
+                s.acquire();
+                sock = s;
+                break;
+            }
+        }
+    }
+
+    if (!sock)
+        return nt_status::CONNECTION_REFUSED;
+
+    return nt_status::SUCCESS;
+}
+
 template<unix_socket_type TYPE>
 template<bool NONBLOCK>
 nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int flags,
-                                       sockaddr*, size_t, uint64_t& sent_bytes,
+                                       sockaddr* to, size_t tolen, uint64_t& sent_bytes,
                                        span<const HANDLE> handles) {
-    if (!other_end)
-        return nt_status::INVALID_PARAMETER;
+    nt_status status;
+    object_ref objref;
 
     if (flags != 0)
         return nt_status::INVALID_PARAMETER;
@@ -589,11 +671,55 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
     {
         lock_guard lock(state_lock);
 
-        if (state != unix_socket_state::connected)
-            return nt_status::CONNECTION_DISCONNECTED;
-
         if (shutdown_write)
             return nt_status::PIPE_BROKEN;
+
+        if constexpr (TYPE != unix_socket_type::dgram) {
+            if (!other_end)
+                return nt_status::INVALID_PARAMETER;
+
+            if (state != unix_socket_state::connected)
+                return nt_status::CONNECTION_DISCONNECTED;
+        }
+
+        if (state == unix_socket_state::connected) {
+            objref = *other_end;
+            other_end->acquire();
+        }
+    }
+
+    if constexpr (TYPE == unix_socket_type::dgram) {
+        if (to) {
+            auto& t = *get_current_thread();
+
+            if (!t.proc)
+                return nt_status::INVALID_PARAMETER;
+
+            if (tolen < sizeof(sa_family_t))
+                return nt_status::INVALID_PARAMETER;
+
+            auto& un = *(sockaddr_un*)to;
+
+            if (un.sun_family != AF_UNIX)
+                return nt_status::INVALID_PARAMETER;
+
+            string_view path(un.sun_path, min(tolen, sizeof(sockaddr_un)) - offsetof(sockaddr_un, sun_path));
+
+            if (auto zero = path.find('\0'); zero != string_view::npos)
+                path = string_view(path.data(), zero);
+
+            objref.reset();
+
+            status = open_socket(*t.proc, path, objref);
+            if (!success(status))
+                return status;
+
+            if (static_cast<base_unix_socket&>(objref.get()).socket_type != TYPE)
+                return nt_status::PROTOCOL_NOT_SUPPORTED;
+        }
+
+        if (!objref)
+            return nt_status::CONNECTION_DISCONNECTED;
     }
 
     size_t vec_size = get_vec_size(v);
@@ -715,13 +841,15 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
         }
     }
 
+    auto& dest = static_cast<unix_socket<TYPE>&>(objref.get());
+
     do {
         bool done_copy = false;
 
         {
-            lock_guard l(other_end->lock);
+            lock_guard l(dest.lock);
 
-            if (other_end->dead || other_end->shutdown_read) {
+            if (dest.dead || dest.shutdown_read) {
                 if constexpr (TYPE == unix_socket_type::stream) {
                     while (!is_list_empty(fds)) {
                         auto& f = containing_record<sent_fd_stream>(fds.next);
@@ -748,7 +876,7 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
             }
 
             if constexpr (TYPE == unix_socket_type::stream) {
-                size_t buf_left = sizeof(other_end->buf.buf) - other_end->buf.buf_unread;
+                size_t buf_left = sizeof(dest.buf.buf) - dest.buf.buf_unread;
 
                 auto to_copy = min(vec_size, buf_left);
 
@@ -756,37 +884,37 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
                     while (!is_list_empty(fds)) {
                         auto& f = containing_record<sent_fd_stream>(fds.next);
 
-                        f.bytes_left = other_end->buf.buf_unread;
+                        f.bytes_left = dest.buf.buf_unread;
 
                         remove_entry_list(f.le);
-                        insert_tail_list(other_end->buf.sent_fds, f.le);
+                        insert_tail_list(dest.buf.sent_fds, f.le);
                     }
 
-                    if (other_end->buf.buf_write_pos + to_copy > sizeof(other_end->buf.buf)) {
-                        auto first_bit = sizeof(other_end->buf.buf) - other_end->buf.buf_write_pos;
+                    if (dest.buf.buf_write_pos + to_copy > sizeof(dest.buf.buf)) {
+                        auto first_bit = sizeof(dest.buf.buf) - dest.buf.buf_write_pos;
 
-                        memcpy_vec(&other_end->buf.buf[other_end->buf.buf_write_pos],
+                        memcpy_vec(&dest.buf.buf[dest.buf.buf_write_pos],
                                    v, top, first_bit);
 
-                        other_end->buf.buf_write_pos = 0;
-                        other_end->buf.buf_unread += first_bit;
+                        dest.buf.buf_write_pos = 0;
+                        dest.buf.buf_unread += first_bit;
                         to_copy -= first_bit;
                         vec_size -= first_bit;
                         sent_bytes += first_bit;
                     }
 
-                    memcpy_vec(&other_end->buf.buf[other_end->buf.buf_write_pos],
+                    memcpy_vec(&dest.buf.buf[dest.buf.buf_write_pos],
                                v, top, to_copy);
 
-                    other_end->buf.buf_write_pos += to_copy;
-                    other_end->buf.buf_unread += to_copy;
+                    dest.buf.buf_write_pos += to_copy;
+                    dest.buf.buf_unread += to_copy;
                     vec_size -= to_copy;
                     sent_bytes += to_copy;
 
                     done_copy = true;
                 }
             } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
-                if (other_end->buf.msgs_unread < MAX_DGRAM_MSGS) {
+                if (dest.buf.msgs_unread < MAX_DGRAM_MSGS) {
                     while (!is_list_empty(fds)) {
                         auto& f = containing_record<sent_fd_dgram>(fds.next);
 
@@ -794,8 +922,8 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
                         insert_tail_list(msg->sent_fds, f.le);
                     }
 
-                    insert_tail_list(other_end->buf.msgs, msg->le);
-                    other_end->buf.msgs_unread++;
+                    insert_tail_list(dest.buf.msgs, msg->le);
+                    dest.buf.msgs_unread++;
                     done_copy = true;
                     sent_bytes = msg->size;
                 }
@@ -808,24 +936,24 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
             sync_lock sl;
             lock_guard l(sl);
 
-            if (!other_end->signalled) {
-                other_end->signalled = true;
+            if (!dest.signalled) {
+                dest.signalled = true;
 
-                wake_up_waiters(other_end->waiters, WAIT_TYPE_READING);
+                wake_up_waiters(dest.waiters, WAIT_TYPE_READING);
             }
 
             {
-                lock_guard l2(other_end->lock);
+                lock_guard l2(dest.lock);
 
-                if (!other_end->dead && !other_end->shutdown_read) {
+                if (!dest.dead && !dest.shutdown_read) {
                     if constexpr (TYPE == unix_socket_type::stream) {
-                        if (other_end->buf.buf_unread == sizeof(other_end->buf.buf)) {
-                            other_end->not_full_event.signalled = false;
+                        if (dest.buf.buf_unread == sizeof(dest.buf.buf)) {
+                            dest.not_full_event.signalled = false;
                             write_signalled = false;
                         }
                     } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
-                        if (other_end->buf.msgs_unread == MAX_DGRAM_MSGS) {
-                            other_end->not_full_event.signalled = false;
+                        if (dest.buf.msgs_unread == MAX_DGRAM_MSGS) {
+                            dest.not_full_event.signalled = false;
                             write_signalled = false;
                         }
                     }
@@ -862,7 +990,7 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
                 break;
         } else {
             // block while we wait for space to become available
-            auto status = wait_for_object(other_end->not_full_event, true);
+            auto status = wait_for_object(dest.not_full_event, true);
 
             if (status == nt_status::USER_APC || status == nt_status::ALERTED || !success(status)) {
                 if constexpr (TYPE == unix_socket_type::stream) {
@@ -971,6 +1099,13 @@ void unix_socket<TYPE>::last_handle_closed() {
             other_end->release();
             release();
         }
+    } else {
+        {
+            lock_guard lg(lock);
+            dead = true;
+        }
+
+        set_event(not_full_event);
     }
 
     {
@@ -1142,12 +1277,7 @@ template<bool NONBLOCK>
 nt_status unix_socket<TYPE>::do_connect(const sockaddr* addr, size_t addrlen) {
     auto& t = *get_current_thread();
     nt_status status;
-    object_ref obj;
-    unsigned int create_result;
-    optional<reference_wrapper<dentry>> drw;
-    uintptr_t us_proc_params;
-    uint32_t read_bytes;
-    HANDLE curdir;
+    object_ref sock;
 
     if (!t.proc)
         return nt_status::INTERNAL_ERROR;
@@ -1169,80 +1299,12 @@ nt_status unix_socket<TYPE>::do_connect(const sockaddr* addr, size_t addrlen) {
     if (auto zero = path.find('\0'); zero != string_view::npos)
         path = string_view(path.data(), zero);
 
-    // get current directory
-
-    status = proc.read_vm((uint8_t*)proc.peb + offsetof(PEB, ProcessParameters),
-                          &us_proc_params, sizeof(us_proc_params), &read_bytes);
+    status = open_socket(proc, path, sock);
     if (!success(status))
         return status;
 
-    if (read_bytes != sizeof(us_proc_params))
-        return nt_status::NO_MEMORY;
-
-    status = proc.read_vm((uint8_t*)us_proc_params + offsetof(RTL_USER_PROCESS_PARAMETERS, CurrentDirectory.Handle),
-                          &curdir, sizeof(HANDLE), &read_bytes);
-
-    if (!success(status))
-        return status;
-
-    if (read_bytes != sizeof(HANDLE))
-        return nt_status::NO_MEMORY;
-
-    auto curdirobj = deref_handle(curdir);
-
-    if (!curdirobj)
-        return nt_status::INVALID_HANDLE;
-
-    if (curdirobj.get().type != object_type::file)
-        return nt_status::OBJECT_TYPE_MISMATCH;
-
-    auto& curdirf = static_cast<file&>(curdirobj.get());
-
-    if (!curdirf.dentry)
-        return nt_status::INVALID_PARAMETER;
-
-    // open socket inode
-
-    status = open_inode(path, *curdirf.dentry, obj, drw, FILE_OPEN,
-                        FILE_NON_DIRECTORY_FILE, create_result, false);
-    if (!success(status))
-        return status;
-
-    if (drw)
-        drw->get().release();
-
-    // FIXME - check permissions
-
-    if (obj.get().type != object_type::inode)
-        return nt_status::CONNECTION_REFUSED;
-
-    auto& ino = static_cast<inode&>(obj.get());
-
-    if (ino.inode_type != inode_type::socket)
-        return nt_status::CONNECTION_REFUSED;
-
-    object_ref sock;
-
-    {
-        lock_guard lock(bound_sockets_lock);
-
-        for (auto le = bound_sockets.next; le != &bound_sockets; le = le->next) {
-            auto& s = *(::unix_socket<TYPE>*)((uint8_t*)le - offsetof(::unix_socket<TYPE>, bound_le));
-
-            if (s.bind_done && s.bound_inode && &s.bound_inode.get() == &ino) {
-                s.acquire();
-                sock = s;
-
-                if (s.socket_type != TYPE)
-                    return nt_status::PROTOCOL_NOT_SUPPORTED;
-
-                break;
-            }
-        }
-    }
-
-    if (!sock)
-        return nt_status::CONNECTION_REFUSED;
+    if (static_cast<base_unix_socket&>(sock.get()).socket_type != TYPE)
+        return nt_status::PROTOCOL_NOT_SUPPORTED;
 
     auto& serv = static_cast<unix_socket&>(sock.get());
 
