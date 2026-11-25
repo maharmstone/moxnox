@@ -295,8 +295,10 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
     size_t copied = 0;
     size_t vec_size = get_vec_size(v);
 
-    if (!other_end)
-        return nt_status::INVALID_PARAMETER;
+    if constexpr (TYPE == unix_socket_type::stream || TYPE == unix_socket_type::seqpacket) {
+        if (!other_end)
+            return nt_status::INVALID_PARAMETER;
+    }
 
     if (flags & ~MSG_PEEK)
         return nt_status::INVALID_PARAMETER;
@@ -331,11 +333,11 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
         if constexpr (NONBLOCK) {
             lock_guard lg(lock);
 
-            if (!other_end_dead && !other_end->shutdown_write) {
+            if (!other_end || (!other_end_dead && !other_end->shutdown_write)) {
                 if constexpr (TYPE == unix_socket_type::stream) {
                     if (buf.buf_unread == 0)
                         return nt_status::CANT_WAIT;
-                } else if (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+                } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
                     if (buf.msgs_unread == 0)
                         return nt_status::CANT_WAIT;
                 }
@@ -430,7 +432,7 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
                 }
             } else if (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
                 if (is_list_empty(buf.msgs)) {
-                    if (other_end_dead || other_end->shutdown_write)
+                    if (other_end && (other_end_dead || other_end->shutdown_write))
                         break;
 
                     continue;
@@ -470,7 +472,7 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
                     if (!not_full_event.signalled)
                         not_full_event.set_holding_sync_lock();
 
-                    if (!other_end->write_signalled) {
+                    if (other_end && !other_end->write_signalled) {
                         other_end->write_signalled = true;
                         wake_up_waiters(other_end->waiters, WAIT_TYPE_WRITING);
                     }
