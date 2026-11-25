@@ -1424,6 +1424,9 @@ template<bool NONBLOCK>
 nt_status unix_socket<TYPE>::do_accept(HANDLE& sock, void* us_addr, int& addrlen) {
     nt_status status;
 
+    if constexpr (TYPE == unix_socket_type::dgram)
+        return nt_status::NOT_SUPPORTED;
+
     if (addrlen < 0 || (us_addr && (size_t)addrlen < sizeof(sa_family_t)))
         return nt_status::INVALID_PARAMETER;
 

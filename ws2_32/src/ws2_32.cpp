@@ -243,7 +243,10 @@ SOCKET accept(SOCKET s, sockaddr* addr, int* addrlen) {
         if (status == nt_status::USER_APC)
             continue;
 
-        if (!success(status)) {
+        if (status == nt_status::NOT_SUPPORTED) {
+            *_errno() = EOPNOTSUPP;
+            return SOCKET_ERROR;
+        } else if (!success(status)) {
             *_errno() = nt_status_to_errno(status);
             return SOCKET_ERROR;
         }
