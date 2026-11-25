@@ -1066,10 +1066,46 @@ nt_status unix_socket::getsockname(span<uint8_t> buf, size_t& len) {
     return nt_status::SUCCESS;
 }
 
-nt_status unix_socket::getpeername(span<uint8_t> /*buf*/, size_t& /*len*/) {
-    print("FIXME - unix_socket::getpeername\n");
+nt_status unix_socket::getpeername(span<uint8_t> buf, size_t& len) {
+    if (buf.size() < offsetof(sockaddr_un, sun_path))
+        return nt_status::BUFFER_TOO_SMALL;
 
-    return nt_status::NOT_IMPLEMENTED;
+    object_ref objref;
+
+    {
+        lock_guard lock(state_lock);
+
+        if (!other_end)
+            return nt_status::CONNECTION_DISCONNECTED;
+
+        objref = *other_end;
+        other_end->acquire();
+    }
+
+    auto& s = static_cast<unix_socket&>(objref.get());
+
+    auto& addr = *(sockaddr_un*)buf.data();
+
+    addr.sun_family = AF_UNIX;
+
+    {
+        lock_guard lock(s.state_lock);
+
+        if (!s.bind_name || s.bind_name[0] == 0) {
+            len = offsetof(sockaddr_un, sun_path);
+            return nt_status::SUCCESS;
+        }
+
+        auto namelen = strlen(s.bind_name.get());
+
+        if (buf.size() < offsetof(sockaddr_un, sun_path) + namelen + 1)
+            return nt_status::BUFFER_TOO_SMALL;
+
+        memcpy(addr.sun_path, s.bind_name.get(), namelen + 1);
+        len = offsetof(sockaddr_un, sun_path) + namelen + 1;
+    }
+
+    return nt_status::SUCCESS;
 }
 
 nt_status unix_socket::shutdown(int /*how*/) {
