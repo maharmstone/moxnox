@@ -95,6 +95,7 @@ enum class nt_status : uint32_t {
     DEVICE_REMOVED = 0xc00002b6,
     SYSTEM_SHUTDOWN = 0xc00002eb,
     STACK_BUFFER_OVERRUN = 0xc0000409,
+    PROTOCOL_NOT_SUPPORTED = 0xc000a013,
 };
 
 using NTSTATUS = enum nt_status;

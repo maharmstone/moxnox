@@ -186,6 +186,9 @@ export int nt_status_to_errno(nt_status status) {
         case nt_status::OBJECT_NAME_COLLISION:
             return EEXIST;
 
+        case nt_status::PROTOCOL_NOT_SUPPORTED:
+            return EPROTOTYPE;
+
         default:
             return EINVAL;
     }

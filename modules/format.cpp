@@ -622,6 +622,8 @@ span<char> do_format_arg(span<char> sp, string_view, nt_status arg) {
             return sp_strcpy(sp, "SYSTEM_SHUTDOWN");
         case nt_status::STACK_BUFFER_OVERRUN:
             return sp_strcpy(sp, "STACK_BUFFER_OVERRUN");
+        case nt_status::PROTOCOL_NOT_SUPPORTED:
+            return sp_strcpy(sp, "PROTOCOL_NOT_SUPPORTED");
         default:
             return do_format_arg(sp, ":08x", (uint32_t)arg);
     }

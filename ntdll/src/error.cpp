@@ -186,6 +186,8 @@ uint32_t RtlNtStatusToDosErrorNoTeb(nt_status status) {
             return ERROR_SYSTEM_SHUTDOWN;
         case STACK_BUFFER_OVERRUN:
             return ERROR_STACK_BUFFER_OVERRUN;
+        case PROTOCOL_NOT_SUPPORTED:
+            break;
     }
 
     return ERROR_MR_MID_NOT_FOUND;
