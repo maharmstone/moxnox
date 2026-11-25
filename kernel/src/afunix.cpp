@@ -578,6 +578,35 @@ void unix_socket::last_handle_closed() {
 
         state = unix_socket_state::closed;
     }
+
+    while (true) {
+        unix_socket* old_server = nullptr;
+        unix_socket* s;
+
+        {
+            lock_guard lock(accept_queue_lock);
+
+            if (is_list_empty(accept_queue))
+                break;
+
+            s = (unix_socket*)((uint8_t*)accept_queue.next - offsetof(::unix_socket, accept_le));
+
+            remove_entry_list(s->accept_le);
+            s->accept_done = true;
+        }
+
+        {
+            lock_guard lock(s->state_lock);
+
+            s->state = unix_socket_state::closed;
+            swap(old_server, s->server);
+        }
+
+        if (old_server)
+            old_server->release();
+
+        s->release();
+    }
 }
 
 nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
