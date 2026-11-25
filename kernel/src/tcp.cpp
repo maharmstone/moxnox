@@ -2900,7 +2900,13 @@ nt_status tcp_socket<FAMILY>::do_accept(HANDLE& sock, void* us_addr, int& addrle
     typename socket_variant<FAMILY>::type c;
 
     while (true) {
-        status = wait_for_object(accept_queue_event.get(), true);
+        if constexpr (NONBLOCK) {
+            status = wait_for_object(accept_queue_event.get(), true, 0);
+            if (status == nt_status::TIMEOUT)
+                return nt_status::CANT_WAIT;
+        } else
+            status = wait_for_object(accept_queue_event.get(), true);
+
         if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
             return status;
 
