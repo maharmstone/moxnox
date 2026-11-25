@@ -98,6 +98,8 @@ public:
     list_entry accept_queue = { &accept_queue, &accept_queue };
     unix_socket* server = nullptr;
     bool accept_done = false;
+    bool shutdown_read = false;
+    bool shutdown_write = false;
 
     uint8_t buf[PAGE_SIZE];
     size_t buf_unread = 0;
@@ -164,6 +166,11 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
 
         if (state != unix_socket_state::connected)
             return nt_status::CONNECTION_DISCONNECTED;
+
+        if (shutdown_read) {
+            recv_bytes = 0;
+            return nt_status::SUCCESS;
+        }
     }
 
     // FIXME - from and fromlen?
@@ -179,7 +186,7 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
         if constexpr (NONBLOCK) {
             lock_guard lg(lock);
 
-            if (buf_unread == 0 && !other_end_dead)
+            if (buf_unread == 0 && !other_end_dead && !other_end->shutdown_write)
                 return nt_status::CANT_WAIT;
         } else {
             auto status = wait_for_object(*this, true);
@@ -198,7 +205,7 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
             lock_guard l2(lock);
 
             if (buf_unread == 0) {
-                if (other_end_dead)
+                if (other_end_dead || other_end->shutdown_write)
                     break;
 
                 continue;
@@ -317,6 +324,9 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
 
         if (state != unix_socket_state::connected)
             return nt_status::CONNECTION_DISCONNECTED;
+
+        if (shutdown_write)
+            return nt_status::PIPE_BROKEN;
     }
 
     size_t vec_size = get_vec_size(v);
@@ -377,7 +387,7 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
 
             size_t buf_left = sizeof(other_end->buf) - other_end->buf_unread;
 
-            if (other_end->dead) {
+            if (other_end->dead || other_end->shutdown_read) {
                 while (!is_list_empty(fds)) {
                     auto& f = containing_record<sent_fd>(fds.next);
 
@@ -386,7 +396,7 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
                 }
 
                 if (sent_bytes == 0)
-                    return nt_status::PIPE_DISCONNECTED;
+                    return nt_status::PIPE_BROKEN;
                 else
                     break;
             }
@@ -441,7 +451,7 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
             {
                 lock_guard l2(other_end->lock);
 
-                if (other_end->buf_unread == sizeof(other_end->buf) && !other_end->dead) {
+                if (other_end->buf_unread == sizeof(other_end->buf) && !other_end->dead && !other_end->shutdown_read) {
                     other_end->not_full_event.signalled = false;
                     write_signalled = false;
                 }
@@ -1139,10 +1149,64 @@ nt_status unix_socket::getpeername(span<uint8_t> buf, size_t& len) {
     return nt_status::SUCCESS;
 }
 
-nt_status unix_socket::shutdown(int /*how*/) {
-    print("FIXME - unix_socket::shutdown\n");
+nt_status unix_socket::shutdown(int how) {
+    if (how != SHUT_RD && how != SHUT_WR && how != SHUT_RDWR)
+        return nt_status::INVALID_PARAMETER;
 
-    return nt_status::NOT_IMPLEMENTED;
+    object_ref objref;
+
+    {
+        lock_guard lock(state_lock);
+
+        if (state != unix_socket_state::connected)
+            return nt_status::CONNECTION_DISCONNECTED;
+
+        if (how == SHUT_RD || how == SHUT_RDWR)
+            shutdown_read = true;
+
+        if (how == SHUT_WR || how == SHUT_RDWR)
+            shutdown_write = true;
+
+        objref = *other_end;
+        other_end->acquire();
+    }
+
+    auto& s = static_cast<unix_socket&>(objref.get());
+
+    if (how == SHUT_WR || how == SHUT_RDWR) {
+        sync_lock sl;
+        lock_guard lock(sl);
+
+        if (!write_signalled) {
+            write_signalled = true;
+            wake_up_waiters(waiters, WAIT_TYPE_WRITING);
+        }
+
+        if (!s.signalled) {
+            s.signalled = true;
+            wake_up_waiters(s.waiters, WAIT_TYPE_READING);
+        }
+    }
+
+    if (how == SHUT_RD || how == SHUT_RDWR) {
+        sync_lock sl;
+        lock_guard lock(sl);
+
+        if (!signalled) {
+            signalled = true;
+            wake_up_waiters(waiters, WAIT_TYPE_READING);
+        }
+
+        if (!s.write_signalled) {
+            s.write_signalled = true;
+            wake_up_waiters(s.waiters, WAIT_TYPE_WRITING);
+        }
+
+        if (!not_full_event.signalled)
+            not_full_event.set_holding_sync_lock();
+    }
+
+    return nt_status::SUCCESS;
 }
 
 nt_status create_unix_socket_pair(int type, object_ref& ref1, object_ref& ref2) {
