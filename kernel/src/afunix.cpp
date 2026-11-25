@@ -56,7 +56,15 @@ public:
     }
 
     nt_status bind(const sockaddr* addr, size_t addrlen) override;
-    nt_status connect(const sockaddr* addr, size_t addrlen) override;
+
+    nt_status connect(const sockaddr* addr, size_t addrlen) override {
+        return do_connect<false>(addr, addrlen);
+    }
+
+    nt_status connect_nonblock(const sockaddr* addr, size_t addrlen) override {
+        return do_connect<true>(addr, addrlen);
+    }
+
     nt_status listen(int backlog) override;
 
     nt_status accept(HANDLE& sock, void* addr, int& addrlen) override {
@@ -127,6 +135,9 @@ private:
 
     template<bool NONBLOCK>
     nt_status do_accept(HANDLE& sock, void* addr, int& addrlen);
+
+    template<bool NONBLOCK>
+    nt_status do_connect(const sockaddr* addr, size_t addrlen);
 };
 
 struct sent_fd {
@@ -724,7 +735,8 @@ nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
     return nt_status::SUCCESS;
 }
 
-nt_status unix_socket::connect(const sockaddr* addr, size_t addrlen) {
+template<bool NONBLOCK>
+nt_status unix_socket::do_connect(const sockaddr* addr, size_t addrlen) {
     auto& t = *get_current_thread();
     nt_status status;
     object_ref obj;

@@ -80,6 +80,10 @@ public:
         return nt_status::INVALID_PARAMETER;
     }
 
+    nt_status connect_nonblock(const sockaddr*, size_t) override {
+        return nt_status::INVALID_PARAMETER;
+    }
+
     nt_status listen(int) override {
         return nt_status::INVALID_PARAMETER;
     }
@@ -3501,11 +3505,14 @@ nt_status socket::do_bind(span<const uint8_t> inbuf) {
     return this->bind((sockaddr*)inbuf.data(), inbuf.size());
 }
 
-nt_status socket::do_connect(span<const uint8_t> inbuf) {
+nt_status socket::do_connect(span<const uint8_t> inbuf, bool nonblock) {
     if (inbuf.size() < sizeof(sockaddr))
         return nt_status::BUFFER_TOO_SMALL;
 
-    return this->connect((sockaddr*)inbuf.data(), inbuf.size());
+    if (nonblock)
+        return this->connect_nonblock((sockaddr*)inbuf.data(), inbuf.size());
+    else
+        return this->connect((sockaddr*)inbuf.data(), inbuf.size());
 }
 
 nt_status socket::do_listen(span<const uint8_t> inbuf) {
@@ -3820,7 +3827,7 @@ nt_status socket::ioctl(uint32_t code, span<const uint8_t> inbuf,
             return do_bind(inbuf);
 
         case IOCTL_MOXNOX_SOCKET_CONNECT:
-            return do_connect(inbuf);
+            return do_connect(inbuf, nonblock);
 
         case IOCTL_MOXNOX_SOCKET_LISTEN:
             return do_listen(inbuf);

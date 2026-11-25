@@ -193,7 +193,15 @@ public:
         return do_sendto<false>(v, flags, to, tolen, sent_bytes);
     }
     nt_status bind(const sockaddr* addr, size_t addrlen) override;
-    nt_status connect(const sockaddr* addr, size_t addrlen) override;
+
+    nt_status connect(const sockaddr* addr, size_t addrlen) override {
+        return do_connect<false>(addr, addrlen);
+    }
+
+    nt_status connect_nonblock(const sockaddr* addr, size_t addrlen) override {
+        return do_connect<true>(addr, addrlen);
+    }
+
     nt_status listen(int backlog) override;
 
     nt_status accept(HANDLE& sock, void* addr, int& addrlen) override {
@@ -252,6 +260,9 @@ private:
 
     template<bool NONBLOCK>
     nt_status do_accept(HANDLE& sock, void* addr, int& addrlen);
+
+    template<bool NONBLOCK>
+    nt_status do_connect(const sockaddr* addr, size_t addrlen);
 };
 
 class tcp_socket_packet : public socket_packet {
@@ -784,7 +795,8 @@ static tcp_seq rand_tcp_seq() {
 }
 
 template<socket_family FAMILY>
-nt_status tcp_socket<FAMILY>::connect(const sockaddr* addr, size_t addrlen) {
+template<bool NONBLOCK>
+nt_status tcp_socket<FAMILY>::do_connect(const sockaddr* addr, size_t addrlen) {
     nt_status status;
     bool mapped_address = false;
 

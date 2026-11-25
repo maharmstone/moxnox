@@ -219,6 +219,7 @@ public:
                              span<const HANDLE> handles) = 0;
     virtual nt_status bind(const sockaddr* addr, size_t addrlen) = 0;
     virtual nt_status connect(const sockaddr* addr, size_t addrlen) = 0;
+    virtual nt_status connect_nonblock(const sockaddr* addr, size_t addrlen) = 0;
     virtual nt_status listen(int backlog) = 0;
     virtual nt_status accept(HANDLE& sock, void* addr, int& addrlen) = 0;
     virtual nt_status accept_nonblock(HANDLE& sock, void* addr, int& addrlen) = 0;
@@ -281,7 +282,7 @@ private:
     nt_status do_recvmsg(span<const uint8_t> inbuf, bool nonblock);
     nt_status do_sendmsg(span<const uint8_t> inbuf, bool nonblock);
     nt_status do_bind(span<const uint8_t> inbuf);
-    nt_status do_connect(span<const uint8_t> inbuf);
+    nt_status do_connect(span<const uint8_t> inbuf, bool nonblock);
     nt_status do_listen(span<const uint8_t> inbuf);
     nt_status do_accept(span<const uint8_t> inbuf, span<uint8_t> outbuf,
                         uintptr_t& written_bytes, bool nonblock);
