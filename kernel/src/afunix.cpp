@@ -1018,7 +1018,38 @@ nt_status unix_socket::accept(HANDLE& sock, void* us_addr, int& addrlen) {
             continue;
         }
 
-        // FIXME - us_addr
+        if (us_addr) {
+            sockaddr_un addr;
+            size_t namelen = 0;
+
+            addr.sun_family = AF_UNIX;
+
+            {
+                lock_guard lock(c->state_lock);
+
+                if (c->bind_name && c->bind_name[0] != 0) {
+                    namelen = min(sizeof(sockaddr_un) - offsetof(sockaddr_un, sun_path),
+                                  strlen(c->bind_name.get()) + 1);
+                    memcpy(addr.sun_path, c->bind_name.get(), namelen);
+                }
+            }
+
+            status = t.proc->write_vm(us_addr, &addr, (uint32_t)min((size_t)addrlen, offsetof(sockaddr_un, sun_path) + namelen),
+                                      nullptr);
+            if (!success(status)) {
+                newsock->other_end = nullptr;
+                newsock->state = unix_socket_state::closed;
+                newsock->release();
+
+                c->other_end = nullptr;
+                c->state = unix_socket_state::closed;
+                c->release();
+
+                return status;
+            }
+
+            addrlen = (int)(offsetof(sockaddr_un, sun_path) + namelen);
+        }
 
         status = t.proc->add_handle(*f, FILE_READ_DATA | FILE_WRITE_DATA,
                                     true, sock);
