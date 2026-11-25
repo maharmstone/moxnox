@@ -459,7 +459,10 @@ int accept4(int s, struct sockaddr* addr, socklen_t* addrlen, int flag) {
             continue;
         }
 
-        if (!success(status)) {
+        if (status == nt_status::NOT_SUPPORTED) {
+            *_errno() = EOPNOTSUPP;
+            return -1;
+        } else if (!success(status)) {
             *_errno() = nt_status_to_errno(status);
             return -1;
         }
