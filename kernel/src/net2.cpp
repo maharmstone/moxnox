@@ -2736,20 +2736,12 @@ static nt_status netctl_socket(span<const uint8_t> buf) {
         }
 
         case AF_UNIX: {
+            nt_status status;
             object_ref ref;
 
-            switch (params.type) {
-                case SOCK_STREAM: {
-                    auto status = create_new_unix_socket(ref);
-                    if (!success(status))
-                        return status;
-
-                    break;
-                }
-
-                default:
-                    return nt_status::INVALID_PARAMETER;
-            }
+            status = create_new_unix_socket(ref, params.type);
+            if (!success(status))
+                return status;
 
             HANDLE h;
 
@@ -2761,8 +2753,8 @@ static nt_status netctl_socket(span<const uint8_t> buf) {
 
             object_ref ref2{*f};
 
-            auto status = t->proc->add_handle(ref2.get(), FILE_READ_DATA | FILE_WRITE_DATA,
-                                              true, h);
+            status = t->proc->add_handle(ref2.get(), FILE_READ_DATA | FILE_WRITE_DATA,
+                                         true, h);
             if (!success(status))
                 return status;
 

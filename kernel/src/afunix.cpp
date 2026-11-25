@@ -24,8 +24,17 @@ import rwsem;
 
 using namespace std;
 
+static constexpr size_t MAX_DGRAM_SIZE = PAGE_SIZE;
+static constexpr size_t MAX_DGRAM_MSGS = 10;
+
 static spinlock bound_sockets_lock;
 static list_entry bound_sockets = { &bound_sockets, &bound_sockets };
+
+enum class unix_socket_type {
+    stream,
+    dgram,
+    seqpacket,
+};
 
 enum class unix_socket_state {
     closed,
@@ -34,7 +43,71 @@ enum class unix_socket_state {
     awaiting_accept,
 };
 
-class unix_socket : public socket {
+class base_unix_socket : public socket {
+public:
+    base_unix_socket(unix_socket_type socket_type) : socket_type(socket_type) { }
+
+    unix_socket_type socket_type;
+    spinlock lock;
+    bool dead = false, other_end_dead = false;
+    bool first;
+    event not_full_event{false};
+    rwsem state_lock;
+    bool bind_done = false;
+    object_ref bound_inode;
+    list_entry bound_le;
+    unique_ptr<char[]> bind_name;
+    object_ref accept_queue_not_full_event;
+    unsigned int listen_backlog;
+    unix_socket_state state = unix_socket_state::closed;
+    list_entry accept_le;
+    spinlock accept_queue_lock;
+    list_entry accept_queue = { &accept_queue, &accept_queue };
+    bool accept_done = false;
+    bool shutdown_read = false;
+    bool shutdown_write = false;
+};
+
+template<unix_socket_type TYPE>
+struct socket_buffer;
+
+template<>
+struct socket_buffer<unix_socket_type::stream> {
+    uint8_t buf[PAGE_SIZE];
+    size_t buf_unread = 0;
+    size_t buf_write_pos = 0;
+    list_entry sent_fds = { &sent_fds, &sent_fds };
+};
+
+struct dgram_msg {
+    static void* operator new(size_t size, size_t extra) {
+        return ::operator new(size + extra);
+    }
+
+    static void operator delete(void* p) {
+        ::operator delete(p);
+    }
+
+    list_entry le;
+    size_t size;
+    list_entry sent_fds = { &sent_fds, &sent_fds };
+    uint8_t buf[];
+};
+
+template<>
+struct socket_buffer<unix_socket_type::dgram> {
+    list_entry msgs = { &msgs, &msgs };
+    size_t msgs_unread = 0;
+};
+
+template<>
+struct socket_buffer<unix_socket_type::seqpacket> {
+    list_entry msgs = { &msgs, &msgs };
+    size_t msgs_unread = 0;
+};
+
+template<unix_socket_type TYPE>
+class unix_socket : public base_unix_socket {
 public:
     unix_socket();
     ~unix_socket();
@@ -95,31 +168,9 @@ public:
 
     nt_status shutdown(int how) override;
 
-    spinlock lock;
-    unix_socket* other_end = nullptr;
-    bool dead = false, other_end_dead = false;
-    bool first;
-    event not_full_event{false};
-    list_entry sent_fds = { &sent_fds, &sent_fds };
-    rwsem state_lock;
-    bool bind_done = false;
-    object_ref bound_inode;
-    list_entry bound_le;
-    unique_ptr<char[]> bind_name;
-    object_ref accept_queue_not_full_event;
-    unsigned int listen_backlog;
-    unix_socket_state state = unix_socket_state::closed;
-    list_entry accept_le;
-    spinlock accept_queue_lock;
-    list_entry accept_queue = { &accept_queue, &accept_queue };
-    unix_socket* server = nullptr;
-    bool accept_done = false;
-    bool shutdown_read = false;
-    bool shutdown_write = false;
-
-    uint8_t buf[PAGE_SIZE];
-    size_t buf_unread = 0;
-    size_t buf_write_pos = 0;
+    unix_socket<TYPE>* other_end = nullptr;
+    unix_socket<TYPE>* server = nullptr;
+    socket_buffer<TYPE> buf;
 
 private:
     template<bool NONBLOCK>
@@ -140,12 +191,12 @@ private:
     nt_status do_connect(const sockaddr* addr, size_t addrlen);
 };
 
-struct sent_fd {
-    sent_fd(object& obj) : obj(obj) {
+struct sent_fd_stream {
+    sent_fd_stream(object& obj) : obj(obj) {
         obj.acquire();
     }
 
-    ~sent_fd() {
+    ~sent_fd_stream() {
         object_release(obj);
     }
 
@@ -155,23 +206,68 @@ struct sent_fd {
     size_t bytes_left;
 };
 
-nt_status create_new_unix_socket(object_ref& ref) {
-    auto s = new unix_socket;
-    if (!s) {
-        print("new failed\n");
-        return nt_status::INSUFFICIENT_RESOURCES;
+struct sent_fd_dgram {
+    sent_fd_dgram(object& obj) : obj(obj) {
+        obj.acquire();
     }
 
-    ref = object_ref{*s};
+    ~sent_fd_dgram() {
+        object_release(obj);
+    }
+
+    list_entry le;
+    object& obj;
+    ACCESS_MASK access_mask;
+};
+
+nt_status create_new_unix_socket(object_ref& ref, int type) {
+    switch (type) {
+        case SOCK_STREAM: {
+            auto s = new unix_socket<unix_socket_type::stream>;
+            if (!s) {
+                print("new failed\n");
+                return nt_status::INSUFFICIENT_RESOURCES;
+            }
+
+            ref = object_ref{*s};
+            break;
+        }
+
+        case SOCK_DGRAM: {
+            auto s = new unix_socket<unix_socket_type::dgram>;
+            if (!s) {
+                print("new failed\n");
+                return nt_status::INSUFFICIENT_RESOURCES;
+            }
+
+            ref = object_ref{*s};
+            break;
+        }
+
+        case SOCK_SEQPACKET: {
+            auto s = new unix_socket<unix_socket_type::seqpacket>;
+            if (!s) {
+                print("new failed\n");
+                return nt_status::INSUFFICIENT_RESOURCES;
+            }
+
+            ref = object_ref{*s};
+            break;
+        }
+
+        default:
+            return nt_status::INVALID_PARAMETER;
+    }
 
     return nt_status::SUCCESS;
 }
 
+template<unix_socket_type TYPE>
 template<bool NONBLOCK>
-nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
-                                   sockaddr_storage*, size_t*,
-                                   uint64_t& recv_bytes, span<HANDLE> handles,
-                                   size_t& num_handles) {
+nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
+                                         sockaddr_storage*, size_t*,
+                                         uint64_t& recv_bytes, span<HANDLE> handles,
+                                         size_t& num_handles) {
     nt_status status;
     auto& t = *get_current_thread();
     size_t copied = 0;
@@ -197,19 +293,31 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
 
     // FIXME - from and fromlen?
 
-    if (vec_size == 0) {
-        recv_bytes = 0;
-        return nt_status::SUCCESS;
+    if constexpr (TYPE == unix_socket_type::stream) {
+        if (vec_size == 0) {
+            recv_bytes = 0;
+            return nt_status::SUCCESS;
+        }
     }
 
-    span<uint8_t> top = v.front();
+    span<uint8_t> top;
+
+    if (!v.empty())
+        top = v.front();
 
     while (true) {
         if constexpr (NONBLOCK) {
             lock_guard lg(lock);
 
-            if (buf_unread == 0 && !other_end_dead && !other_end->shutdown_write)
-                return nt_status::CANT_WAIT;
+            if (!other_end_dead && !other_end->shutdown_write) {
+                if constexpr (TYPE == unix_socket_type::stream) {
+                    if (buf.buf_unread == 0)
+                        return nt_status::CANT_WAIT;
+                } else if (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+                    if (buf.msgs_unread == 0)
+                        return nt_status::CANT_WAIT;
+                }
+            }
         } else {
             auto status = wait_for_object(*this, true);
 
@@ -226,74 +334,118 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
             lock_guard l(sl);
             lock_guard l2(lock);
 
-            if (buf_unread == 0) {
-                if (other_end_dead || other_end->shutdown_write)
-                    break;
+            if constexpr (TYPE == unix_socket_type::stream) {
+                if (buf.buf_unread == 0) {
+                    if (other_end_dead || other_end->shutdown_write)
+                        break;
 
-                continue;
-            }
-
-            size_t buf_read_pos = buf_write_pos + sizeof(buf) - buf_unread;
-
-            while (buf_read_pos >= sizeof(buf)) {
-                buf_read_pos -= sizeof(buf);
-            }
-
-            size_t to_copy = min(vec_size, buf_unread);
-
-            if (!(flags & MSG_PEEK)) {
-                if (!is_list_empty(sent_fds)) {
-                    auto& f = containing_record<sent_fd>(sent_fds.next);
-
-                    if (f.bytes_left > 0)
-                        to_copy = min(to_copy, f.bytes_left);
+                    continue;
                 }
 
-                while (!is_list_empty(sent_fds)) {
-                    auto& f = containing_record<sent_fd>(sent_fds.next);
+                size_t buf_read_pos = buf.buf_write_pos + sizeof(buf.buf) - buf.buf_unread;
 
-                    if (f.bytes_left < to_copy) {
+                while (buf_read_pos >= sizeof(buf.buf)) {
+                    buf_read_pos -= sizeof(buf.buf);
+                }
+
+                size_t to_copy = min(vec_size, buf.buf_unread);
+
+                if (!(flags & MSG_PEEK)) {
+                    if (!is_list_empty(buf.sent_fds)) {
+                        auto& f = containing_record<sent_fd_stream>(buf.sent_fds.next);
+
+                        if (f.bytes_left > 0)
+                            to_copy = min(to_copy, f.bytes_left);
+                    }
+
+                    while (!is_list_empty(buf.sent_fds)) {
+                        auto& f = containing_record<sent_fd_stream>(buf.sent_fds.next);
+
+                        if (f.bytes_left < to_copy) {
+                            remove_entry_list(f.le);
+                            insert_tail_list(fds, f.le);
+                        } else
+                            break;
+                    }
+
+                    for (auto le = buf.sent_fds.next; le != &buf.sent_fds; le = le->next) {
+                        auto& f = containing_record<sent_fd_stream>(le);
+
+                        f.bytes_left -= to_copy;
+                    }
+                }
+
+                if (buf_read_pos + to_copy > sizeof(buf.buf)) {
+                    auto first_bit = sizeof(buf.buf) - buf_read_pos;
+
+                    memcpy_vec(v, top, &buf.buf[buf_read_pos], first_bit);
+
+                    buf_read_pos = 0;
+                    to_copy -= first_bit;
+                    copied = first_bit;
+
+                    if (!(flags & MSG_PEEK))
+                        buf.buf_unread -= first_bit;
+                }
+
+                memcpy_vec(v, top, &buf.buf[buf_read_pos], to_copy);
+                copied += to_copy;
+
+                if (!(flags & MSG_PEEK)) {
+                    buf.buf_unread -= to_copy;
+
+                    if (buf.buf_unread == 0)
+                        signalled = false;
+
+                    if (!not_full_event.signalled)
+                        not_full_event.set_holding_sync_lock();
+
+                    if (!other_end->write_signalled) {
+                        other_end->write_signalled = true;
+                        wake_up_waiters(other_end->waiters, WAIT_TYPE_WRITING);
+                    }
+                }
+            } else if (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+                if (is_list_empty(buf.msgs)) {
+                    if (other_end_dead || other_end->shutdown_write)
+                        break;
+
+                    continue;
+                }
+
+                auto& msg = containing_record<dgram_msg>(buf.msgs.next);
+
+                size_t to_copy = min(vec_size, msg.size);
+
+                if (!(flags & MSG_PEEK)) {
+                    while (!is_list_empty(msg.sent_fds)) {
+                        auto& f = containing_record<sent_fd_dgram>(msg.sent_fds.next);
+
                         remove_entry_list(f.le);
                         insert_tail_list(fds, f.le);
-                    } else
-                        break;
+                    }
                 }
 
-                for (auto le = sent_fds.next; le != &sent_fds; le = le->next) {
-                    auto& f = containing_record<sent_fd>(le);
+                memcpy_vec(v, top, msg.buf, to_copy);
+                copied += to_copy;
 
-                    f.bytes_left -= to_copy;
-                }
-            }
+                if (!(flags & MSG_PEEK)) {
+                    remove_entry_list(msg.le);
 
-            if (buf_read_pos + to_copy > sizeof(buf)) {
-                auto first_bit = sizeof(buf) - buf_read_pos;
+                    buf.msgs_unread--;
 
-                memcpy_vec(v, top, &buf[buf_read_pos], first_bit);
+                    if (buf.msgs_unread == 0)
+                        signalled = false;
 
-                buf_read_pos = 0;
-                to_copy -= first_bit;
-                copied = first_bit;
+                    if (!not_full_event.signalled)
+                        not_full_event.set_holding_sync_lock();
 
-                if (!(flags & MSG_PEEK))
-                    buf_unread -= first_bit;
-            }
+                    if (!other_end->write_signalled) {
+                        other_end->write_signalled = true;
+                        wake_up_waiters(other_end->waiters, WAIT_TYPE_WRITING);
+                    }
 
-            memcpy_vec(v, top, &buf[buf_read_pos], to_copy);
-            copied += to_copy;
-
-            if (!(flags & MSG_PEEK)) {
-                buf_unread -= to_copy;
-
-                if (buf_unread == 0)
-                    signalled = false;
-
-                if (!not_full_event.signalled)
-                    not_full_event.set_holding_sync_lock();
-
-                if (!other_end->write_signalled) {
-                    other_end->write_signalled = true;
-                    wake_up_waiters(other_end->waiters, WAIT_TYPE_WRITING);
+                    delete &msg;
                 }
             }
         }
@@ -301,34 +453,65 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
         num_handles = 0;
 
         while (!is_list_empty(fds)) {
-            auto& f = containing_record<sent_fd>(fds.next);
+            if constexpr (TYPE == unix_socket_type::stream) {
+                auto& f = containing_record<sent_fd_stream>(fds.next);
 
-            remove_entry_list(f.le);
+                remove_entry_list(f.le);
 
-            if (num_handles < handles.size()) {
-                handle_t h;
+                if (num_handles < handles.size()) {
+                    handle_t h;
 
-                status = t.proc->add_handle(f.obj, f.access_mask, true, h);
-                if (!success(status)) {
-                    delete &f;
+                    status = t.proc->add_handle(f.obj, f.access_mask, true, h);
+                    if (!success(status)) {
+                        delete &f;
 
-                    // FIXME - close handles already done
+                        // FIXME - close handles already done
 
-                    while (!is_list_empty(fds)) {
-                        auto& f2 = containing_record<sent_fd>(fds.next);
+                        while (!is_list_empty(fds)) {
+                            auto& f2 = containing_record<sent_fd_stream>(fds.next);
 
-                        remove_entry_list(f2.le);
-                        delete &f2;
+                            remove_entry_list(f2.le);
+                            delete &f2;
+                        }
+
+                        return status;
                     }
 
-                    return status;
+                    handles[num_handles] = h;
                 }
 
-                handles[num_handles] = h;
-            }
+                num_handles++;
+                delete &f;
+            } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+                auto& f = containing_record<sent_fd_dgram>(fds.next);
 
-            num_handles++;
-            delete &f;
+                remove_entry_list(f.le);
+
+                if (num_handles < handles.size()) {
+                    handle_t h;
+
+                    status = t.proc->add_handle(f.obj, f.access_mask, true, h);
+                    if (!success(status)) {
+                        delete &f;
+
+                        // FIXME - close handles already done
+
+                        while (!is_list_empty(fds)) {
+                            auto& f2 = containing_record<sent_fd_dgram>(fds.next);
+
+                            remove_entry_list(f2.le);
+                            delete &f2;
+                        }
+
+                        return status;
+                    }
+
+                    handles[num_handles] = h;
+                }
+
+                num_handles++;
+                delete &f;
+            }
         }
 
         break;
@@ -338,10 +521,11 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
     return nt_status::SUCCESS;
 }
 
+template<unix_socket_type TYPE>
 template<bool NONBLOCK>
-nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
-                                 sockaddr*, size_t, uint64_t& sent_bytes,
-                                 span<const HANDLE> handles) {
+nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int flags,
+                                       sockaddr*, size_t, uint64_t& sent_bytes,
+                                       span<const HANDLE> handles) {
     if (!other_end)
         return nt_status::INVALID_PARAMETER;
 
@@ -360,13 +544,20 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
 
     size_t vec_size = get_vec_size(v);
 
-    if (vec_size == 0) {
-        sent_bytes = 0;
+    if constexpr (TYPE == unix_socket_type::stream) {
+        if (vec_size == 0) {
+            sent_bytes = 0;
 
-        if (!handles.empty())
-            return nt_status::INVALID_PARAMETER;
+            if (!handles.empty())
+                return nt_status::INVALID_PARAMETER;
 
-        return nt_status::SUCCESS;
+            return nt_status::SUCCESS;
+        }
+    }
+
+    if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+        if (vec_size > MAX_DGRAM_SIZE)
+            return nt_status::INVALID_BUFFER_SIZE;
     }
 
     list_entry fds = { &fds, &fds };
@@ -376,96 +567,170 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
 
         auto obj = deref_handle(h, access_mask);
 
-        if (!obj) {
-            while (!is_list_empty(fds)) {
-                auto& f = containing_record<sent_fd>(fds.next);
-
-                remove_entry_list(f.le);
-                delete &f;
-            }
-
-            return nt_status::INVALID_HANDLE;
-        }
-
-        auto f = new sent_fd(obj.get());
-        if (!f) {
-            while (!is_list_empty(fds)) {
-                auto& f = containing_record<sent_fd>(fds.next);
-
-                remove_entry_list(f.le);
-                delete &f;
-            }
-
-            return nt_status::INSUFFICIENT_RESOURCES;
-        }
-
-        f->access_mask = access_mask;
-
-        insert_tail_list(fds, f->le);
-    }
-
-    span<const uint8_t> top = v.front();
-
-    sent_bytes = 0;
-
-    do {
-        size_t to_copy;
-
-        {
-            lock_guard l(other_end->lock);
-
-            size_t buf_left = sizeof(other_end->buf) - other_end->buf_unread;
-
-            if (other_end->dead || other_end->shutdown_read) {
+        if constexpr (TYPE == unix_socket_type::stream) {
+            if (!obj) {
                 while (!is_list_empty(fds)) {
-                    auto& f = containing_record<sent_fd>(fds.next);
+                    auto& f = containing_record<sent_fd_stream>(fds.next);
 
                     remove_entry_list(f.le);
                     delete &f;
                 }
 
-                if (sent_bytes == 0)
+                return nt_status::INVALID_HANDLE;
+            }
+
+            auto f = new sent_fd_stream(obj.get());
+            if (!f) {
+                while (!is_list_empty(fds)) {
+                    auto& f = containing_record<sent_fd_stream>(fds.next);
+
+                    remove_entry_list(f.le);
+                    delete &f;
+                }
+
+                return nt_status::INSUFFICIENT_RESOURCES;
+            }
+
+            f->access_mask = access_mask;
+
+            insert_tail_list(fds, f->le);
+        } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+            if (!obj) {
+                while (!is_list_empty(fds)) {
+                    auto& f = containing_record<sent_fd_dgram>(fds.next);
+
+                    remove_entry_list(f.le);
+                    delete &f;
+                }
+
+                return nt_status::INVALID_HANDLE;
+            }
+
+            auto f = new sent_fd_dgram(obj.get());
+            if (!f) {
+                while (!is_list_empty(fds)) {
+                    auto& f = containing_record<sent_fd_dgram>(fds.next);
+
+                    remove_entry_list(f.le);
+                    delete &f;
+                }
+
+                return nt_status::INSUFFICIENT_RESOURCES;
+            }
+
+            f->access_mask = access_mask;
+
+            insert_tail_list(fds, f->le);
+        }
+    }
+
+    span<const uint8_t> top;
+    dgram_msg* msg = nullptr;
+
+    if (!v.empty())
+        top = v.front();
+
+    sent_bytes = 0;
+
+    if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+        msg = new (vec_size) dgram_msg;
+        if (!msg) {
+            print("new failed\n");
+            return nt_status::INSUFFICIENT_RESOURCES;
+        }
+
+        msg->size = vec_size;
+        memcpy_vec(msg->buf, v, top, vec_size);
+    }
+
+    do {
+        bool done_copy = false;
+
+        {
+            lock_guard l(other_end->lock);
+
+            if (other_end->dead || other_end->shutdown_read) {
+                if constexpr (TYPE == unix_socket_type::stream) {
+                    while (!is_list_empty(fds)) {
+                        auto& f = containing_record<sent_fd_stream>(fds.next);
+
+                        remove_entry_list(f.le);
+                        delete &f;
+                    }
+                } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+                    while (!is_list_empty(fds)) {
+                        auto& f = containing_record<sent_fd_dgram>(fds.next);
+
+                        remove_entry_list(f.le);
+                        delete &f;
+                    }
+                }
+
+                if (sent_bytes == 0) {
+                    if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket)
+                        delete msg;
+
                     return nt_status::PIPE_BROKEN;
-                else
+                } else
                     break;
             }
 
-            to_copy = min(vec_size, buf_left);
+            if constexpr (TYPE == unix_socket_type::stream) {
+                size_t buf_left = sizeof(other_end->buf.buf) - other_end->buf.buf_unread;
 
-            if (to_copy > 0) {
-                while (!is_list_empty(fds)) {
-                    auto& f = containing_record<sent_fd>(fds.next);
+                auto to_copy = min(vec_size, buf_left);
 
-                    f.bytes_left = other_end->buf_unread;
+                if (to_copy > 0) {
+                    while (!is_list_empty(fds)) {
+                        auto& f = containing_record<sent_fd_stream>(fds.next);
 
-                    remove_entry_list(f.le);
-                    insert_tail_list(other_end->sent_fds, f.le);
+                        f.bytes_left = other_end->buf.buf_unread;
+
+                        remove_entry_list(f.le);
+                        insert_tail_list(other_end->buf.sent_fds, f.le);
+                    }
+
+                    if (other_end->buf.buf_write_pos + to_copy > sizeof(other_end->buf.buf)) {
+                        auto first_bit = sizeof(other_end->buf.buf) - other_end->buf.buf_write_pos;
+
+                        memcpy_vec(&other_end->buf.buf[other_end->buf.buf_write_pos],
+                                   v, top, first_bit);
+
+                        other_end->buf.buf_write_pos = 0;
+                        other_end->buf.buf_unread += first_bit;
+                        to_copy -= first_bit;
+                        vec_size -= first_bit;
+                        sent_bytes += first_bit;
+                    }
+
+                    memcpy_vec(&other_end->buf.buf[other_end->buf.buf_write_pos],
+                               v, top, to_copy);
+
+                    other_end->buf.buf_write_pos += to_copy;
+                    other_end->buf.buf_unread += to_copy;
+                    vec_size -= to_copy;
+                    sent_bytes += to_copy;
+
+                    done_copy = true;
                 }
+            } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+                if (other_end->buf.msgs_unread < MAX_DGRAM_MSGS) {
+                    while (!is_list_empty(fds)) {
+                        auto& f = containing_record<sent_fd_dgram>(fds.next);
 
-                if (other_end->buf_write_pos + to_copy > sizeof(other_end->buf)) {
-                    auto first_bit = sizeof(other_end->buf) - other_end->buf_write_pos;
+                        remove_entry_list(f.le);
+                        insert_tail_list(msg->sent_fds, f.le);
+                    }
 
-                    memcpy_vec(&other_end->buf[other_end->buf_write_pos], v, top,
-                               first_bit);
-
-                    other_end->buf_write_pos = 0;
-                    other_end->buf_unread += first_bit;
-                    to_copy -= first_bit;
-                    vec_size -= first_bit;
-                    sent_bytes += first_bit;
+                    insert_tail_list(other_end->buf.msgs, msg->le);
+                    other_end->buf.msgs_unread++;
+                    done_copy = true;
+                    sent_bytes = msg->size;
                 }
-
-                memcpy_vec(&other_end->buf[other_end->buf_write_pos], v, top,
-                           to_copy);
-
-                other_end->buf_write_pos += to_copy;
-                other_end->buf_unread += to_copy;
-                vec_size -= to_copy;
-                sent_bytes += to_copy;
             }
         }
 
-        if (to_copy > 0) {
+        if (done_copy) {
             // wake up waiting thread
 
             sync_lock sl;
@@ -480,47 +745,84 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
             {
                 lock_guard l2(other_end->lock);
 
-                if (other_end->buf_unread == sizeof(other_end->buf) && !other_end->dead && !other_end->shutdown_read) {
-                    other_end->not_full_event.signalled = false;
-                    write_signalled = false;
+                if (!other_end->dead && !other_end->shutdown_read) {
+                    if constexpr (TYPE == unix_socket_type::stream) {
+                        if (other_end->buf.buf_unread == sizeof(other_end->buf.buf)) {
+                            other_end->not_full_event.signalled = false;
+                            write_signalled = false;
+                        }
+                    } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+                        if (other_end->buf.msgs_unread == MAX_DGRAM_MSGS) {
+                            other_end->not_full_event.signalled = false;
+                            write_signalled = false;
+                        }
+                    }
                 }
             }
         }
 
-        if (vec_size == 0)
+        if (vec_size == 0 || (done_copy && (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket)))
             break;
 
         if constexpr (NONBLOCK) {
-            while (!is_list_empty(fds)) {
-                auto& f = containing_record<sent_fd>(fds.next);
+            if constexpr (TYPE == unix_socket_type::stream) {
+                while (!is_list_empty(fds)) {
+                    auto& f = containing_record<sent_fd_stream>(fds.next);
 
-                remove_entry_list(f.le);
-                delete &f;
+                    remove_entry_list(f.le);
+                    delete &f;
+                }
+            } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+                while (!is_list_empty(fds)) {
+                    auto& f = containing_record<sent_fd_dgram>(fds.next);
+
+                    remove_entry_list(f.le);
+                    delete &f;
+                }
             }
 
-            if (sent_bytes == 0)
+            if (sent_bytes == 0) {
+                if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket)
+                    delete msg;
+
                 return nt_status::CANT_WAIT;
-            else
+            } else
                 break;
         } else {
             // block while we wait for space to become available
             auto status = wait_for_object(other_end->not_full_event, true);
 
             if (status == nt_status::USER_APC || status == nt_status::ALERTED || !success(status)) {
-                while (!is_list_empty(fds)) {
-                    auto& f = containing_record<sent_fd>(fds.next);
+                if constexpr (TYPE == unix_socket_type::stream) {
+                    while (!is_list_empty(fds)) {
+                        auto& f = containing_record<sent_fd_stream>(fds.next);
 
-                    remove_entry_list(f.le);
-                    delete &f;
+                        remove_entry_list(f.le);
+                        delete &f;
+                    }
+                } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
+                    while (!is_list_empty(fds)) {
+                        auto& f = containing_record<sent_fd_dgram>(fds.next);
+
+                        remove_entry_list(f.le);
+                        delete &f;
+                    }
                 }
 
                 if (status == nt_status::USER_APC) {
-                    if (sent_bytes == 0)
+                    if (sent_bytes == 0) {
+                        if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket)
+                            delete msg;
+
                         return status;
-                    else
+                    } else
                         break;
-                } else if (!success(status) || status == nt_status::ALERTED)
+                } else {
+                    if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket)
+                        delete msg;
+
                     return status;
+                }
             }
         }
     } while (true);
@@ -528,21 +830,41 @@ nt_status unix_socket::do_sendto(span<const span<const uint8_t>> v, int flags,
     return nt_status::SUCCESS;
 }
 
-unix_socket::unix_socket() {
+template<unix_socket_type TYPE>
+unix_socket<TYPE>::unix_socket() : base_unix_socket(TYPE) {
     signalled = false;
     not_full_event.signalled = true;
 }
 
-unix_socket::~unix_socket() {
-    while (!is_list_empty(sent_fds)) {
-        auto& f = containing_record<sent_fd>(sent_fds.next);
+template<unix_socket_type TYPE>
+unix_socket<TYPE>::~unix_socket() {
+    if constexpr (TYPE == unix_socket_type::stream) {
+        while (!is_list_empty(buf.sent_fds)) {
+            auto& f = containing_record<sent_fd_stream>(buf.sent_fds.next);
 
-        remove_entry_list(f.le);
-        delete &f;
+            remove_entry_list(f.le);
+            delete &f;
+        }
+    } else {
+        while (!is_list_empty(buf.msgs)) {
+            auto& m = containing_record<dgram_msg>(buf.msgs.next);
+
+            remove_entry_list(m.le);
+
+            while (!is_list_empty(m.sent_fds)) {
+                auto& f = containing_record<sent_fd_dgram>(m.sent_fds.next);
+
+                remove_entry_list(f.le);
+                delete &f;
+            }
+
+            delete &m;
+        }
     }
 }
 
-void unix_socket::last_handle_closed() {
+template<unix_socket_type TYPE>
+void unix_socket<TYPE>::last_handle_closed() {
     if (other_end) {
         bool both_dead;
 
@@ -618,7 +940,7 @@ void unix_socket::last_handle_closed() {
             if (is_list_empty(accept_queue))
                 break;
 
-            s = (unix_socket*)((uint8_t*)accept_queue.next - offsetof(::unix_socket, accept_le));
+            s = (unix_socket<TYPE>*)((uint8_t*)accept_queue.next - offsetof(::unix_socket<TYPE>, accept_le));
 
             remove_entry_list(s->accept_le);
             s->accept_done = true;
@@ -638,7 +960,8 @@ void unix_socket::last_handle_closed() {
     }
 }
 
-nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
+template<unix_socket_type TYPE>
+nt_status unix_socket<TYPE>::bind(const sockaddr* addr, size_t addrlen) {
     auto& t = *get_current_thread();
     nt_status status;
     object_ref obj;
@@ -742,8 +1065,9 @@ nt_status unix_socket::bind(const sockaddr* addr, size_t addrlen) {
     return nt_status::SUCCESS;
 }
 
+template<unix_socket_type TYPE>
 template<bool NONBLOCK>
-nt_status unix_socket::do_connect(const sockaddr* addr, size_t addrlen) {
+nt_status unix_socket<TYPE>::do_connect(const sockaddr* addr, size_t addrlen) {
     auto& t = *get_current_thread();
     nt_status status;
     object_ref obj;
@@ -831,11 +1155,15 @@ nt_status unix_socket::do_connect(const sockaddr* addr, size_t addrlen) {
         lock_guard lock(bound_sockets_lock);
 
         for (auto le = bound_sockets.next; le != &bound_sockets; le = le->next) {
-            auto& s = *(::unix_socket*)((uint8_t*)le - offsetof(::unix_socket, bound_le));
+            auto& s = *(::unix_socket<TYPE>*)((uint8_t*)le - offsetof(::unix_socket<TYPE>, bound_le));
 
             if (s.bind_done && s.bound_inode && &s.bound_inode.get() == &ino) {
                 s.acquire();
                 sock = s;
+
+                if (s.socket_type != TYPE)
+                    return nt_status::PROTOCOL_NOT_SUPPORTED;
+
                 break;
             }
         }
@@ -919,7 +1247,8 @@ nt_status unix_socket::do_connect(const sockaddr* addr, size_t addrlen) {
     return nt_status::SUCCESS;
 }
 
-nt_status unix_socket::listen(int backlog) {
+template<unix_socket_type TYPE>
+nt_status unix_socket<TYPE>::listen(int backlog) {
     if (backlog < 0)
         return nt_status::INVALID_PARAMETER;
 
@@ -949,8 +1278,9 @@ nt_status unix_socket::listen(int backlog) {
     return nt_status::SUCCESS;
 }
 
+template<unix_socket_type TYPE>
 template<bool NONBLOCK>
-nt_status unix_socket::do_accept(HANDLE& sock, void* us_addr, int& addrlen) {
+nt_status unix_socket<TYPE>::do_accept(HANDLE& sock, void* us_addr, int& addrlen) {
     nt_status status;
 
     if (addrlen < 0 || (us_addr && (size_t)addrlen < sizeof(sa_family_t)))
@@ -999,7 +1329,7 @@ nt_status unix_socket::do_accept(HANDLE& sock, void* us_addr, int& addrlen) {
             if (is_list_empty(accept_queue))
                 continue;
 
-            auto& s = *(::unix_socket*)((uint8_t*)accept_queue.next - offsetof(::unix_socket, accept_le));
+            auto& s = *(::unix_socket<TYPE>*)((uint8_t*)accept_queue.next - offsetof(::unix_socket<TYPE>, accept_le));
 
             remove_entry_list(s.accept_le);
             s.accept_done = true;
@@ -1151,7 +1481,8 @@ nt_status unix_socket::do_accept(HANDLE& sock, void* us_addr, int& addrlen) {
     }
 }
 
-nt_status unix_socket::getsockname(span<uint8_t> buf, size_t& len) {
+template<unix_socket_type TYPE>
+nt_status unix_socket<TYPE>::getsockname(span<uint8_t> buf, size_t& len) {
     if (buf.size() < offsetof(sockaddr_un, sun_path))
         return nt_status::BUFFER_TOO_SMALL;
 
@@ -1179,7 +1510,8 @@ nt_status unix_socket::getsockname(span<uint8_t> buf, size_t& len) {
     return nt_status::SUCCESS;
 }
 
-nt_status unix_socket::getpeername(span<uint8_t> buf, size_t& len) {
+template<unix_socket_type TYPE>
+nt_status unix_socket<TYPE>::getpeername(span<uint8_t> buf, size_t& len) {
     if (buf.size() < offsetof(sockaddr_un, sun_path))
         return nt_status::BUFFER_TOO_SMALL;
 
@@ -1221,7 +1553,8 @@ nt_status unix_socket::getpeername(span<uint8_t> buf, size_t& len) {
     return nt_status::SUCCESS;
 }
 
-nt_status unix_socket::shutdown(int how) {
+template<unix_socket_type TYPE>
+nt_status unix_socket<TYPE>::shutdown(int how) {
     if (how != SHUT_RD && how != SHUT_WR && how != SHUT_RDWR)
         return nt_status::INVALID_PARAMETER;
 
@@ -1285,7 +1618,7 @@ nt_status create_unix_socket_pair(int type, object_ref& ref1, object_ref& ref2) 
     if (type != SOCK_STREAM) // FIXME - support SOCK_DGRAM too
         return nt_status::INVALID_PARAMETER;
 
-    auto s1 = new unix_socket;
+    auto s1 = new unix_socket<unix_socket_type::stream>;
     if (!s1) {
         print("new failed\n");
         return nt_status::INSUFFICIENT_RESOURCES;
@@ -1293,7 +1626,7 @@ nt_status create_unix_socket_pair(int type, object_ref& ref1, object_ref& ref2) 
 
     ref1 = object_ref{*s1};
 
-    auto s2 = new unix_socket;
+    auto s2 = new unix_socket<unix_socket_type::stream>;
     if (!s2) {
         print("new failed\n");
         return nt_status::INSUFFICIENT_RESOURCES;
