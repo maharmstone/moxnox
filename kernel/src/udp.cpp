@@ -1608,11 +1608,7 @@ nt_status udp_socket<FAMILY>::sendto(span<const span<const uint8_t>> v,
     {
         lock_guard lock(bind_lock);
 
-        if (!connect_done && (!to || tolen < sizeof(typename FAMILY::sockaddr)))
-            return nt_status::INVALID_PARAMETER;
-
-        // if connected, sendto destination is ignored
-        if (connect_done) {
+        if (connect_done && !to) {
             if constexpr (is_same_v<FAMILY, ipv4>) {
                 auto& s2 = static_cast<udp_socket<ipv4>&>(*this);
 
@@ -1627,6 +1623,9 @@ nt_status udp_socket<FAMILY>::sendto(span<const span<const uint8_t>> v,
                 dstscope = s2.connected_scope;
             }
         } else {
+            if (!to || tolen < sizeof(typename FAMILY::sockaddr))
+                return nt_status::INVALID_PARAMETER;
+
             if constexpr (is_same_v<FAMILY, ipv4>) {
                 dst = *(ipv4_address*)&((sockaddr_in*)to)->sin_addr;
                 dstport = ((sockaddr_in*)to)->sin_port;
