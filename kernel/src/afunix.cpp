@@ -1387,6 +1387,9 @@ nt_status unix_socket<TYPE>::do_connect(const sockaddr* addr, size_t addrlen) {
 
 template<unix_socket_type TYPE>
 nt_status unix_socket<TYPE>::listen(int backlog) {
+    if constexpr (TYPE == unix_socket_type::dgram)
+        return nt_status::NOT_SUPPORTED;
+
     if (backlog < 0)
         return nt_status::INVALID_PARAMETER;
 

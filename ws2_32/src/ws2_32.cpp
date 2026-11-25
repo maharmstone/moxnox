@@ -211,7 +211,10 @@ int listen(SOCKET s, int backlog) {
     auto status = NtDeviceIoControlFile((HANDLE)h, 0, nullptr, nullptr, &iosb,
                                         IOCTL_MOXNOX_SOCKET_LISTEN, &backlog,
                                         (uint32_t)sizeof(backlog), nullptr, 0);
-    if (!success(status)) {
+    if (status == nt_status::NOT_SUPPORTED) {
+        *_errno() = EOPNOTSUPP;
+        return SOCKET_ERROR;
+    } else if (!success(status)) {
         *_errno() = nt_status_to_errno(status);
         return SOCKET_ERROR;
     }
