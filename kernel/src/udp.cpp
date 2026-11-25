@@ -68,6 +68,10 @@ public:
         return nt_status::INVALID_PARAMETER;
     }
 
+    nt_status accept_nonblock(HANDLE&, void*, int&) override {
+        return nt_status::INVALID_PARAMETER;
+    }
+
     nt_status getsockname(span<uint8_t> buf, size_t& len) override;
     nt_status getpeername(span<uint8_t> buf, size_t& len) override;
 

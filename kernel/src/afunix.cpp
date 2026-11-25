@@ -58,7 +58,15 @@ public:
     nt_status bind(const sockaddr* addr, size_t addrlen) override;
     nt_status connect(const sockaddr* addr, size_t addrlen) override;
     nt_status listen(int backlog) override;
-    nt_status accept(HANDLE& sock, void* addr, int& addrlen) override;
+
+    nt_status accept(HANDLE& sock, void* addr, int& addrlen) override {
+        return do_accept<false>(sock, addr, addrlen);
+    }
+
+    nt_status accept_nonblock(HANDLE& sock, void* addr, int& addrlen) override {
+        return do_accept<true>(sock, addr, addrlen);
+    }
+
     nt_status getsockname(span<uint8_t>, size_t&) override;
     nt_status getpeername(span<uint8_t> buf, size_t& len) override;
 
@@ -116,6 +124,9 @@ private:
     nt_status do_sendto(span<const span<const uint8_t>> v, int flags,
                         sockaddr* to, size_t tolen, uint64_t& sent_bytes,
                         span<const HANDLE> handles);
+
+    template<bool NONBLOCK>
+    nt_status do_accept(HANDLE& sock, void* addr, int& addrlen);
 };
 
 struct sent_fd {
@@ -913,7 +924,8 @@ nt_status unix_socket::listen(int backlog) {
     return nt_status::SUCCESS;
 }
 
-nt_status unix_socket::accept(HANDLE& sock, void* us_addr, int& addrlen) {
+template<bool NONBLOCK>
+nt_status unix_socket::do_accept(HANDLE& sock, void* us_addr, int& addrlen) {
     nt_status status;
 
     if (addrlen < 0 || (us_addr && (size_t)addrlen < sizeof(sa_family_t)))

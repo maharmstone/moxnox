@@ -221,6 +221,7 @@ public:
     virtual nt_status connect(const sockaddr* addr, size_t addrlen) = 0;
     virtual nt_status listen(int backlog) = 0;
     virtual nt_status accept(HANDLE& sock, void* addr, int& addrlen) = 0;
+    virtual nt_status accept_nonblock(HANDLE& sock, void* addr, int& addrlen) = 0;
 
     nt_status read(span<const span<uint8_t>> v,
                    uint64_t& read_bytes) {
@@ -283,7 +284,7 @@ private:
     nt_status do_connect(span<const uint8_t> inbuf);
     nt_status do_listen(span<const uint8_t> inbuf);
     nt_status do_accept(span<const uint8_t> inbuf, span<uint8_t> outbuf,
-                        uintptr_t& written_bytes);
+                        uintptr_t& written_bytes, bool nonblock);
     nt_status do_getsockname(span<const uint8_t> inbuf, span<uint8_t> outbuf,
                              uintptr_t& written_bytes);
     nt_status do_getpeername(span<const uint8_t> inbuf, span<uint8_t> outbuf,

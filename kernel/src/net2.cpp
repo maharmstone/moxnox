@@ -88,6 +88,10 @@ public:
         return nt_status::INVALID_PARAMETER;
     }
 
+    nt_status accept_nonblock(HANDLE&, void*, int&) override {
+        return nt_status::INVALID_PARAMETER;
+    }
+
     nt_status getsockname(span<uint8_t> buf, size_t& len) override;
 
     nt_status getpeername(span<uint8_t>, size_t&) override {
@@ -3514,7 +3518,7 @@ nt_status socket::do_listen(span<const uint8_t> inbuf) {
 }
 
 nt_status socket::do_accept(span<const uint8_t> inbuf, span<uint8_t> outbuf,
-                            uintptr_t& written_bytes) {
+                            uintptr_t& written_bytes, bool nonblock) {
     if (inbuf.size() < sizeof(MOXNOX_SOCKET_ACCEPT_IN))
         return nt_status::BUFFER_TOO_SMALL;
 
@@ -3530,8 +3534,12 @@ nt_status socket::do_accept(span<const uint8_t> inbuf, span<uint8_t> outbuf,
 
     HANDLE sock;
     int addrlen = params_in.addrlen;
+    nt_status status;
 
-    auto status = this->accept(sock, params_in.addr, addrlen);
+    if (nonblock)
+        status = this->accept_nonblock(sock, params_in.addr, addrlen);
+    else
+        status = this->accept(sock, params_in.addr, addrlen);
 
     if (!success(status))
         return status;
@@ -3818,7 +3826,7 @@ nt_status socket::ioctl(uint32_t code, span<const uint8_t> inbuf,
             return do_listen(inbuf);
 
         case IOCTL_MOXNOX_SOCKET_ACCEPT:
-            return do_accept(inbuf, outbuf, written_bytes);
+            return do_accept(inbuf, outbuf, written_bytes, nonblock);
 
         case IOCTL_MOXNOX_SOCKET_GETSOCKNAME:
             return do_getsockname(inbuf, outbuf, written_bytes);
