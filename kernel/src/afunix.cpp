@@ -79,7 +79,28 @@ struct socket_buffer<unix_socket_type::stream> {
     list_entry sent_fds = { &sent_fds, &sent_fds };
 };
 
-struct dgram_msg {
+template<unix_socket_type TYPE>
+struct sock_msg;
+
+template<>
+struct sock_msg<unix_socket_type::dgram> {
+    static void* operator new(size_t size, size_t extra) {
+        return ::operator new(size + extra);
+    }
+
+    static void operator delete(void* p) {
+        ::operator delete(p);
+    }
+
+    list_entry le;
+    size_t size;
+    list_entry sent_fds = { &sent_fds, &sent_fds };
+    unique_ptr<char[]> name;
+    uint8_t buf[];
+};
+
+template<>
+struct sock_msg<unix_socket_type::seqpacket> {
     static void* operator new(size_t size, size_t extra) {
         return ::operator new(size + extra);
     }
@@ -265,7 +286,7 @@ nt_status create_new_unix_socket(object_ref& ref, int type) {
 template<unix_socket_type TYPE>
 template<bool NONBLOCK>
 nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
-                                         sockaddr_storage*, size_t*,
+                                         sockaddr_storage* from, size_t* fromlen,
                                          uint64_t& recv_bytes, span<HANDLE> handles,
                                          size_t& num_handles) {
     nt_status status;
@@ -328,6 +349,7 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
         }
 
         list_entry fds = { &fds, &fds };
+        char msgname[sizeof(sockaddr_un::sun_path) + 1];
 
         {
             sync_lock sl;
@@ -413,7 +435,7 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
                     continue;
                 }
 
-                auto& msg = containing_record<dgram_msg>(buf.msgs.next);
+                auto& msg = containing_record<sock_msg<TYPE>>(buf.msgs.next);
 
                 size_t to_copy = min(vec_size, msg.size);
 
@@ -428,6 +450,13 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
 
                 memcpy_vec(v, top, msg.buf, to_copy);
                 copied += to_copy;
+
+                if constexpr (TYPE == unix_socket_type::dgram) {
+                    if (msg.name && msg.name[0])
+                        strcpy(msgname, msg.name.get());
+                    else
+                        msgname[0] = 0;
+                }
 
                 if (!(flags & MSG_PEEK)) {
                     remove_entry_list(msg.le);
@@ -512,6 +541,31 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
                 num_handles++;
                 delete &f;
             }
+        }
+
+        if (from && fromlen && *fromlen >= sizeof(sa_family_t)) {
+            auto& addr = *(sockaddr_un*)from;
+            size_t namelen = 0;
+
+            addr.sun_family = AF_UNIX;
+
+            if constexpr (TYPE == unix_socket_type::stream || TYPE == unix_socket_type::seqpacket) {
+                lock_guard lock(other_end->state_lock);
+
+                if (other_end->bind_name && other_end->bind_name[0] != 0) {
+                    namelen = min(sizeof(sockaddr_un) - offsetof(sockaddr_un, sun_path),
+                                    strlen(other_end->bind_name.get()) + 1);
+                    memcpy(addr.sun_path, other_end->bind_name.get(), namelen);
+                }
+            } else {
+                if (msgname[0] != 0) {
+                    namelen = min(sizeof(sockaddr_un) - offsetof(sockaddr_un, sun_path),
+                                  strlen(msgname) + 1);
+                    memcpy(addr.sun_path, msgname, namelen);
+                }
+            }
+
+            *fromlen = offsetof(sockaddr_un, sun_path) + namelen;
         }
 
         break;
@@ -625,7 +679,7 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
     }
 
     span<const uint8_t> top;
-    dgram_msg* msg = nullptr;
+    sock_msg<TYPE>* msg = nullptr;
 
     if (!v.empty())
         top = v.front();
@@ -633,7 +687,7 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
     sent_bytes = 0;
 
     if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
-        msg = new (vec_size) dgram_msg;
+        msg = new (vec_size) sock_msg<TYPE>;
         if (!msg) {
             print("new failed\n");
             return nt_status::INSUFFICIENT_RESOURCES;
@@ -641,6 +695,24 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
 
         msg->size = vec_size;
         memcpy_vec(msg->buf, v, top, vec_size);
+
+        if constexpr (TYPE == unix_socket_type::dgram) {
+            lock_guard lock(state_lock);
+
+            if (bind_name) {
+                auto len = strlen(bind_name.get());
+
+                msg->name.reset(new char[len + 1]);
+                if (!msg->name) {
+                    print("new failed\n");
+                    delete msg;
+                    return nt_status::INSUFFICIENT_RESOURCES;
+                }
+
+                memcpy(msg->name.get(), bind_name.get(), len);
+                msg->name[len] = 0;
+            }
+        }
     }
 
     do {
@@ -847,7 +919,7 @@ unix_socket<TYPE>::~unix_socket() {
         }
     } else {
         while (!is_list_empty(buf.msgs)) {
-            auto& m = containing_record<dgram_msg>(buf.msgs.next);
+            auto& m = containing_record<sock_msg<TYPE>>(buf.msgs.next);
 
             remove_entry_list(m.le);
 
