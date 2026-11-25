@@ -956,7 +956,9 @@ nt_status unix_socket<TYPE>::do_sendto(span<const span<const uint8_t>> v, int fl
                     } else if constexpr (TYPE == unix_socket_type::dgram || TYPE == unix_socket_type::seqpacket) {
                         if (dest.buf.msgs_unread == MAX_DGRAM_MSGS) {
                             dest.not_full_event.signalled = false;
-                            write_signalled = false;
+
+                            if constexpr (TYPE != unix_socket_type::dgram)
+                                write_signalled = false;
                         }
                     }
                 }
