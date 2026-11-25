@@ -180,7 +180,7 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
     if (!other_end)
         return nt_status::INVALID_PARAMETER;
 
-    if (flags != 0)
+    if (flags & ~MSG_PEEK)
         return nt_status::INVALID_PARAMETER;
 
     {
@@ -241,27 +241,29 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
 
             size_t to_copy = min(vec_size, buf_unread);
 
-            if (!is_list_empty(sent_fds)) {
-                auto& f = containing_record<sent_fd>(sent_fds.next);
+            if (!(flags & MSG_PEEK)) {
+                if (!is_list_empty(sent_fds)) {
+                    auto& f = containing_record<sent_fd>(sent_fds.next);
 
-                if (f.bytes_left > 0)
-                    to_copy = min(to_copy, f.bytes_left);
-            }
+                    if (f.bytes_left > 0)
+                        to_copy = min(to_copy, f.bytes_left);
+                }
 
-            while (!is_list_empty(sent_fds)) {
-                auto& f = containing_record<sent_fd>(sent_fds.next);
+                while (!is_list_empty(sent_fds)) {
+                    auto& f = containing_record<sent_fd>(sent_fds.next);
 
-                if (f.bytes_left < to_copy) {
-                    remove_entry_list(f.le);
-                    insert_tail_list(fds, f.le);
-                } else
-                    break;
-            }
+                    if (f.bytes_left < to_copy) {
+                        remove_entry_list(f.le);
+                        insert_tail_list(fds, f.le);
+                    } else
+                        break;
+                }
 
-            for (auto le = sent_fds.next; le != &sent_fds; le = le->next) {
-                auto& f = containing_record<sent_fd>(le);
+                for (auto le = sent_fds.next; le != &sent_fds; le = le->next) {
+                    auto& f = containing_record<sent_fd>(le);
 
-                f.bytes_left -= to_copy;
+                    f.bytes_left -= to_copy;
+                }
             }
 
             if (buf_read_pos + to_copy > sizeof(buf)) {
@@ -270,24 +272,29 @@ nt_status unix_socket::do_recvfrom(span<const span<uint8_t>> v, int flags,
                 memcpy_vec(v, top, &buf[buf_read_pos], first_bit);
 
                 buf_read_pos = 0;
-                buf_unread -= first_bit;
                 to_copy -= first_bit;
                 copied = first_bit;
+
+                if (!(flags & MSG_PEEK))
+                    buf_unread -= first_bit;
             }
 
             memcpy_vec(v, top, &buf[buf_read_pos], to_copy);
-            buf_unread -= to_copy;
             copied += to_copy;
 
-            if (buf_unread == 0)
-                signalled = false;
+            if (!(flags & MSG_PEEK)) {
+                buf_unread -= to_copy;
 
-            if (!not_full_event.signalled)
-                not_full_event.set_holding_sync_lock();
+                if (buf_unread == 0)
+                    signalled = false;
 
-            if (!other_end->write_signalled) {
-                other_end->write_signalled = true;
-                wake_up_waiters(other_end->waiters, WAIT_TYPE_WRITING);
+                if (!not_full_event.signalled)
+                    not_full_event.set_holding_sync_lock();
+
+                if (!other_end->write_signalled) {
+                    other_end->write_signalled = true;
+                    wake_up_waiters(other_end->waiters, WAIT_TYPE_WRITING);
+                }
             }
         }
 
