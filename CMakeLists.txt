@@ -256,6 +256,11 @@ target_sources(unique_handle_nobuiltin PUBLIC FILE_SET CXX_MODULES FILES modules
 target_compile_options(unique_handle_nobuiltin PRIVATE -fno-builtin -fno-exceptions ${USERSPACE_CFLAGS})
 target_link_libraries(unique_handle_nobuiltin PRIVATE nt_nobuiltin)
 
+add_library(unique_fd STATIC)
+target_sources(unique_fd PUBLIC FILE_SET CXX_MODULES FILES modules/unique_fd.cpp)
+target_compile_options(unique_fd PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
+target_link_libraries(unique_fd PRIVATE ucrtbase_mod)
+
 add_library(vt100 STATIC)
 target_sources(vt100 PUBLIC FILE_SET CXX_MODULES FILES modules/vt100.cpp)
 target_compile_options(vt100 PRIVATE -fno-exceptions ${USERSPACE_CFLAGS})
