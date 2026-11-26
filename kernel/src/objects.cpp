@@ -164,8 +164,8 @@ concept is_readable_object_without_offset = requires(T t, span<const span<uint8_
 
 export
 template<typename T>
-concept has_ioctls = requires(T t, uint32_t code, span<const uint8_t> inbuf, span<uint8_t> outbuf, uintptr_t& written) {
-    { t.ioctl(code, inbuf, outbuf, written) } -> convertible_to<NTSTATUS>;
+concept has_ioctls = requires(T t, uint32_t code, span<const uint8_t> inbuf, span<uint8_t> outbuf, uintptr_t& written, ACCESS_MASK access_mask) {
+    { t.ioctl(code, inbuf, outbuf, written, access_mask) } -> convertible_to<NTSTATUS>;
 };
 
 export

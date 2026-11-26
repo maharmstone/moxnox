@@ -1428,10 +1428,11 @@ NTSTATUS NtOpenSection(HANDLE* section_handle, ACCESS_MASK desired_access,
 }
 
 nt_status section::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                         span<uint8_t> outbuf, uintptr_t& written) {
+                         span<uint8_t> outbuf, uintptr_t& written,
+                         ACCESS_MASK access_mask) {
     return visit([&](auto* ptr) {
         if constexpr (has_ioctls<typename remove_pointer_t<decltype(ptr)>::dev_type>)
-            return ptr->dev.ioctl(code, inbuf, outbuf, written);
+            return ptr->dev.ioctl(code, inbuf, outbuf, written, access_mask);
         else
             return nt_status::NOT_SUPPORTED;
     }, get_cache());

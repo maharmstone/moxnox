@@ -3079,7 +3079,8 @@ static nt_status netctl_socketpair(span<const uint8_t> inbuf,
 }
 
 nt_status netctl::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                        span<uint8_t> outbuf, uintptr_t& written) {
+                        span<uint8_t> outbuf, uintptr_t& written,
+                        ACCESS_MASK /*access_mask*/) {
     switch (code) {
         case IOCTL_MOXNOX_NETCTL_SOCKET:
             return netctl_socket(inbuf);
@@ -3807,7 +3808,7 @@ nt_status socket::do_shutdown(span<const uint8_t> inbuf) {
 
 nt_status socket::ioctl(uint32_t code, span<const uint8_t> inbuf,
                         span<uint8_t> outbuf, uintptr_t& written_bytes,
-                        bool nonblock) {
+                        ACCESS_MASK /*access_mask*/, bool nonblock) {
     switch (code) {
         case IOCTL_MOXNOX_SOCKET_RECVMSG:
             return do_recvmsg(inbuf, nonblock);

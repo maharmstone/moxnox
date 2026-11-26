@@ -28,7 +28,7 @@ public:
         return write(span(&sp, 1), written_bytes);
     }
 
-    virtual nt_status ioctl(uint32_t, span<const uint8_t>, span<uint8_t>, uintptr_t&) {
+    virtual nt_status ioctl(uint32_t, span<const uint8_t>, span<uint8_t>, uintptr_t&, ACCESS_MASK) {
         return nt_status::NOT_SUPPORTED;
     }
 

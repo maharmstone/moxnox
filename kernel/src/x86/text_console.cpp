@@ -35,7 +35,8 @@ public:
     NTSTATUS query_info(enum SECTION_INFORMATION_CLASS section_information_class,
                         span<uint8_t> buf, size_t* return_length) override;
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written) override;
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask) override;
 
 private:
     nt_status set_cursor(span<const uint8_t> inbuf, uintptr_t& written);
@@ -167,7 +168,8 @@ nt_status text_console_cache::set_cursor(span<const uint8_t> inbuf,
 }
 
 nt_status text_console_cache::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                                    span<uint8_t>, uintptr_t& written) {
+                                    span<uint8_t>, uintptr_t& written,
+                                    ACCESS_MASK /*access_mask*/) {
     switch (code) {
         case IOCTL_MOXNOX_CONSOLE_SET_CURSOR:
             return set_cursor(inbuf, written);

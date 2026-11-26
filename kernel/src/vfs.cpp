@@ -254,7 +254,8 @@ public:
     NTSTATUS write(span<const span<const uint8_t>> v, uint64_t offset,
                    uint64_t& written_bytes);
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written);
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask);
     NTSTATUS query_directory(HANDLE event, PIO_APC_ROUTINE apc_routine,
                              void* apc_context, IO_STATUS_BLOCK& io_status_block,
                              void* file_information, uint32_t length,

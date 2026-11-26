@@ -48,7 +48,8 @@ public:
     }
 
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written) override;
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask) override;
 };
 
 export class pty_client : public chardev {
@@ -60,7 +61,8 @@ public:
                     uint64_t& written_bytes) override;
     sync_object& get_sync_object() override;
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written) override;
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask) override;
     void last_handle_closed() override;
     nt_status userspace_open(object_ref&) override;
 
@@ -110,7 +112,8 @@ public:
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override;
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written) override;
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask) override;
     sync_object& get_sync_object() override;
     void last_handle_closed() override;
 
@@ -313,7 +316,8 @@ static nt_status create_pty(span<const uint8_t> inbuf, span<uint8_t> outbuf,
 }
 
 nt_status ptyctl::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                        span<uint8_t> outbuf, uintptr_t& written) {
+                        span<uint8_t> outbuf, uintptr_t& written,
+                        ACCESS_MASK /*access_mask*/) {
     switch (code) {
         case IOCTL_MOXNOX_PTYCTL_CREATE_PTY:
             return create_pty(inbuf, outbuf, written);
@@ -986,7 +990,8 @@ nt_status pty_client::get_fg_pg(span<uint8_t> outbuf, uintptr_t& written) {
 }
 
 nt_status pty_client::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                            span<uint8_t> outbuf, uintptr_t& written) {
+                            span<uint8_t> outbuf, uintptr_t& written,
+                            ACCESS_MASK /*access_mask*/) {
     switch (code) {
         case IOCTL_MOXNOX_PTY_ISATTY:
             written = 0;
@@ -1230,7 +1235,8 @@ nt_status pty_info::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
 }
 
 nt_status pty_server::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                            span<uint8_t> outbuf, uintptr_t& written) {
+                            span<uint8_t> outbuf, uintptr_t& written,
+                            ACCESS_MASK /*access_mask*/) {
     switch (code) {
         case IOCTL_MOXNOX_PTY_GET_CLIENT:
             return get_client(outbuf, written);

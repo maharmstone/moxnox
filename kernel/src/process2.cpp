@@ -144,7 +144,7 @@ public:
     }
 
     nt_status ioctl(uint32_t, span<const uint8_t>, span<uint8_t>,
-                    uintptr_t&) override {
+                    uintptr_t&, ACCESS_MASK) override {
         return nt_status::NOT_SUPPORTED;
     }
 };
@@ -165,7 +165,7 @@ public:
     }
 
     nt_status ioctl(uint32_t, span<const uint8_t>, span<uint8_t>,
-                    uintptr_t&) override {
+                    uintptr_t&, ACCESS_MASK) override {
         return nt_status::NOT_SUPPORTED;
     }
 };
@@ -5413,7 +5413,7 @@ nt_status process::set_controlling_terminal(span<const uint8_t> buffer) {
     auto& c = static_cast<chardev&>(obj.get());
 
     auto status = c.ioctl(IOCTL_MOXNOX_PTY_ISATTY, span<uint8_t>(),
-                          span<uint8_t>(), written);
+                          span<uint8_t>(), written, 0);
     if (!success(status))
         return status;
 
@@ -5444,7 +5444,7 @@ nt_status process::set_controlling_terminal(span<const uint8_t> buffer) {
 
     status = c.ioctl(IOCTL_MOXNOX_PTY_SET_FOREGROUND_PROCESS_GROUP,
                      span((uint8_t*)&pg_id, sizeof(uintptr_t)),
-                     span<uint8_t>(), written);
+                     span<uint8_t>(), written, 0);
     if (!success(status))
         return status;
 

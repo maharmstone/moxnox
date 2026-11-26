@@ -60,7 +60,8 @@ public:
     }
 
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written) override;
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask) override;
 };
 
 struct mount_point {
@@ -1954,7 +1955,8 @@ static nt_status file_writev(file& f, span<const uint8_t> inbuf,
 }
 
 nt_status file::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                      span<uint8_t> outbuf, uintptr_t& written) {
+                      span<uint8_t> outbuf, uintptr_t& written,
+                      ACCESS_MASK access_mask) {
     nt_status ret;
 
     switch (code) {
@@ -1971,9 +1973,9 @@ nt_status file::ioctl(uint32_t code, span<const uint8_t> inbuf,
     if (nonblock && ino.type == object_type::socket) {
         auto& s = static_cast<socket&>(ino);
 
-        ret = s.ioctl(code, inbuf, outbuf, written, true);
+        ret = s.ioctl(code, inbuf, outbuf, written, access_mask, true);
     } else
-        ret = object_ioctl(ino, code, inbuf, outbuf, written);
+        ret = object_ioctl(ino, code, inbuf, outbuf, written, access_mask);
 
     return ret;
 }
@@ -4150,7 +4152,8 @@ static nt_status vfsctl_unmount(span<const uint8_t> inbuf) {
 }
 
 nt_status vfsctl::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                        span<uint8_t> outbuf, uintptr_t& written) {
+                        span<uint8_t> outbuf, uintptr_t& written,
+                        ACCESS_MASK /*access_mask*/) {
     switch (code) {
         case IOCTL_MOXNOX_VFSCTL_MOUNT:
             return vfsctl_mount(inbuf);

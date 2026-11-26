@@ -102,7 +102,8 @@ public:
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override;
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written) override;
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask) override;
 
     bool init = false;
 
@@ -2688,7 +2689,8 @@ nt_status usb_hid_device::write(span<const span<const uint8_t>> v,
 }
 
 nt_status usb_hid_device::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                                span<uint8_t> outbuf, uintptr_t& written) {
+                                span<uint8_t> outbuf, uintptr_t& written,
+                                ACCESS_MASK) {
     switch (code) {
         case IOCTL_MOXNOX_EVDEV_GET_ABSINFO:
             return ioctl_get_absinfo(inbuf, outbuf, written);

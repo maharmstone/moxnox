@@ -53,7 +53,8 @@ public:
     }
 
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written) override;
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask) override;
 };
 
 static rwsem trace_point_lock;
@@ -270,7 +271,8 @@ static nt_status disable_tracepoint(string_view name) {
 }
 
 nt_status tracectl::ioctl(uint32_t code, span<const uint8_t> inbuf,
-                          span<uint8_t> /*outbuf*/, uintptr_t& /*written*/) {
+                          span<uint8_t> /*outbuf*/, uintptr_t& /*written*/,
+                          ACCESS_MASK /*access_mask*/) {
     switch (code) {
         case IOCTL_MOXNOX_TRACECTL_ENABLE:
             return enable_tracepoint(string_view((char*)inbuf.data(), inbuf.size()));

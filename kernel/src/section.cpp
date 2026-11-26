@@ -61,7 +61,8 @@ public:
                                 span<uint8_t> buf, size_t* return_length) = 0;
     virtual NTSTATUS flush_cache(uint64_t page_num, uint64_t num_pages) = 0;
     virtual nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                            span<uint8_t> outbuf, uintptr_t& written) = 0;
+                            span<uint8_t> outbuf, uintptr_t& written,
+                            ACCESS_MASK access_mask) = 0;
     virtual ~custom_section_cache() { }
 
     page_cache<custom_section_cache> cache{*this};
@@ -93,7 +94,8 @@ public:
     cache_variant get_cache();
     nt_status flush(uint64_t page_num, uint64_t num_pages);
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written);
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask);
 
     optional<reference_wrapper<file>> file;
     enum section_type type;

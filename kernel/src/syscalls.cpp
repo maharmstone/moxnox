@@ -1244,19 +1244,21 @@ extern "C"
 NTSTATUS NtDeviceIoControlFile(HANDLE file_handle, HANDLE /*event*/, PIO_APC_ROUTINE /*apc_routine*/, void* /*apc_context*/,
                                IO_STATUS_BLOCK* iosb, uint32_t control_code, const void* input_buffer,
                                uint32_t input_buffer_len, void* output_buffer, uint32_t output_buffer_len) {
+    ACCESS_MASK access_mask;
+
     TRACE6("NtDeviceIoControlFile", file_handle, control_code, input_buffer,
            input_buffer_len, output_buffer, output_buffer_len);
 
     if (!file_handle)
         return nt_status::INVALID_PARAMETER;
 
-    auto objrw = deref_handle(file_handle);
+    auto objrw = deref_handle(file_handle, access_mask);
     if (!objrw)
         return nt_status::INVALID_HANDLE;
 
     return object_ioctl(objrw.get(), control_code, span((uint8_t*)input_buffer, input_buffer_len),
                         span((uint8_t*)output_buffer, output_buffer_len),
-                        iosb->Information);
+                        iosb->Information, access_mask);
 }
 
 extern "C"

@@ -207,7 +207,7 @@ public:
 
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
                     span<uint8_t> outbuf, uintptr_t& written,
-                    bool nonblock = false);
+                    ACCESS_MASK access_mask, bool nonblock = false);
     virtual void last_handle_closed() = 0;
 
     virtual nt_status recvfrom(span<const span<uint8_t>> v, int flags,
@@ -320,7 +320,8 @@ public:
     }
 
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
-                    span<uint8_t> outbuf, uintptr_t& written) override;
+                    span<uint8_t> outbuf, uintptr_t& written,
+                    ACCESS_MASK access_mask) override;
 };
 
 struct ipv4_route {
