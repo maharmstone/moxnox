@@ -22,6 +22,7 @@ import evdev;
 import unicode;
 import win32error;
 import pagesize;
+import init;
 
 static span<char16_t> environment;
 
@@ -696,10 +697,24 @@ int main(int argc, char** argv) {
 
     prepare_environment();
 
-    if (!serial_mode) {
+    {
+        HANDLE h;
+
+        auto status = NtCreateEvent(&h, SYNCHRONIZE | EVENT_MODIFY_STATE,
+                                    nullptr, EVENT_TYPE::NotificationEvent,
+                                    false);
+        if (!success(status)) {
+            print_stderr("NtCreateEvent returned {}\n", status);
+            return 1;
+        }
+
+        log_started_event.reset(h);
+    }
+
+    {
         unique_handle h;
 
-        auto status = create_thread(do_serial, nullptr, h);
+        auto status = create_thread(power_button_thread, nullptr, h);
         if (!success(status))
             print_stderr("create_thread returned {}\n", status);
     }
@@ -707,7 +722,28 @@ int main(int argc, char** argv) {
     {
         unique_handle h;
 
-        auto status = create_thread(power_button_thread, nullptr, h);
+        auto status = create_thread(log_thread, nullptr, h);
+        if (!success(status))
+            print_stderr("create_thread returned {}\n", status);
+    }
+
+    while (true) {
+        auto status = NtWaitForSingleObject(log_started_event.get(), false,
+                                            nullptr);
+        if (status == nt_status::USER_APC)
+            continue;
+        else if (!success(status)) {
+            print_stderr("NtWaitForSingleObject returned {}\n", status);
+            return 1;
+        }
+
+        break;
+    }
+
+    if (!serial_mode) {
+        unique_handle h;
+
+        auto status = create_thread(do_serial, nullptr, h);
         if (!success(status))
             print_stderr("create_thread returned {}\n", status);
     }
