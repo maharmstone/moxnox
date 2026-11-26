@@ -306,8 +306,10 @@ nt_status unix_socket<TYPE>::do_recvfrom(span<const span<uint8_t>> v, int flags,
     {
         lock_guard lock(state_lock);
 
-        if (state != unix_socket_state::connected)
-            return nt_status::CONNECTION_DISCONNECTED;
+        if constexpr (TYPE != unix_socket_type::dgram) {
+            if (state != unix_socket_state::connected)
+                return nt_status::CONNECTION_DISCONNECTED;
+        }
 
         if (shutdown_read) {
             recv_bytes = 0;
