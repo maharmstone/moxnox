@@ -1799,10 +1799,14 @@ NTSTATUS file::write(span<const span<const uint8_t>> v, uint64_t offset,
 }
 
 static nt_status file_readv(file& f, span<const uint8_t> inbuf,
-                            span<uint8_t> outbuf, uintptr_t& written) {
+                            span<uint8_t> outbuf, uintptr_t& written,
+                            ACCESS_MASK access_mask) {
     nt_status status;
     uint64_t vec_offset = 0;
     auto& t = *get_current_thread();
+
+    if (!(access_mask & FILE_READ_DATA))
+        return nt_status::ACCESS_DENIED;
 
     if (inbuf.size() < sizeof(iovec))
         return nt_status::INVALID_PARAMETER;
@@ -1961,7 +1965,7 @@ nt_status file::ioctl(uint32_t code, span<const uint8_t> inbuf,
 
     switch (code) {
         case IOCTL_MOXNOX_FILE_READV:
-            return file_readv(*this, inbuf, outbuf, written);
+            return file_readv(*this, inbuf, outbuf, written, access_mask);
 
         case IOCTL_MOXNOX_FILE_WRITEV:
             return file_writev(*this, inbuf, outbuf, written);
