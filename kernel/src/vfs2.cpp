@@ -1867,10 +1867,14 @@ static nt_status file_readv(file& f, span<const uint8_t> inbuf,
 }
 
 static nt_status file_writev(file& f, span<const uint8_t> inbuf,
-                             span<uint8_t> outbuf, uintptr_t& written) {
+                             span<uint8_t> outbuf, uintptr_t& written,
+                             ACCESS_MASK access_mask) {
     nt_status status;
     uint64_t vec_offset = 0;
     auto& t = *get_current_thread();
+
+    if (!(access_mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)))
+        return nt_status::ACCESS_DENIED;
 
     if (inbuf.size() < sizeof(iovec))
         return nt_status::INVALID_PARAMETER;
@@ -1899,7 +1903,18 @@ static nt_status file_writev(file& f, span<const uint8_t> inbuf,
         if (!success(status))
             return status;
 
-        status = f.write(span(spans, num_spans), written_bytes2);
+        if ((access_mask & FILE_APPEND_DATA) && !(access_mask & FILE_WRITE_DATA) && f.ino.type == object_type::inode) {
+            uint64_t offset;
+            auto& ino = static_cast<inode&>(f.ino);
+
+            {
+                lock_guard lock(ino.inode_lock);
+                offset = ino.file_size;
+            }
+
+            status = f.write(span(spans, num_spans), offset, written_bytes2);
+        } else
+            status = f.write(span(spans, num_spans), written_bytes2);
 
         rlr.reset();
 
@@ -1968,7 +1983,7 @@ nt_status file::ioctl(uint32_t code, span<const uint8_t> inbuf,
             return file_readv(*this, inbuf, outbuf, written, access_mask);
 
         case IOCTL_MOXNOX_FILE_WRITEV:
-            return file_writev(*this, inbuf, outbuf, written);
+            return file_writev(*this, inbuf, outbuf, written, access_mask);
 
         default:
             break;
