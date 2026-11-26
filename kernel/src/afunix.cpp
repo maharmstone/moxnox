@@ -1070,38 +1070,49 @@ unix_socket<TYPE>::~unix_socket() {
 template<unix_socket_type TYPE>
 void unix_socket<TYPE>::last_handle_closed() {
     if (other_end) {
-        bool both_dead;
-
-        {
-            auto& first_lock = first ? lock : other_end->lock;
-            auto& second_lock = first ? other_end->lock : lock;
-
-            sync_lock sl;
-            lock_guard lg1(sl);
-            lock_guard lg2(first_lock);
-            lock_guard lg3(second_lock);
-
-            dead = true;
-
-            if (!other_end->signalled) {
-                other_end->signalled = true;
-                wake_up_waiters(other_end->waiters, WAIT_TYPE_READING);
+        if constexpr (TYPE == unix_socket_type::dgram) {
+            {
+                lock_guard lg(lock);
+                dead = true;
             }
 
-            if (!other_end->write_signalled) {
-                other_end->write_signalled = true;
-                wake_up_waiters(other_end->waiters, WAIT_TYPE_WRITING);
-            }
+            set_event(not_full_event);
 
-            not_full_event.set_holding_sync_lock();
-
-            other_end->other_end_dead = true;
-            both_dead = other_end->dead;
-        }
-
-        if (both_dead) {
             other_end->release();
-            release();
+        } else {
+            bool both_dead;
+
+            {
+                auto& first_lock = first ? lock : other_end->lock;
+                auto& second_lock = first ? other_end->lock : lock;
+
+                sync_lock sl;
+                lock_guard lg1(sl);
+                lock_guard lg2(first_lock);
+                lock_guard lg3(second_lock);
+
+                dead = true;
+
+                if (!other_end->signalled) {
+                    other_end->signalled = true;
+                    wake_up_waiters(other_end->waiters, WAIT_TYPE_READING);
+                }
+
+                if (!other_end->write_signalled) {
+                    other_end->write_signalled = true;
+                    wake_up_waiters(other_end->waiters, WAIT_TYPE_WRITING);
+                }
+
+                not_full_event.set_holding_sync_lock();
+
+                other_end->other_end_dead = true;
+                both_dead = other_end->dead;
+            }
+
+            if (both_dead) {
+                other_end->release();
+                release();
+            }
         }
     } else {
         {
@@ -1312,74 +1323,92 @@ nt_status unix_socket<TYPE>::do_connect(const sockaddr* addr, size_t addrlen) {
 
     auto& serv = static_cast<unix_socket&>(sock.get());
 
-    {
-        lock_guard lock(serv.state_lock);
+    if constexpr (TYPE == unix_socket_type::dgram) {
+        auto newsock = &serv;
 
-        if (serv.state != unix_socket_state::listening)
-            return nt_status::CONNECTION_REFUSED;
-    }
-
-    while (true) {
-        if constexpr (NONBLOCK) {
-            status = wait_for_object(serv.accept_queue_not_full_event.get(),
-                                     true, 0);
-            if (status == nt_status::TIMEOUT)
-                return nt_status::CANT_WAIT;
-        } else
-            status = wait_for_object(serv.accept_queue_not_full_event.get(), true);
-
-        if (status == nt_status::ALERTED)
-            continue;
-        else if (!success(status) || status == nt_status::USER_APC)
-            return status;
+        newsock->acquire();
 
         {
             lock_guard lock1(state_lock);
+            lock_guard lock2(lock);
+
+            swap(other_end, newsock);
+            state = unix_socket_state::connected;
+        }
+
+        if (newsock)
+            newsock->release();
+    } else {
+        {
+            lock_guard lock(serv.state_lock);
+
+            if (serv.state != unix_socket_state::listening)
+                return nt_status::CONNECTION_REFUSED;
+        }
+
+        while (true) {
+            if constexpr (NONBLOCK) {
+                status = wait_for_object(serv.accept_queue_not_full_event.get(),
+                                         true, 0);
+                if (status == nt_status::TIMEOUT)
+                    return nt_status::CANT_WAIT;
+            } else
+                status = wait_for_object(serv.accept_queue_not_full_event.get(),
+                                         true);
+
+            if (status == nt_status::ALERTED)
+                continue;
+            else if (!success(status) || status == nt_status::USER_APC)
+                return status;
 
             {
-                lock_guard lock2(serv.state_lock);
-
-                if (serv.state != unix_socket_state::listening)
-                    return nt_status::CONNECTION_REFUSED;
+                lock_guard lock1(state_lock);
 
                 {
-                    lock_guard lock3(serv.accept_queue_lock);
+                    lock_guard lock2(serv.state_lock);
 
-                    if (serv.listen_backlog == 0)
-                        continue;
+                    if (serv.state != unix_socket_state::listening)
+                        return nt_status::CONNECTION_REFUSED;
 
-                    acquire();
+                    {
+                        lock_guard lock3(serv.accept_queue_lock);
 
-                    serv.listen_backlog--;
-                    insert_tail_list(serv.accept_queue, accept_le);
+                        if (serv.listen_backlog == 0)
+                            continue;
+
+                        acquire();
+
+                        serv.listen_backlog--;
+                        insert_tail_list(serv.accept_queue, accept_le);
+                    }
+                }
+
+                state = unix_socket_state::awaiting_accept;
+                server = &serv;
+                serv.acquire();
+            }
+
+            {
+                sync_lock sl;
+                lock_guard lock(sl);
+
+                if (!serv.signalled && !is_list_empty(serv.accept_queue)) {
+                    serv.signalled = true;
+                    wake_up_waiters(serv.waiters, WAIT_TYPE_READING);
+                }
+
+                auto& ev = static_cast<event&>(serv.accept_queue_not_full_event.get());
+
+                {
+                    lock_guard lock2(serv.accept_queue_lock);
+
+                    if (serv.listen_backlog == 0 && ev.signalled)
+                        ev.signalled = false;
                 }
             }
 
-            state = unix_socket_state::awaiting_accept;
-            server = &serv;
-            serv.acquire();
+            break;
         }
-
-        {
-            sync_lock sl;
-            lock_guard lock(sl);
-
-            if (!serv.signalled && !is_list_empty(serv.accept_queue)) {
-                serv.signalled = true;
-                wake_up_waiters(serv.waiters, WAIT_TYPE_READING);
-            }
-
-            auto& ev = static_cast<event&>(serv.accept_queue_not_full_event.get());
-
-            {
-                lock_guard lock2(serv.accept_queue_lock);
-
-                if (serv.listen_backlog == 0 && ev.signalled)
-                    ev.signalled = false;
-            }
-        }
-
-        break;
     }
 
     return nt_status::SUCCESS;
