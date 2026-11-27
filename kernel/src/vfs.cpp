@@ -164,7 +164,7 @@ public:
 
 static_assert(is_readable_object_with_offset<inode>);
 static_assert(is_writable_object_with_offset<inode>);
-static_assert(is_nonblocking_readable_vec_object<inode>);
+static_assert(is_nonblocking_readable_object<inode>);
 static_assert(is_nonblocking_writable_vec_object<inode>);
 static_assert(cacheable_flushable<inode>);
 static_assert(cache_supports_writeback<inode>);

@@ -304,7 +304,7 @@ static_assert(is_sync_object<class socket>);
 static_assert(has_last_handle_closed<class socket>);
 static_assert(is_readable_object_without_offset<class socket>);
 static_assert(is_writable_object_without_offset<class socket>);
-static_assert(is_nonblocking_readable_vec_object<class socket>);
+static_assert(is_nonblocking_readable_object<class socket>);
 static_assert(is_nonblocking_writable_vec_object<class socket>);
 
 class netctl : public chardev {

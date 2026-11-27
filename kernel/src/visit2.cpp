@@ -206,7 +206,7 @@ nt_status object_read_nonblock(object& obj, span<const span<uint8_t>> v,
     nt_status status;
 
     visit_obj(obj, [&](auto&& o) {
-        if constexpr (is_nonblocking_readable_vec_object<remove_reference_t<decltype(o)>>)
+        if constexpr (is_nonblocking_readable_object<remove_reference_t<decltype(o)>>)
             status = o.read_nonblock(v, read_bytes);
         else
             status = nt_status::NOT_SUPPORTED;
