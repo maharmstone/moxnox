@@ -43,6 +43,10 @@ public:
         return nt_status::NOT_SUPPORTED;
     }
 
+    nt_status read_nonblock(span<const span<uint8_t>>, uint64_t&) override {
+        return nt_status::NOT_SUPPORTED;
+    }
+
     nt_status write(span<const span<const uint8_t>>, uint64_t&) override {
         return nt_status::NOT_SUPPORTED;
     }
@@ -56,7 +60,15 @@ export class pty_client : public chardev {
 public:
     pty_client(pipe& recv_pipe, pipe& send_pipe, uint16_t cols, uint16_t rows);
     ~pty_client();
-    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override;
+
+    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<false>(v, read_bytes);
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<true>(v, read_bytes);
+    }
+
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override;
     sync_object& get_sync_object() override;
@@ -98,6 +110,9 @@ public:
     rwsem info_mutex;
 
 private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
+
     nt_status set_fg_pg(span<const uint8_t> inbuf);
     nt_status get_info_stream(span<uint8_t> outbuf);
     size_t process_canonical_input(span<const uint8_t> new_data, uint8_t* echo_buf,
@@ -108,7 +123,15 @@ class pty_server : public chardev {
 public:
     pty_server(pty_client& client);
     ~pty_server();
-    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override;
+
+    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<false>(v, read_bytes);
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<true>(v, read_bytes);
+    }
+
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override;
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
@@ -120,6 +143,9 @@ public:
     pty_client& client;
 
 private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
+
     nt_status write2(span<const span<const uint8_t>> v,
                      uint64_t& written_bytes);
     nt_status get_client(span<uint8_t> outbuf, uintptr_t& written);
@@ -147,7 +173,13 @@ public:
         parent.release();
     }
 
-    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override;
+    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<false>(v, read_bytes);
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<true>(v, read_bytes);
+    }
 
     nt_status write(span<const span<const uint8_t>>, uint64_t&) override {
         return nt_status::NOT_SUPPORTED;
@@ -162,6 +194,10 @@ public:
     spinlock queue_lock;
     list_entry queue = { &queue, &queue };
     size_t queue_length = 0;
+
+private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
 };
 
 export bool create_dev_ptyctl() {
@@ -343,10 +379,16 @@ pty_client::~pty_client() {
         fg_pg->release();
 }
 
-nt_status pty_client::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
-    auto ret = recv_pipe.read(v, read_bytes);
+template<bool NONBLOCK>
+nt_status pty_client::do_read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
+    nt_status ret;
 
-    if (disconnected && read_bytes == 0) {
+    if constexpr (NONBLOCK)
+        ret = recv_pipe.read_nonblock(v, read_bytes);
+    else
+        ret = recv_pipe.read(v, read_bytes);
+
+    if (disconnected && ret != nt_status::CANT_WAIT && read_bytes == 0) {
         lock_guard l(recv_pipe.lock);
 
         if (recv_pipe.buf_unread == 0)
@@ -536,8 +578,12 @@ pty_server::~pty_server() {
     client.release();
 }
 
-nt_status pty_server::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
-    return client.send_pipe.read(v, read_bytes);
+template<bool NONBLOCK>
+nt_status pty_server::do_read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
+    if constexpr (NONBLOCK)
+        return client.send_pipe.read_nonblock(v, read_bytes);
+    else
+        return client.send_pipe.read(v, read_bytes);
 }
 
 size_t pty_client::process_canonical_input(span<const uint8_t> new_data,
@@ -1194,7 +1240,8 @@ void pty_info::post_info_event(pty_info_type type) {
     }
 }
 
-nt_status pty_info::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
+template<bool NONBLOCK>
+nt_status pty_info::do_read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
     nt_status status;
     size_t vec_size = get_vec_size(v);
 
@@ -1204,7 +1251,13 @@ nt_status pty_info::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
     span<uint8_t> top = v.front();
 
     while (true) {
-        status = wait_for_object(*this, true);
+        if constexpr (NONBLOCK) {
+            status = wait_for_object(*this, true, 0);
+            if (status == nt_status::TIMEOUT)
+                return nt_status::CANT_WAIT;
+        } else
+            status = wait_for_object(*this, true);
+
         if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
             return status;
 

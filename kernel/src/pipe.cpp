@@ -20,7 +20,14 @@ public:
     pipe(unsigned int buffer_pages);
     virtual ~pipe();
 
-    NTSTATUS read(span<const span<uint8_t>> v, uint64_t& read_bytes) override;
+    NTSTATUS read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<false>(v, read_bytes);
+    }
+
+    NTSTATUS read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<true>(v, read_bytes);
+    }
+
     NTSTATUS write(span<const span<const uint8_t>> v,
                    uint64_t& written_bytes) override;
     NTSTATUS write_nonblock(span<const span<const uint8_t>> v,
@@ -49,6 +56,10 @@ public:
     event not_full_event{false};
     list_entry flushable_le;
     bool eof_pending = false;
+
+private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
 };
 
 export void add_to_flushable_pipes_list(pipe& p);

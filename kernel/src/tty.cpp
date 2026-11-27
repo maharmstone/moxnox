@@ -27,6 +27,10 @@ public:
         return nt_status::INVALID_PARAMETER;
     }
 
+    nt_status read_nonblock(span<const span<uint8_t>>, uint64_t&) override {
+        return nt_status::INVALID_PARAMETER;
+    }
+
     nt_status write(span<const span<const uint8_t>>, uint64_t&) override {
         return nt_status::INVALID_PARAMETER;
     }

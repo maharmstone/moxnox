@@ -24,9 +24,10 @@ import scheduler;
 
 using namespace std;
 
-static spinlock urandom_lock;
-static uint32_t urandom_key[8]; // FIXME - initialize from rdseed/rdrand if present (and not broken)?
-static event urandom_event{false};
+spinlock urandom_lock;
+uint32_t urandom_key[8]; // FIXME - initialize from rdseed/rdrand if present (and not broken)?
+event urandom_event{false};
+
 static size_t urandom_bits_left = 256;
 
 class random_chardev : public chardev {
@@ -35,9 +36,24 @@ public:
         exclusive = false;
     }
 
-    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override;
+    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<false>(v, read_bytes);
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<true>(v, read_bytes);
+    }
+
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override;
+
+    sync_object& get_sync_object() override {
+        return urandom_event;
+    }
+
+private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
 };
 
 export bool create_dev_urandom() {
@@ -65,8 +81,9 @@ nt_status random_chardev::write(span<const span<const uint8_t>> v,
     return nt_status::SUCCESS;
 }
 
-nt_status random_chardev::read(span<const span<uint8_t>> v,
-                               uint64_t& read_bytes) {
+template<bool NONBLOCK>
+nt_status random_chardev::do_read(span<const span<uint8_t>> v,
+                                  uint64_t& read_bytes) {
     uint32_t in[16], out[16];
     nt_status status;
     auto len = get_vec_size(v);
@@ -76,7 +93,13 @@ nt_status random_chardev::read(span<const span<uint8_t>> v,
     if (read_bytes == 0)
         return nt_status::SUCCESS;
 
-    status = wait_for_object(urandom_event, true);
+    if constexpr (NONBLOCK) {
+        status = wait_for_object(urandom_event, true, 0);
+        if (status == nt_status::TIMEOUT)
+            return nt_status::CANT_WAIT;
+    } else
+        status = wait_for_object(urandom_event, true);
+
     if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
         return status;
 

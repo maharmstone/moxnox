@@ -135,12 +135,23 @@ public:
         signalled = false;
     }
 
-    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override;
+    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<false>(v, read_bytes);
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<true>(v, read_bytes);
+    }
+
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override;
 
     spinlock lock;
     list_entry pages = { &pages, &pages };
+
+private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
 };
 
 struct console_info {
@@ -1726,7 +1737,8 @@ nt_status console::flush(bool go_readonly) {
     return nt_status::SUCCESS;
 }
 
-nt_status kmsg_buf::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
+template<bool NONBLOCK>
+nt_status kmsg_buf::do_read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
     list_entry del_list = { &del_list, &del_list };
     size_t vec_size = get_vec_size(v);
 

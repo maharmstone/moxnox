@@ -76,6 +76,10 @@ public:
         return recv_pipe.read(v, read_bytes);
     }
 
+    NTSTATUS read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return recv_pipe.read_nonblock(v, read_bytes);
+    }
+
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override {
         return send_pipe.write(v, written_bytes);

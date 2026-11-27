@@ -38,16 +38,11 @@ public:
     }
 
     nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
-        auto ret = recv_pipe.read(v, read_bytes);
+        return do_read<false>(v, read_bytes);
+    }
 
-        if (disconnected && read_bytes == 0) {
-            lock_guard l(recv_pipe.lock);
-
-            if (recv_pipe.buf_unread == 0)
-                return nt_status::PIPE_DISCONNECTED;
-        }
-
-        return ret;
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<true>(v, read_bytes);
     }
 
     nt_status write(span<const span<const uint8_t>> v,
@@ -97,6 +92,10 @@ public:
     pipe& send_pipe;
     bool disconnected = false;
     object_ref server;
+
+private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
 };
 
 class named_duplex_pipe_server : public chardev {
@@ -111,6 +110,10 @@ public:
 
     nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
         return client.send_pipe.read(v, read_bytes);
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return client.send_pipe.read_nonblock(v, read_bytes);
     }
 
     nt_status write(span<const span<const uint8_t>> v,
@@ -371,7 +374,8 @@ void pipe::set_eof_pending() {
     }
 }
 
-NTSTATUS pipe::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
+template<bool NONBLOCK>
+nt_status pipe::do_read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
     size_t copied = 0;
     size_t vec_size = get_vec_size(v);
 
@@ -390,12 +394,28 @@ NTSTATUS pipe::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
         timeout = 0;
 
     while (true) {
-        auto status = wait_for_object(*this, true, timeout);
+        nt_status status;
 
-        if (status == nt_status::TIMEOUT) {
-            read_bytes = 0;
-            return nt_status::PIPE_DISCONNECTED;
-        } else if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED) {
+        if constexpr (NONBLOCK) {
+            status = wait_for_object(*this, true, 0);
+
+            if (status == nt_status::TIMEOUT) {
+                if (server_closed) {
+                    read_bytes = 0;
+                    return nt_status::PIPE_DISCONNECTED;
+                } else
+                    return nt_status::CANT_WAIT;
+            }
+        } else {
+            status = wait_for_object(*this, true, timeout);
+
+            if (status == nt_status::TIMEOUT) {
+                read_bytes = 0;
+                return nt_status::PIPE_DISCONNECTED;
+            }
+        }
+
+        if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED) {
             read_bytes = 0;
             return status;
         }
@@ -457,6 +477,9 @@ NTSTATUS pipe::read(span<const span<uint8_t>> v, uint64_t& read_bytes) {
     read_bytes = copied;
     return nt_status::SUCCESS;
 }
+
+template nt_status pipe::do_read<false>(span<const span<uint8_t>>, uint64_t&);
+template nt_status pipe::do_read<true>(span<const span<uint8_t>>, uint64_t&);
 
 void pipe::clear() {
     sync_lock sl;
@@ -683,4 +706,24 @@ void named_duplex_pipe_client::last_handle_closed() {
 
     s.client_disconnected();
     server.reset();
+}
+
+template<bool NONBLOCK>
+nt_status named_duplex_pipe_client::do_read(span<const span<uint8_t>> v,
+                                            uint64_t& read_bytes) {
+    nt_status ret;
+
+    if constexpr (NONBLOCK)
+        ret = recv_pipe.read_nonblock(v, read_bytes);
+    else
+        ret = recv_pipe.read(v, read_bytes);
+
+    if (disconnected && ret != nt_status::CANT_WAIT && read_bytes == 0) {
+        lock_guard l(recv_pipe.lock);
+
+        if (recv_pipe.buf_unread == 0)
+            return nt_status::PIPE_DISCONNECTED;
+    }
+
+    return ret;
 }

@@ -49,6 +49,10 @@ public:
         return nt_status::NOT_SUPPORTED;
     }
 
+    nt_status read_nonblock(span<const span<uint8_t>>, uint64_t&) override {
+        return nt_status::NOT_SUPPORTED;
+    }
+
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override;
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
@@ -114,7 +118,13 @@ public:
         p.release();
     }
 
-    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override;
+    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<false>(v, read_bytes);
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<true>(v, read_bytes);
+    }
 
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override {
@@ -136,6 +146,9 @@ public:
     size_t items_left = 256;
 
 private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
+
     evdev_multiplexer& p;
 };
 
@@ -149,6 +162,10 @@ public:
     evdev_device() : chardev() { }
 
     nt_status read(span<const span<uint8_t>>, uint64_t&) override {
+        return nt_status::NOT_SUPPORTED;
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>>, uint64_t&) override {
         return nt_status::NOT_SUPPORTED;
     }
 
@@ -205,7 +222,13 @@ public:
         p.release();
     }
 
-    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override;
+    nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<false>(v, read_bytes);
+    }
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return do_read<true>(v, read_bytes);
+    }
 
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override {
@@ -227,6 +250,9 @@ public:
     size_t items_left = 256;
 
 private:
+    template<bool NONBLOCK>
+    nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
+
     evdev_device& p;
 };
 
@@ -419,8 +445,9 @@ nt_status evdev_multiplexer::userspace_open(object_ref& objref) {
     return nt_status::SUCCESS;
 }
 
-nt_status evdev_multiplexer_client::read(span<const span<uint8_t>> v,
-                                         uint64_t& read_bytes) {
+template<bool NONBLOCK>
+nt_status evdev_multiplexer_client::do_read(span<const span<uint8_t>> v,
+                                            uint64_t& read_bytes) {
     size_t vec_size = get_vec_size(v);
 
     if (vec_size < sizeof(input_event_with_id))
@@ -431,7 +458,15 @@ nt_status evdev_multiplexer_client::read(span<const span<uint8_t>> v,
     read_bytes = 0;
 
     while (true) {
-        auto status = wait_for_object(*this, true);
+        nt_status status;
+
+        if constexpr (NONBLOCK) {
+            status = wait_for_object(*this, true, 0);
+            if (status == nt_status::TIMEOUT)
+                return nt_status::CANT_WAIT;
+        } else
+            status = wait_for_object(*this, true);
+
         if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
             return status;
 
@@ -610,8 +645,9 @@ nt_status evdev_multiplexer::write(span<const span<const uint8_t>> v,
     return status;
 }
 
-nt_status evdev_device_client::read(span<const span<uint8_t>> v,
-                                    uint64_t& read_bytes) {
+template<bool NONBLOCK>
+nt_status evdev_device_client::do_read(span<const span<uint8_t>> v,
+                                       uint64_t& read_bytes) {
     size_t vec_size = get_vec_size(v);
 
     if (vec_size < sizeof(input_event))
@@ -622,7 +658,15 @@ nt_status evdev_device_client::read(span<const span<uint8_t>> v,
     read_bytes = 0;
 
     while (true) {
-        auto status = wait_for_object(*this, true);
+        nt_status status;
+
+        if constexpr (NONBLOCK) {
+            status = wait_for_object(*this, true, 0);
+            if (status == nt_status::TIMEOUT)
+                return nt_status::CANT_WAIT;
+        } else
+            status = wait_for_object(*this, true);
+
         if (!success(status) || status == nt_status::USER_APC || status == nt_status::ALERTED)
             return status;
 

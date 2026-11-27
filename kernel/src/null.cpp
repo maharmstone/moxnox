@@ -25,6 +25,11 @@ public:
     }
 
     nt_status read(span<const span<uint8_t>> v, uint64_t& read_bytes) override;
+
+    nt_status read_nonblock(span<const span<uint8_t>> v, uint64_t& read_bytes) override {
+        return read(v, read_bytes);
+    }
+
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override;
 };
