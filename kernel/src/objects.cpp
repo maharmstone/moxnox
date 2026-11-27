@@ -204,6 +204,6 @@ concept is_nonblocking_readable_object = requires(T t, span<const span<uint8_t>>
 
 export
 template<typename T>
-concept is_nonblocking_writable_vec_object = requires(T t, span<const span<const uint8_t>> v, uint64_t& written_bytes) {
+concept is_nonblocking_writable_object = requires(T t, span<const span<const uint8_t>> v, uint64_t& written_bytes) {
     { t.write_nonblock(v, written_bytes) } -> convertible_to<NTSTATUS>;
 };

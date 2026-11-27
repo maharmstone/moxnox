@@ -73,4 +73,4 @@ static_assert(is_rw_sync_object<fifo_object>);
 static_assert(is_readable_object_without_offset<fifo_object>);
 static_assert(is_writable_object_without_offset<fifo_object>);
 static_assert(is_nonblocking_readable_object<fifo_object>);
-static_assert(is_nonblocking_writable_vec_object<fifo_object>);
+static_assert(is_nonblocking_writable_object<fifo_object>);
