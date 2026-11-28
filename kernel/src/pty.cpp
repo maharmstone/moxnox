@@ -51,6 +51,10 @@ public:
         return nt_status::NOT_SUPPORTED;
     }
 
+    nt_status write_nonblock(span<const span<const uint8_t>>, uint64_t&) override {
+        return nt_status::NOT_SUPPORTED;
+    }
+
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
                     span<uint8_t> outbuf, uintptr_t& written,
                     ACCESS_MASK access_mask) override;
@@ -70,7 +74,15 @@ public:
     }
 
     nt_status write(span<const span<const uint8_t>> v,
-                    uint64_t& written_bytes) override;
+                    uint64_t& written_bytes) override {
+        return do_write<false>(v, written_bytes);
+    }
+
+    nt_status write_nonblock(span<const span<const uint8_t>> v,
+                             uint64_t& written_bytes) override {
+        return do_write<true>(v, written_bytes);
+    }
+
     sync_object& get_sync_object() override;
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
                     span<uint8_t> outbuf, uintptr_t& written,
@@ -113,6 +125,9 @@ private:
     template<bool NONBLOCK>
     nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
 
+    template<bool NONBLOCK>
+    nt_status do_write(span<const span<const uint8_t>> v, uint64_t& written_bytes);
+
     nt_status set_fg_pg(span<const uint8_t> inbuf);
     nt_status get_info_stream(span<uint8_t> outbuf);
     size_t process_canonical_input(span<const uint8_t> new_data, uint8_t* echo_buf,
@@ -133,7 +148,15 @@ public:
     }
 
     nt_status write(span<const span<const uint8_t>> v,
-                    uint64_t& written_bytes) override;
+                    uint64_t& written_bytes) override {
+        return do_write<false>(v, written_bytes);
+    }
+
+    nt_status write_nonblock(span<const span<const uint8_t>> v,
+                             uint64_t& written_bytes) override {
+        return do_write<true>(v, written_bytes);
+    }
+
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
                     span<uint8_t> outbuf, uintptr_t& written,
                     ACCESS_MASK access_mask) override;
@@ -145,6 +168,9 @@ public:
 private:
     template<bool NONBLOCK>
     nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
+
+    template<bool NONBLOCK>
+    nt_status do_write(span<const span<const uint8_t>> v, uint64_t& written_bytes);
 
     nt_status write2(span<const span<const uint8_t>> v,
                      uint64_t& written_bytes);
@@ -182,6 +208,10 @@ public:
     }
 
     nt_status write(span<const span<const uint8_t>>, uint64_t&) override {
+        return nt_status::NOT_SUPPORTED;
+    }
+
+    nt_status write_nonblock(span<const span<const uint8_t>>, uint64_t&) override {
         return nt_status::NOT_SUPPORTED;
     }
 
@@ -398,7 +428,7 @@ nt_status pty_client::do_read(span<const span<uint8_t>> v, uint64_t& read_bytes)
     return ret;
 }
 
-static size_t find_newline(span<const uint8_t> s) {
+size_t find_newline(span<const uint8_t> s) {
     for (size_t i = 0; i < s.size(); i++) {
         if (s[i] == '\n')
             return i;
@@ -407,8 +437,9 @@ static size_t find_newline(span<const uint8_t> s) {
     return string_view::npos;
 }
 
-nt_status pty_client::write(span<const span<const uint8_t>> v,
-                            uint64_t& written_bytes) {
+template<bool NONBLOCK>
+nt_status pty_client::do_write(span<const span<const uint8_t>> v,
+                               uint64_t& written_bytes) {
     nt_status status;
 
     if (disconnected)
@@ -418,6 +449,8 @@ nt_status pty_client::write(span<const span<const uint8_t>> v,
 
     if (settings.c_oflag & OPOST && settings.c_oflag & ONLCR) {
         uint64_t w = 0;
+
+        // FIXME - non-blocking mode
 
         static const array<uint8_t, 2> crlf = { '\r', '\n' };
 
@@ -516,7 +549,10 @@ nt_status pty_client::write(span<const span<const uint8_t>> v,
         written_bytes = w;
         return nt_status::SUCCESS;
     } else {
-        status = send_pipe.write(v, written_bytes);
+        if constexpr (NONBLOCK)
+            status = send_pipe.write_nonblock(v, written_bytes);
+        else
+            status = send_pipe.write(v, written_bytes);
 
         if (disconnected)
             return nt_status::PIPE_DISCONNECTED;
@@ -841,11 +877,14 @@ void pty_client::post_info_event(pty_info_type type) {
     }
 }
 
-nt_status pty_server::write(span<const span<const uint8_t>> v,
-                            uint64_t& written_bytes) {
+template<bool NONBLOCK>
+nt_status pty_server::do_write(span<const span<const uint8_t>> v,
+                               uint64_t& written_bytes) {
     nt_status status;
     uint64_t bytes;
     bool noflsh = client.settings.c_lflag & NOFLSH;
+
+    // FIXME - non-blocking mode
 
     if (!(client.settings.c_lflag & ISIG))
         return write2(v, written_bytes);

@@ -47,6 +47,11 @@ public:
     nt_status write(span<const span<const uint8_t>> v,
                     uint64_t& written_bytes) override;
 
+    nt_status write_nonblock(span<const span<const uint8_t>> v,
+                             uint64_t& written_bytes) override {
+        return write(v, written_bytes);
+    }
+
     sync_object& get_sync_object() override {
         return urandom_event;
     }

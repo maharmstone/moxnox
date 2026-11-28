@@ -23,6 +23,8 @@ public:
                                    uint64_t& read_bytes) = 0;
     virtual NTSTATUS write(span<const span<const uint8_t>> v,
                            uint64_t& written_bytes) = 0;
+    virtual NTSTATUS write_nonblock(span<const span<const uint8_t>> v,
+                                    uint64_t& written_bytes) = 0;
 
     NTSTATUS write(string_view sv, uint64_t& written_bytes) {
         auto sp = span((const uint8_t*)sv.data(), sv.length());
@@ -71,6 +73,7 @@ public:
 static_assert(is_sync_object<chardev>);
 static_assert(is_readable_object_without_offset<chardev>);
 static_assert(is_nonblocking_readable_object<chardev>);
+static_assert(is_nonblocking_writable_object<chardev>);
 static_assert(is_writable_object_without_offset<chardev>);
 static_assert(has_ioctls<chardev>);
 static_assert(has_exclusive_field<chardev>);

@@ -45,17 +45,12 @@ public:
         return do_read<true>(v, read_bytes);
     }
 
-    nt_status write(span<const span<const uint8_t>> v,
-                    uint64_t& written_bytes) override {
-        if (disconnected)
-            return nt_status::PIPE_DISCONNECTED;
+    nt_status write(span<const span<const uint8_t>> v, uint64_t& written_bytes) override {
+        return do_write<false>(v, written_bytes);
+    }
 
-        auto ret = send_pipe.write(v, written_bytes);
-
-        if (disconnected)
-            return nt_status::PIPE_DISCONNECTED;
-
-        return ret;
+    nt_status write_nonblock(span<const span<const uint8_t>> v, uint64_t& written_bytes) override {
+        return do_write<true>(v, written_bytes);
     }
 
     sync_object& get_sync_object() override {
@@ -96,6 +91,9 @@ public:
 private:
     template<bool NONBLOCK>
     nt_status do_read(span<const span<uint8_t>> v, uint64_t& read_bytes);
+
+    template<bool NONBLOCK>
+    nt_status do_write(span<const span<const uint8_t>> v, uint64_t& written_bytes);
 };
 
 class named_duplex_pipe_server : public chardev {
@@ -116,17 +114,12 @@ public:
         return client.send_pipe.read_nonblock(v, read_bytes);
     }
 
-    nt_status write(span<const span<const uint8_t>> v,
-                    uint64_t& written_bytes) override {
-        if (disconnected)
-            return nt_status::PIPE_BROKEN;
+    nt_status write(span<const span<const uint8_t>> v, uint64_t& written_bytes) override {
+        return do_write<false>(v, written_bytes);
+    }
 
-        auto ret = client.recv_pipe.write(v, written_bytes);
-
-        if (disconnected)
-            return nt_status::PIPE_BROKEN;
-
-        return ret;
+    nt_status write_nonblock(span<const span<const uint8_t>> v, uint64_t& written_bytes) override {
+        return do_write<true>(v, written_bytes);
     }
 
     sync_object& get_sync_object() override {
@@ -165,6 +158,10 @@ public:
 
     named_duplex_pipe_client& client;
     bool disconnected = false;
+
+private:
+    template<bool NONBLOCK>
+    nt_status do_write(span<const span<const uint8_t>> v, uint64_t& written_bytes);
 };
 
 static spinlock flushable_pipes_lock;
@@ -724,6 +721,44 @@ nt_status named_duplex_pipe_client::do_read(span<const span<uint8_t>> v,
         if (recv_pipe.buf_unread == 0)
             return nt_status::PIPE_DISCONNECTED;
     }
+
+    return ret;
+}
+
+template<bool NONBLOCK>
+nt_status named_duplex_pipe_client::do_write(span<const span<const uint8_t>> v,
+                                             uint64_t& written_bytes) {
+    nt_status ret;
+
+    if (disconnected)
+        return nt_status::PIPE_DISCONNECTED;
+
+    if constexpr (NONBLOCK)
+        ret = send_pipe.write_nonblock(v, written_bytes);
+    else
+        ret = send_pipe.write(v, written_bytes);
+
+    if (disconnected)
+        return nt_status::PIPE_DISCONNECTED;
+
+    return ret;
+}
+
+template<bool NONBLOCK>
+nt_status named_duplex_pipe_server::do_write(span<const span<const uint8_t>> v,
+                                             uint64_t& written_bytes) {
+    nt_status ret;
+
+    if (disconnected)
+        return nt_status::PIPE_BROKEN;
+
+    if constexpr (NONBLOCK)
+        ret = client.recv_pipe.write_nonblock(v, written_bytes);
+    else
+        ret = client.recv_pipe.write(v, written_bytes);
+
+    if (disconnected)
+        return nt_status::PIPE_BROKEN;
 
     return ret;
 }

@@ -54,7 +54,15 @@ public:
     }
 
     nt_status write(span<const span<const uint8_t>> v,
-                    uint64_t& written_bytes) override;
+                    uint64_t& written_bytes) override {
+        return do_write<false>(v, written_bytes);
+    }
+
+    nt_status write_nonblock(span<const span<const uint8_t>> v,
+                             uint64_t& written_bytes) override {
+        return do_write<true>(v, written_bytes);
+    }
+
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
                     span<uint8_t> outbuf, uintptr_t& written,
                     ACCESS_MASK access_mask) override;
@@ -68,6 +76,9 @@ public:
 private:
     nt_status ioctl_get_absinfo(span<const uint8_t> inbuf, span<uint8_t> outbuf,
                                 uintptr_t& written, ACCESS_MASK access_mask);
+
+    template<bool NONBLOCK>
+    nt_status do_write(span<const span<const uint8_t>> v, uint64_t& written_bytes);
 };
 
 struct input_event_with_id_item {
@@ -131,6 +142,11 @@ public:
         return p.write(v, written_bytes);
     }
 
+    nt_status write_nonblock(span<const span<const uint8_t>> v,
+                             uint64_t& written_bytes) override {
+        return p.write_nonblock(v, written_bytes);
+    }
+
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
                     span<uint8_t> outbuf, uintptr_t& written,
                     ACCESS_MASK access_mask) override {
@@ -153,8 +169,8 @@ private:
 };
 
 static atomic<uint32_t> next_keyboard_id = 0;
-static spinlock evdev_contexts_spinlock;
-static list_entry evdev_contexts = { &evdev_contexts, &evdev_contexts };
+spinlock evdev_contexts_spinlock;
+list_entry evdev_contexts = { &evdev_contexts, &evdev_contexts };
 
 export class evdev_device : public chardev {
 public:
@@ -170,6 +186,10 @@ public:
     }
 
     nt_status write(span<const span<const uint8_t>>, uint64_t&) override {
+        return nt_status::NOT_SUPPORTED;
+    }
+
+    nt_status write_nonblock(span<const span<const uint8_t>>, uint64_t&) override {
         return nt_status::NOT_SUPPORTED;
     }
 
@@ -235,6 +255,11 @@ public:
         return p.write(v, written_bytes);
     }
 
+    nt_status write_nonblock(span<const span<const uint8_t>> v,
+                             uint64_t& written_bytes) override {
+        return p.write_nonblock(v, written_bytes);
+    }
+
     nt_status ioctl(uint32_t code, span<const uint8_t> inbuf,
                     span<uint8_t> outbuf, uintptr_t& written,
                     ACCESS_MASK access_mask) override {
@@ -287,11 +312,15 @@ public:
             delete this;
     }
 
+    template<bool NONBLOCK>
     nt_status write(const input_event& ev) {
         uint64_t written_bytes;
         auto sp = span((const uint8_t*)&ev, sizeof(input_event));
 
-        return p.write(span(&sp, 1), written_bytes);
+        if constexpr (NONBLOCK)
+            return p.write_nonblock(span(&sp, 1), written_bytes);
+        else
+            return p.write(span(&sp, 1), written_bytes);
     }
 
     void listen_thread();
@@ -606,8 +635,9 @@ void evdev_multiplexer_client::post_event(const input_event& ev, uint32_t id) {
     }
 }
 
-nt_status evdev_multiplexer::write(span<const span<const uint8_t>> v,
-                                   uint64_t& written_bytes) {
+template<bool NONBLOCK>
+nt_status evdev_multiplexer::do_write(span<const span<const uint8_t>> v,
+                                      uint64_t& written_bytes) {
     if (get_vec_size(v) < sizeof(input_event_with_id))
         return nt_status::INVALID_PARAMETER;
 
@@ -635,7 +665,7 @@ nt_status evdev_multiplexer::write(span<const span<const uint8_t>> v,
     if (!ctx)
         return nt_status::NOT_FOUND;
 
-    auto status = ctx->write(ev.ev);
+    auto status = ctx->write<NONBLOCK>(ev.ev);
 
     if (success(status))
         written_bytes = sizeof(input_event_with_id);

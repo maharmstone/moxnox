@@ -85,7 +85,14 @@ public:
     }
 
     nt_status write(span<const span<const uint8_t>> v,
-                    uint64_t& written_bytes) override;
+                    uint64_t& written_bytes) override {
+        return do_write<false>(v, written_bytes);
+    }
+
+    nt_status write_nonblock(span<const span<const uint8_t>> v,
+                             uint64_t& written_bytes) override {
+        return do_write<true>(v, written_bytes);
+    }
 
     sync_object& get_sync_object() override {
         return recv_pipe;
@@ -101,6 +108,10 @@ public:
     pipe& recv_pipe;
 
 private:
+    template<bool NONBLOCK>
+    nt_status do_write(span<const span<const uint8_t>> v,
+                       uint64_t& written_bytes);
+
     virt_queue* recv_queue = nullptr;
     virt_queue* send_queue = nullptr;
 };
@@ -187,8 +198,9 @@ void virtio_console<T>::recv_thread() {
 }
 
 template<virtio_device T>
-nt_status virtio_console<T>::write(span<const span<const uint8_t>> v,
-                                   uint64_t& written_bytes) {
+template<bool NONBLOCK>
+nt_status virtio_console<T>::do_write(span<const span<const uint8_t>> v,
+                                      uint64_t& written_bytes) {
     if (shutting_down_cpu.load(memory_order::acquire) != 0xffffffff)
         return nt_status::SYSTEM_SHUTDOWN;
 
@@ -267,6 +279,7 @@ nt_status virtio_console<T>::write(span<const span<const uint8_t>> v,
             break;
     }
 
+    // FIXME - non-blocking mode?
     auto status = send_queue->indirect(span(descs, vec_count), read_bytes);
 
     free(descs);

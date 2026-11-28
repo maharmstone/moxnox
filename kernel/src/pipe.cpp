@@ -31,7 +31,7 @@ public:
     NTSTATUS write(span<const span<const uint8_t>> v,
                    uint64_t& written_bytes) override;
     NTSTATUS write_nonblock(span<const span<const uint8_t>> v,
-                            uint64_t& written_bytes);
+                            uint64_t& written_bytes) override;
 
     NTSTATUS write_nonblock(string_view sv, uint64_t& written_bytes) {
         span sp = span((const uint8_t*)sv.data(), sv.length());
