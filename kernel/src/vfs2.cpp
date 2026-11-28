@@ -49,7 +49,9 @@ using namespace std;
 
 class vfsctl : public chardev {
 public:
-    vfsctl() { }
+    vfsctl() {
+        write_signalled = false;
+    }
 
     nt_status read(span<const span<uint8_t>>, uint64_t&) override {
         return nt_status::NOT_IMPLEMENTED;

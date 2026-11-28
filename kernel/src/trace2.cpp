@@ -41,6 +41,7 @@ struct active_trace_point {
 class tracectl : public chardev {
 public:
     tracectl() {
+        write_signalled = false;
         exclusive = false;
     }
 

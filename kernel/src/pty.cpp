@@ -37,7 +37,9 @@ using namespace std;
 
 class ptyctl : public chardev {
 public:
-    ptyctl() { }
+    ptyctl() {
+        write_signalled = false;
+    }
 
     nt_status read(span<const span<uint8_t>>, uint64_t&) override {
         return nt_status::NOT_SUPPORTED;
@@ -188,6 +190,7 @@ public:
         parent.acquire();
 
         signalled = false;
+        write_signalled = false;
     }
 
     ~pty_info() {

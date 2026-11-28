@@ -13,9 +13,9 @@ import object_ref;
 
 using namespace std;
 
-export class chardev : public sync_object {
+export class chardev : public rw_sync_object {
 public:
-    chardev() : sync_object(object_type::chardev, true) { }
+    chardev() : rw_sync_object(object_type::chardev, true, true) { }
     virtual ~chardev() { }
 
     virtual NTSTATUS read(span<const span<uint8_t>> v, uint64_t& read_bytes) = 0;
@@ -70,7 +70,7 @@ public:
     bool readonly = false;
 };
 
-static_assert(is_sync_object<chardev>);
+static_assert(is_rw_sync_object<chardev>);
 static_assert(is_readable_object_without_offset<chardev>);
 static_assert(is_nonblocking_readable_object<chardev>);
 static_assert(is_nonblocking_writable_object<chardev>);

@@ -174,8 +174,9 @@ list_entry evdev_contexts = { &evdev_contexts, &evdev_contexts };
 
 export class evdev_device : public chardev {
 public:
-    // FIXME - empty ctor to work round GCC bug
-    evdev_device() : chardev() { }
+    evdev_device() : chardev() {
+        write_signalled = false;
+    }
 
     nt_status read(span<const span<uint8_t>>, uint64_t&) override {
         return nt_status::NOT_SUPPORTED;

@@ -328,6 +328,8 @@ static uint32_t flush_framebuffer_resource;
 
 template<virtio_device T>
 virtio_gpu<T>::virtio_gpu(T& dev) : dev(dev) {
+    write_signalled = false;
+
     if constexpr (is_same_v<T, virtio_pci_device>) {
         if (dev.device_cfg->length < sizeof(virtio_gpu_config)) {
             print("virtio_gpu: device cfg length was {}, expected at least {}\n",

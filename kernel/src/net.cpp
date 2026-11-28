@@ -309,7 +309,9 @@ static_assert(is_nonblocking_writable_object<class socket>);
 
 class netctl : public chardev {
 public:
-    netctl() { }
+    netctl() {
+        write_signalled = false;
+    }
 
     nt_status read(span<const span<uint8_t>>, uint64_t&) override {
         return nt_status::NOT_IMPLEMENTED;

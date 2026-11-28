@@ -20,6 +20,7 @@ using namespace std;
 class tty_chardev : public chardev {
 public:
     tty_chardev() {
+        write_signalled = false;
         exclusive = false;
     }
 
